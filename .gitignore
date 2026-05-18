@@ -12,6 +12,6 @@ wheels/
 # Variables de entorno locales
 .env
 
-# Datos grandes
+# Datos grandes (>100 MB)
 TFG_Chollos/data/raw/fichas/resultados_booking_Cádiz.csv
 TFG_Chollos/data/raw/fichas/resultados_booking_Málaga.csv
