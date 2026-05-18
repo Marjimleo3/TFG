@@ -67,40 +67,51 @@ def extraer_servicios_influyentes(ficha:pd.DataFrame) -> pd.DataFrame:
         servicios = [serv.lower().strip('"') for serv in ast.literal_eval(fila['servicios'])]   #La lista de servicios es un 'str' porque esta con "", aunque tenga forma de lista, la función ast.literal_eval convierte un string que parece una estructura de Python (lista) en la estructura real.
         servicios_habitacion = [serv.lower().strip('"') for serv in ast.literal_eval(fila['servicios_habitacion'])]
         
-        parking = aire = calefaccion = gimnasio = restaurante = piscina = vistas = terraza = baño = False
+        parking = parking_gratis = gimnasio = restaurante = piscina = piscina_interior = aire = calefaccion = vistas = terraza = baño = False
 
-        for servicio in servicios:
-            if 'parking' in servicio or '1. parking en el alojamiento' in servicio:
+        for servicio,servicio_habitacion in zip(servicios,servicios_habitacion):
+            if 'parking' in servicio:
                 parking = servicio
-            if 'aire acondicionado' in servicio:
-                aire = servicio
-            if 'calefacción' in servicio:
-                calefaccion = servicio
-            if 'gimnasio' in servicio:
+            if 'parking gratis' in servicio or 'free parking' in servicio:
+                parking_gratis = servicio
+            if 'gimnasio' in servicio or 'gym' in servicio:
                 gimnasio = servicio
-            if 'restaurante' in servicio:
+            if 'restaurante' in servicio or 'restaurant' in servicio:
                 restaurante = servicio
-            if 'piscina' in servicios:
+            if ('piscina' in servicio or 'pool' in servicio) and 'vista' not in servicio:
                 piscina = servicio
+            if 'piscina interior' in servicio or 'cubierta' in servicio:
+                piscina_interior = servicio
+            # if ('aire' in servicio or 'air' in servicio) and 'libre' not in servicio:
+            #     aire = servicio
+            # if 'calefacción' in servicio or 'calefaccion' in servicio or 'heat' in servicio:
+            #     calefaccion = servicio
 
-        for servicio_habitacion in servicios_habitacion:
-            if 'vista' in servicio_habitacion:
+
+            if ('aire' in servicio_habitacion or 'air' in servicio_habitacion) and ('libre' not in servicio_habitacion and 'stairs' not in servicio_habitacion and 'hair' not in servicio_habitacion and 'chair' not in servicio_habitacion and 'purifier' not in servicio_habitacion):
+                aire = servicio_habitacion
+            if 'calefacción' in servicio_habitacion or 'calefaccion' in servicio_habitacion or 'heat' in servicio_habitacion:
+                calefaccion = servicio_habitacion
+            if ('vista' in servicio_habitacion or 'views' in servicio_habitacion or 'scenary' in servicio_habitacion) and 'pay-per-view channels' not in servicio_habitacion:
                 vistas = servicio_habitacion
-            if 'terraza' in servicio_habitacion:
+            if 'terraza' in servicio_habitacion or 'terrace' in servicio_habitacion or 'deck' in servicio_habitacion or 'balcón' in servicio_habitacion or 'balcon' in servicio_habitacion:
                 terraza = servicio_habitacion
-            if 'baño' in servicio_habitacion:
-                baño = servicio_habitacion
+            if ('baño' in servicio_habitacion or 'bath' in servicio_habitacion) and ('shared bathroom' not in servicio_habitacion and 'bath-robe' not in servicio_habitacion):
+                baño_privado = servicio_habitacion
+
 
         filas.append({
             'Parking_texto': parking, 'Parking': parking != False,
-            'Aire_texto': aire, 'Aire': aire != False,
-            'Calefaccion_texto': calefaccion, 'Calefaccion': calefaccion != False,
+            'Parking_gratis_texto': parking_gratis, 'Parking_gratis' : parking_gratis != False,
             'Gimnasio_texto': gimnasio, 'Gimnasio': gimnasio != False,
             'Restaurante_texto': restaurante, 'Restaurante': restaurante != False,
             'Piscina_texto': piscina, 'Piscina': piscina != False,
+            'Piscina_interior_texto': piscina_interior, 'Piscina_interior': piscina_interior != False,
+            'Aire_texto': aire, 'Aire': aire != False,
+            'Calefaccion_texto': calefaccion, 'Calefaccion': calefaccion != False,
             'Vistas_texto': vistas, 'Vistas': vistas != False,
             'Terraza_texto': terraza, 'Terraza': terraza != False,
-            'Baño_texto': baño, 'Baño': baño != False
+            'Baño_texto': baño_privado, 'Baño': baño_privado != False
             })
         
     return pd.DataFrame(filas)
@@ -121,7 +132,7 @@ def main():
         raw = pd.read_csv( BASE / "data" / "raw" / "fichas" / f"resultados_booking_{provincia}.csv", sep="|")
         print(f'Este es el número de servicios no encontrados en {provincia}:\n{(extraer_servicios_influyentes(raw)==False).sum()}')
         servicios_generales = extraer_servicios_influyentes(raw)
-        print(servicios_generales)
+        print(servicios_generales.head())
 
         servicios_generales.to_csv(BASE / "data" / "processed" / "servicios_binarios" / f"servicios_generales_binarios_{provincia}.csv", index=False, columns=servicios_generales.columns, sep="|")
 
