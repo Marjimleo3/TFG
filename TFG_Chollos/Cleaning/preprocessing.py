@@ -59,7 +59,7 @@ def limpieza_datos():
 def extraer_servicios_influyentes(ficha:pd.DataFrame) -> pd.DataFrame:
 
     keywords = ['parking', 'aire acondicionado', 'calefacción', 'gimnasio', 'restaurante']
-    columnas = ['parking', 'aire', 'calefaccion', 'gimnasio', 'restaurante']
+    columnas = ['Parking', 'Aire', 'Calefaccion', 'Gimnasio', 'Restaurante']
 
     filas = []
     for _, fila in ficha.iterrows():
@@ -96,7 +96,7 @@ def main():
         servicios_generales = extraer_servicios_influyentes(raw)
         print(servicios_generales)
 
-        # servicios_generales.to_parquet(BASE / "data" / "processed" / "servicios_binarios" / f"servicios_generales_binarios_{provincia}.parquet")
+        servicios_generales.to_csv(BASE / "data" / "processed" / "servicios_binarios" / f"servicios_generales_binarios_{provincia}.csv", index=False, columns=servicios_generales.columns, sep="|")
 
     
 
