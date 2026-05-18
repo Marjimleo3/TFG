@@ -1,0 +1,67 @@
+---
+title: "TFG: búsqueda de chollos según preferencias del cliente"
+author: "Mario Jiménez León"
+format: html
+engine: jupyter
+jupyter: python3
+toc: true
+number-sections: true
+---
+
+## Detección de anomalías negativas en precios de alojamientos turísticos en Andalucía mediante ML supervisado y No supervisado: desarrollo de una aplicación para la personalización de ofertas según preferencias del cliente.
+
+### Índice:
+
+1.  Extracción Datos (Creación Base de Datos)
+
+2.  Análisis Descriptivo
+
+3.  Modelización (ML supervisado y no supervisado)
+
+4.  Clasificación (chollo/no chollo)
+
+5.  Sistema Scoring
+
+6.  Formulario
+
+    <br>
+
+\*Nota. Se **acota** el estudio a la comunidad autónoma de **Andalucía** para garantizar **homogeneidad territorial** y **viabilidad técnica del sistema**
+
+Lo primero sería hacer el formulario del cliente, y guardarlo en una buena base de datos, que se utilizará posteriormente para hacer un buen filtro de los datos, porque cuanto menos alojamientos procesemos, más rápido será la búsqueda.
+
+Una vez hayamos extraído algunos chollos, de entre los 10 primeros, hacemos una búsqueda comparativa entre las distintas webs, tripadvisor, agora... Para ver si podemos extraer más barato aún el alojamiento. Por ejemplo cuando contratas el servicio desde la propia página web del alojamiento, suele ser aún más barato que en las webs de búsquedas.
+
+PREGUNTAR DAVID QUE EL SCRAPEO QUE LO HAGO PARA 2 ADULTOS, 1 HABITACIÓN Y 0 MENORES SOLO?
+
+EN SCRAPER.PY NO HAY SEÑAL DE NADA SI FALLA LA EXTRACCIÓN DE ALGUNA ESTANCIA, ARREGLAR
+
+<!-- AÑADIR PARALELIZACIÓN AL EXTRAER PRECIO DE CADA DÍA -->
+
+ARREGLAR PULSAR BOTÓN PRECIO/CALENDARIO
+
+<!-- INTENTAR PARALELIZACIÓN CON DASK PARA WEB SCRAPING -->
+
+Para crear la app de Streamlit como web, sin necesidad de que se este corriendo en mi ordenador, debemos de subir la app a github, y después ir a streamlit.io y hacer 'deplay' (subir) la app que tenemos en github, a través de la conexión streamlit.io-github
+
+Para los commits en github, hay una estandarización para las descripciones: 
+fix: decimal comma causing map render error (correción de bug)
+feat: add hotel filter (nueva funcionalidad)
+chore: update dependencies (tareas de mantenimiento)
+docs: add README instructions (cambios en documentacion)
+style: format code with black (Formato, espacios, puntos y coma... No afectan al código)
+wip: choropleth map (not working yet)
+
+Para hacer una gráfica
+https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html
+https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
+
+El proyecto sigue una arquitectura modular: consiste en dividir un programa en piezas independientes (módulos), donde cada una tiene una responsabilidad clara y bien definida. Tiene las siguientes características:
+- El código es mantenible — fácil de modificar sin romper todo
+- Es escalable — se puede añadir un nuevo modelo sin tocar el preprocesamiento
+- Es testeable — se puede probar cada módulo por separado
+- Sigue estándares de la industria
+
+<br>
+
+### 1. Estructura Base de datos
