@@ -1,4 +1,4 @@
-Parking_texto|Parking|Parking_gratis_texto|Parking_gratis|Gimnasio_texto|Gimnasio|Restaurante_texto|Restaurante|Piscina_texto|Piscina|Piscina_interior_texto|Piscina_interior|Aire_texto|Aire|Calefaccion_texto|Calefaccion|Vistas_texto|Vistas|Terraza_texto|Terraza|Baño_texto|Baño
+Parking_texto|Parking|Parking_gratis_texto|Parking_gratis|Gimnasio_texto|Gimnasio|Restaurante_texto|Restaurante|Piscina_texto|Piscina|Piscina_interior_texto|Piscina_interior|Aire_texto|Aire|Calefaccion_texto|Calefaccion|Vistas_texto|Vistas|Terraza_texto|Terraza|Baño_privado_texto|Baño_privado
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|False|False|False|False|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|False|False|False|False|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|False|False|False|False|baño en la habitación|True
@@ -11,12 +11,12 @@ False|False|False|False|False|False|False|False|False|False|False|False|aire aco
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|False|False|balcón|True|baño en la habitación|True
 False|False|False|False|gimnasio|True|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|terraza|True|baño en la habitación|True
 False|False|False|False|gimnasio|True|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|baño en la habitación|True
-False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|piscina con vistas|True|terraza|True|baño en la habitación|True
+False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|terraza|True|baño en la habitación|True
 parking|True|False|False|gimnasio|True|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|baño en la habitación|True
 2. parking en el alojamiento|True|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas|True|terraza|True|baño en la habitación|True
-False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|baño en la habitación|True
+False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False
 False|False|False|False|False|False|False|False|piscina al aire libre|True|False|False|aire acondicionado|True|heating|True|False|False|terraza|True|baño en la habitación|True
-False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|vistas al río|True|terraza|True|baño en la habitación|True
+False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|vistas al río|True|terraza|True|False|False
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas|True|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|balcón|True|baño en la habitación|True
@@ -30,7 +30,7 @@ False|False|False|False|False|False|False|False|False|False|False|False|aire aco
 False|False|False|False|gimnasio|True|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas al jardín|True|balcón|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas a un patio interior|True|False|False|baño en la habitación|True
 parking|True|False|False|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|False|False|False|False|False|False|baño privado|True
-False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|piscina con vistas|True|False|False|baño en la habitación|True
+False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|individual_air_conditioning|True|heating|True|vistas al jardín|True|terraza|True|baño en la habitación|True
 parking|True|False|False|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|False|False|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|restaurante|True|piscina al aire libre|True|False|False|aire acondicionado|True|heating|True|False|False|balcón|True|baño en la habitación|True
@@ -61,7 +61,7 @@ False|False|False|False|False|False|False|False|False|False|False|False|aire aco
 False|False|False|False|gimnasio|True|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|False|False|vistas|True|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|False|False|False|False|baño privado|True
-parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|baño privado|True
+parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|False|False
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|False|False|balcón|True|baño privado|True
 parking|True|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|vistas al jardín|True|terraza|True|baño privado|True
@@ -81,9 +81,9 @@ False|False|False|False|False|False|False|False|False|False|False|False|individu
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|False|False|vistas|True|balcón|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas al mar|True|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas a la ciudad|True|terraza|True|baño privado|True
-parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|individual_air_conditioning|True|heating|True|piscina con vistas|True|terraza|True|baño privado|True
+parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|individual_air_conditioning|True|heating|True|False|False|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas a un lugar de interés|True|terraza|True|baño en la habitación|True
-False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|baño en la habitación|True
+False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False
 parking|True|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|balcón|True|bath or shower|True
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|baño privado|True
 parking privado|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|False|False|False|False|terraza|True|baño en la habitación|True
@@ -92,7 +92,7 @@ False|False|False|False|False|False|False|False|False|False|False|False|False|Fa
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas al jardín|True|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|aire acondicionado|True|heating|True|vistas al mar|True|terraza|True|baño privado|True
 parking|True|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas a la ciudad|True|balcón|True|bath or shower|True
-False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|False|False|vistas a un patio interior|True|False|False|bath or shower|True
+False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|False|False|vistas a un patio interior|True|False|False|False|False
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas a la piscina|True|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas a un patio interior|True|terraza|True|baño en la habitación|True
 parking|True|False|False|False|False|False|False|piscina al aire libre|True|False|False|individual_air_conditioning|True|heating|True|False|False|False|False|baño privado|True
@@ -127,7 +127,7 @@ False|False|False|False|False|False|False|False|False|False|False|False|False|Fa
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|False|False|False|False|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina 2 - al aire libre|True|False|False|aire acondicionado|True|heating|True|vistas al mar|True|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|False|False|vistas a un lugar de interés|True|terraza|True|baño privado|True
-False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|baño privado|True
+False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|False|False|False|False|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas a un patio interior|True|False|False|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|terraza|True|baño privado|True
@@ -137,7 +137,7 @@ parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|
 False|False|False|False|False|False|False|False|piscina privada|True|False|False|individual_air_conditioning|True|heating|True|vistas al jardín|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|vistas al mar|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|vistas a la montaña|True|terraza|True|baño privado|True
-False|False|False|False|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|terraza|True|baño privado|True
+False|False|False|False|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|terraza|True|False|False
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|False|False|False|False|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|False|False|False|False|False|False|terraza|True|baño en la habitación|True
@@ -155,13 +155,13 @@ False|False|False|False|False|False|False|False|False|False|False|False|individu
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas a un patio interior|True|False|False|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|vistas a un patio interior|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|vistas|True|terraza|True|baño privado|True
-False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|baño privado|True
+False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|False|False|terraza|True|baño privado|True
-False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas|True|balcón|True|baño privado|True
+False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas|True|balcón|True|False|False
 parking|True|False|False|False|False|False|False|piscina al aire libre|True|False|False|individual_air_conditioning|True|heating|True|False|False|False|False|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|vistas a la montaña|True|balcón|True|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|vistas a la montaña|True|False|False|baño privado|True
-parking privado|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|False|False|vistas al jardín|True|terraza|True|baño privado|True
+parking privado|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|False|False|vistas al jardín|True|terraza|True|False|False
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|individual_air_conditioning|True|heating|True|vistas al lago|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|vistas al río|True|False|False|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|baño privado|True
@@ -172,13 +172,13 @@ parking gratis|True|parking gratis|True|False|False|False|False|False|False|Fals
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|individual_air_conditioning|True|heating|True|vistas al mar|True|terraza|True|bath or shower|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|False|False|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|baño privado|True
-False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|False|False|False|False|False|False|baño privado|True
+False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|False|False|False|False|False|False|False|False
 False|False|False|False|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|False|False|False|False|balcón|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|balcón|True|baño privado|True
 parking|True|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas a la ciudad|True|balcón|True|baño en la habitación|True
-False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|baño en la habitación|True
+False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|individual_air_conditioning|True|heating|True|vistas|True|False|False|baño privado|True
-parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas|True|False|False|baño privado|True
+parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas|True|False|False|False|False
 parking en un garaje|True|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|False|False|False|False|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas al jardín|True|balcón|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|vistas al mar|True|terraza|True|baño privado|True
@@ -187,24 +187,24 @@ parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire 
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|False|False|heating|True|vistas al jardín|True|terraza|True|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas a un patio interior|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|vistas al jardín|True|terraza|True|baño privado|True
-parking privado|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|False|False|baño privado|True
+parking privado|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|False|False|False|False
 parking|True|False|False|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|False|False|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|vistas al mar|True|terraza|True|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|vistas a la montaña|True|False|False|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|individual_air_conditioning|True|False|False|False|False|terraza|True|bath or shower|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|False|False|False|False|baño privado|True
-False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|False|False|False|False|terraza|True|baño privado|True
+False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|False|False|False|False|terraza|True|False|False
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas a un lugar de interés|True|False|False|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|aire acondicionado|True|heating|True|vistas|True|terraza|True|baño privado|True
 False|False|False|False|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|False|False|bath or shower|True
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|vistas a un lugar de interés|True|terraza|True|baño en la habitación|True
-False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|baño en la habitación|True
+False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|False|False
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|False|False|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|False|False|False|False|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|False|False|False|False|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|False|False|False|False|baño privado|True
-parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|aire acondicionado|True|False|False|vistas al jardín|True|terraza|True|baño privado|True
+parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|aire acondicionado|True|False|False|vistas al jardín|True|terraza|True|False|False
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas a la ciudad|True|balcón|True|bath or shower|True
 parking gratis|True|parking gratis|True|False|False|restaurante|True|False|False|False|False|individual_air_conditioning|True|heating|True|vistas al jardín|True|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|False|False|vistas|True|terraza|True|baño privado|True
@@ -219,7 +219,7 @@ parking gratis|True|parking gratis|True|False|False|False|False|False|False|Fals
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|False|False|vistas a la ciudad|True|balcón|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas al río|True|balcón|True|baño privado|True
 False|False|False|False|gimnasio|True|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas a un lugar de interés|True|balcón|True|baño en la habitación|True
-parking|True|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|piscina con vistas|True|False|False|baño privado|True
+parking|True|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas al río|True|terraza|True|baño privado|True
 parking|True|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|False|False|False|False|False|False|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|aire acondicionado|True|heating|True|vistas a la piscina|True|terraza|True|baño en la habitación|True
@@ -228,7 +228,7 @@ False|False|False|False|False|False|False|False|False|False|False|False|aire aco
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas a un patio interior|True|False|False|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|vistas a la montaña|True|False|False|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|terraza|True|baño privado|True
-False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|baño privado|True
+False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|False|False
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|False|False|vistas al mar|True|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|terraza|True|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|False|False|False|False|False|False|baño privado|True
@@ -236,7 +236,7 @@ parking privado|True|parking gratis|True|False|False|False|False|piscina al aire
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|False|False|heating|True|vistas al jardín|True|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|False|False|False|False|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas al jardín|True|False|False|baño privado|True
-parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas a la piscina|True|balcón|True|baño privado|True
+parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas a la piscina|True|balcón|True|False|False
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas al río|True|terraza|True|baño privado|True
 parking|True|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|terraza|True|baño en la habitación|True
@@ -255,7 +255,7 @@ False|False|False|False|False|False|False|False|False|False|False|False|False|Fa
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|vistas a la montaña|True|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|False|False|False|False|False|False|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|False|False|vistas al jardín|True|terraza|True|baño en la habitación|True
-False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|baño en la habitación|True
+False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|False|False|vistas a la montaña|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|vistas al jardín|True|terraza|True|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas a la piscina|True|False|False|baño en la habitación|True
@@ -277,7 +277,7 @@ parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire 
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|vistas a la montaña|True|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|False|False|vistas a la ciudad|True|balcón|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|aire acondicionado|True|heating|True|vistas al río|True|terraza|True|baño privado|True
-False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas a un lugar de interés|True|terraza|True|baño privado|True
+False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas a un lugar de interés|True|terraza|True|False|False
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|vistas a la montaña|True|balcón|True|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|balcón|True|baño privado|True
@@ -305,7 +305,7 @@ False|False|False|False|False|False|False|False|False|False|False|False|aire aco
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|vistas a la montaña|True|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|vistas a la montaña|True|False|False|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas al mar|True|terraza|True|baño en la habitación|True
-2. parking fuera del alojamiento|True|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas a la ciudad|True|False|False|baño privado|True
+1. parking en el alojamiento|True|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas a la ciudad|True|False|False|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|False|False|vistas a un patio interior|True|terraza|True|baño privado|True
 False|False|False|False|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas|True|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas al jardín|True|terraza|True|baño privado|True
@@ -326,7 +326,7 @@ parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|heating|True|vistas al jardín|True|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas|True|False|False|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas a un lugar de interés|True|False|False|baño privado|True
-False|False|False|False|False|False|False|False|piscina privada|True|False|False|False|False|heating|True|vistas al jardín|True|terraza|True|baño privado|True
+False|False|False|False|False|False|False|False|piscina privada|True|False|False|False|False|heating|True|vistas al jardín|True|terraza|True|False|False
 False|False|False|False|False|False|False|False|piscina al aire libre|True|False|False|False|False|False|False|vistas al jardín|True|terraza|True|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|balcón|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|False|False|vistas al jardín|True|terraza|True|baño en la habitación|True
@@ -342,7 +342,7 @@ False|False|False|False|False|False|False|False|False|False|False|False|aire aco
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|individual_air_conditioning|True|heating|True|vistas al jardín|True|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|gimnasio|True|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas al mar|True|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|baño privado|True
-False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas al río|True|terraza|True|baño privado|True
+False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas al río|True|terraza|True|False|False
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|False|False|False|False|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|False|False|vistas a un lugar de interés|True|terraza|True|baño privado|True
 parking privado|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|False|False|vistas al jardín|True|terraza|True|baño privado|True
@@ -366,7 +366,7 @@ parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|False|False|False|False|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas a la ciudad|True|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|vistas a un lugar de interés|True|False|False|bath or shower|True
-False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|vistas al jardín|True|terraza|True|bath or shower|True
+False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|vistas al jardín|True|terraza|True|False|False
 False|False|False|False|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|False|False|vistas al jardín|True|False|False|baño privado|True
 parking privado|True|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas a un patio interior|True|balcón|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|False|False|False|False|terraza|True|baño en la habitación|True
@@ -404,7 +404,7 @@ False|False|False|False|False|False|False|False|False|False|False|False|False|Fa
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|False|False|vistas a la montaña|True|False|False|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|False|False|vistas al jardín|True|terraza|True|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|terraza|True|baño privado|True
-False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|baño privado|True
+False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas al jardín|True|False|False|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|terraza|True|baño en la habitación|True
@@ -419,17 +419,17 @@ parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|False|False|False|False|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas al mar|True|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|vistas al jardín|True|terraza|True|baño privado|True
-False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas|True|terraza|True|baño privado|True
+False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas|True|terraza|True|False|False
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|piscina interior|True|aire acondicionado|True|False|False|vistas|True|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|aire acondicionado|True|False|False|vistas al jardín|True|terraza|True|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|vistas al río|True|balcón|True|baño en la habitación|True
-False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|baño en la habitación|True
+False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|False|False
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|False|False|vistas al río|True|balcón|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas a un lugar de interés|True|balcón|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|False|False|vistas al jardín|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|False|False|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|False|False|vistas|True|terraza|True|baño en la habitación|True
-parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|False|False|terraza|True|baño en la habitación|True
+parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|False|False|terraza|True|False|False
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|terraza|True|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|balcón|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas al jardín|True|terraza|True|baño privado|True
@@ -451,7 +451,7 @@ parking privado|True|parking gratis|True|False|False|False|False|False|False|Fal
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas a la ciudad|True|balcón|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina infantil|True|False|False|individual_air_conditioning|True|heating|True|vistas al jardín|True|terraza|True|baño privado|True
 parking|True|False|False|False|False|False|False|False|False|False|False|False|False|False|False|vistas al jardín|True|False|False|bath or shower|True
-False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|False|False|False|False|bath or shower|True
+False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|False|False|False|False|False|False
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|vistas a la montaña|True|False|False|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|False|False|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|False|False|vistas al jardín|True|balcón|True|baño privado|True
@@ -471,7 +471,7 @@ False|False|False|False|False|False|False|False|False|False|False|False|individu
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|aire acondicionado|True|False|False|vistas al jardín|True|terraza|True|baño privado|True
 False|False|False|False|False|False|False|False|piscina privada|True|False|False|False|False|False|False|vistas al jardín|True|balcón|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|restaurante|True|piscina al aire libre|True|False|False|False|False|False|False|vistas a la montaña|True|False|False|baño privado|True
-parking privado|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|False|False|vistas|True|terraza|True|baño privado|True
+parking privado|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|False|False|vistas|True|terraza|True|False|False
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|False|False|False|False|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|vistas a la montaña|True|balcón|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|individual_air_conditioning|True|False|False|vistas a un patio interior|True|False|False|baño en la habitación|True
@@ -482,7 +482,7 @@ False|False|False|False|False|False|False|False|False|False|False|False|aire aco
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|individual_air_conditioning|True|heating|True|vistas al lago|True|terraza|True|baño en la habitación|True
-parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|False|False|vistas al jardín|True|terraza|True|baño en la habitación|True
+parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|False|False|vistas al jardín|True|terraza|True|False|False
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|aire acondicionado|True|heating|True|vistas al río|True|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas a un lugar de interés|True|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|False|False|False|False|terraza|True|baño privado|True
@@ -491,7 +491,7 @@ parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire 
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas a un lugar de interés|True|False|False|baño en la habitación|True
 parking|True|False|False|gimnasio|True|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas al río|True|terraza|True|baño privado|True
 False|False|False|False|gimnasio|True|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|balcón|True|baño privado|True
-False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|False|False|balcón|True|baño privado|True
+False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|False|False|balcón|True|False|False
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|False|False|False|False|balcón|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas|True|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|terraza|True|baño en la habitación|True
@@ -511,7 +511,7 @@ parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|
 parking gratis|True|parking gratis|True|False|False|False|False|piscina 2 - al aire libre|True|False|False|False|False|heating|True|vistas al jardín|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|False|False|heating|True|vistas al lago|True|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|vistas a un lugar de interés|True|False|False|bath or shower|True
-False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|balcón|True|bath or shower|True
+False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|balcón|True|False|False
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas a un lugar de interés|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|False|False|False|False|terraza|True|baño en la habitación|True
@@ -522,18 +522,18 @@ False|False|False|False|False|False|False|False|False|False|False|False|False|Fa
 parking gratis|True|parking gratis|True|False|False|False|False|piscina infantil|True|False|False|aire acondicionado|True|False|False|vistas al jardín|True|balcón|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina interior|True|piscina interior|True|aire acondicionado|True|False|False|vistas al jardín|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|aire acondicionado|True|False|False|vistas al jardín|True|balcón|True|baño privado|True
-False|False|False|False|False|False|False|False|piscina privada|True|False|False|False|False|heating|True|vistas a un patio interior|True|terraza|True|baño privado|True
+False|False|False|False|False|False|False|False|piscina privada|True|False|False|False|False|heating|True|vistas a un patio interior|True|terraza|True|False|False
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|individual_air_conditioning|True|heating|True|vistas al jardín|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|False|False|False|False|balcón|True|baño privado|True
-False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|terraza|True|baño privado|True
+False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|terraza|True|False|False
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|vistas al río|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|False|False|vistas a la montaña|True|False|False|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|False|False|False|False|False|False|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas a la ciudad|True|terraza|True|baño en la habitación|True
-False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|False|False|terraza|True|baño en la habitación|True
+False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|False|False|terraza|True|False|False
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas a la ciudad|True|balcón|True|baño en la habitación|True
-False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|baño en la habitación|True
+False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|False|False
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas|True|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|terraza|True|baño en la habitación|True
 parking|True|False|False|False|False|False|False|False|False|False|False|False|False|False|False|vistas al jardín|True|False|False|baño privado|True
@@ -550,10 +550,10 @@ parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|False|False|False|False|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas al río|True|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|False|False|False|False|vistas al jardín|True|terraza|True|baño en la habitación|True
-parking|True|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|terraza|True|baño en la habitación|True
-parking gratis|True|parking gratis|True|False|False|False|False|piscina|True|False|False|aire acondicionado|True|heating|True|piscina con vistas|True|terraza|True|bath or shower|True
+parking|True|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|terraza|True|False|False
+parking gratis|True|parking gratis|True|False|False|False|False|piscina|True|False|False|aire acondicionado|True|heating|True|False|False|terraza|True|bath or shower|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|False|False|False|False|terraza|True|baño privado|True
-parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|False|False|vistas al jardín|True|terraza|True|baño privado|True
+parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|False|False|vistas al jardín|True|terraza|True|False|False
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|False|False|vistas a la montaña|True|balcón|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina|True|False|False|individual_air_conditioning|True|heating|True|vistas al jardín|True|False|False|baño privado|True
@@ -565,8 +565,8 @@ parking gratis|True|parking gratis|True|False|False|False|False|False|False|Fals
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|False|False|False|False|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|False|False|False|False|terraza|True|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|balcón|True|baño privado|True
-False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|baño privado|True
-False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|baño privado|True
+False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False
+False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False
 False|False|False|False|gimnasio|True|2 restaurantes|True|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas a un lugar de interés|True|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|vistas al jardín|True|False|False|baño en la habitación|True
@@ -586,7 +586,7 @@ parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire 
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|heating|True|vistas a un lugar de interés|True|False|False|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas a un patio interior|True|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|aire acondicionado|True|heating|True|vistas al mar|True|terraza|True|baño privado|True
-False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|baño privado|True
+False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False
 parking|True|False|False|False|False|restaurante|True|piscina al aire libre|True|False|False|aire acondicionado|True|heating|True|vistas|True|terraza|True|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas al mar|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|heating|True|vistas al río|True|terraza|True|baño en la habitación|True
@@ -618,7 +618,7 @@ False|False|False|False|False|False|False|False|False|False|False|False|aire aco
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|individual_air_conditioning|True|False|False|vistas al mar|True|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas al mar|True|balcón|True|baño en la habitación|True
-False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|baño en la habitación|True
+False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|terraza|True|bath or shower|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|False|False|False|False|vistas al jardín|True|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|heating|True|vistas al río|True|terraza|True|baño privado|True
@@ -629,7 +629,7 @@ parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire 
 False|False|False|False|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|heating|True|vistas al jardín|True|terraza|True|baño en la habitación|True
-parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|individual_air_conditioning|True|heating|True|vistas al mar|True|terraza|True|baño en la habitación|True
+parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|individual_air_conditioning|True|heating|True|vistas al mar|True|terraza|True|False|False
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|terraza|True|baño en la habitación|True
 parking|True|False|False|False|False|False|False|piscina al aire libre|True|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|False|False|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|vistas al mar|True|terraza|True|bath or shower|True
@@ -709,7 +709,7 @@ parking gratis|True|parking gratis|True|False|False|False|False|False|False|Fals
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|False|False|False|False|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|False|False|vistas a un patio interior|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|aire acondicionado|True|False|False|vistas al mar|True|terraza|True|baño privado|True
-False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|baño privado|True
+False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False
 parking gratis|True|parking gratis|True|False|False|restaurante|True|piscina|True|False|False|individual_air_conditioning|True|heating|True|vistas al jardín|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|aire acondicionado|True|False|False|vistas al jardín|True|terraza|True|baño privado|True
 parking|True|False|False|False|False|False|False|piscina privada|True|False|False|False|False|heating|True|False|False|False|False|baño privado|True
@@ -722,7 +722,7 @@ False|False|False|False|False|False|False|False|False|False|False|False|False|Fa
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|individual_air_conditioning|True|heating|True|vistas al mar|True|terraza|True|bath or shower|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|False|False|terraza|True|bath or shower|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|False|False|vistas al jardín|True|False|False|baño privado|True
-parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas al mar|True|terraza|True|baño privado|True
+parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas al mar|True|terraza|True|False|False
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|False|False|False|False|False|False|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|vistas a la montaña|True|terraza|True|baño en la habitación|True
@@ -733,7 +733,7 @@ parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire 
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|False|False|heating|True|vistas al jardín|True|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|piscina privada|True|False|False|False|False|heating|True|vistas al jardín|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|terraza|True|bath or shower|True
-False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas al río|True|False|False|bath or shower|True
+False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas al río|True|False|False|False|False
 parking gratis|True|parking gratis|True|False|False|False|False|piscina al aire libre|True|False|False|False|False|False|False|vistas al jardín|True|terraza|True|baño privado|True
 parking privado|True|False|False|False|False|False|False|piscina privada|True|False|False|False|False|False|False|False|False|False|False|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas a un lugar de interés|True|terraza|True|baño privado|True
@@ -744,15 +744,15 @@ parking gratis|True|parking gratis|True|False|False|False|False|piscina|True|Fal
 parking gratis|True|parking gratis|True|False|False|False|False|piscina|True|False|False|individual_air_conditioning|True|heating|True|vistas al jardín|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|piscina 2 - cubierta (infantil)|True|individual_air_conditioning|True|heating|True|vistas al jardín|True|False|False|baño privado|True
-False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|False|False|vistas al jardín|True|terraza|True|baño privado|True
-parking privado|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|baño privado|True
+False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|False|False|vistas al jardín|True|terraza|True|False|False
+parking privado|True|parking gratis|True|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|False|False|False|False|False|False
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas a un patio interior|True|False|False|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|vistas a la ciudad|True|False|False|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas a un lugar de interés|True|balcón|True|baño privado|True
 False|False|False|False|False|False|False|False|piscina al aire libre|True|False|False|False|False|heating|True|vistas al jardín|True|False|False|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|individual_air_conditioning|True|heating|True|False|False|False|False|baño en la habitación|True
-False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas al mar|True|terraza|True|baño en la habitación|True
+False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas al mar|True|terraza|True|False|False
 False|False|False|False|False|False|False|False|piscina privada|True|False|False|individual_air_conditioning|True|heating|True|vistas al jardín|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|heating|True|vistas al jardín|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|individual_air_conditioning|True|False|False|vistas al mar|True|terraza|True|bath or shower|True
@@ -779,7 +779,7 @@ parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|False|False|vistas al mar|True|terraza|True|bath or shower|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|heating|True|vistas al jardín|True|terraza|True|baño privado|True
 False|False|False|False|False|False|False|False|piscina privada|True|False|False|False|False|False|False|vistas al jardín|True|terraza|True|baño privado|True
-False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|balcón|True|baño privado|True
+False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|balcón|True|False|False
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|heating|True|vistas al jardín|True|terraza|True|baño privado|True
 False|False|False|False|False|False|False|False|piscina privada|True|False|False|False|False|heating|True|vistas al jardín|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|False|False|vistas al jardín|True|terraza|True|baño privado|True
@@ -793,13 +793,13 @@ False|False|False|False|False|False|False|False|piscina|True|False|False|False|F
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas al lago|True|terraza|True|baño privado|True
 False|False|False|False|False|False|False|False|False|False|False|False|aire acondicionado|True|heating|True|vistas|True|terraza|True|baño en la habitación|True
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|heating|True|vistas a un patio interior|True|terraza|True|baño en la habitación|True
-False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|vistas al jardín|True|terraza|True|baño en la habitación|True
-parking|True|False|False|False|False|False|False|False|False|False|False|False|False|False|False|vistas al jardín|True|terraza|True|baño en la habitación|True
+False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|vistas al jardín|True|terraza|True|False|False
+parking|True|False|False|False|False|False|False|False|False|False|False|False|False|False|False|vistas al jardín|True|terraza|True|False|False
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|False|False|vistas al jardín|True|terraza|True|baño privado|True
 False|False|False|False|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|heating|True|vistas al jardín|True|terraza|True|baño en la habitación|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|False|False|vistas a la montaña|True|terraza|True|baño privado|True
-False|False|False|False|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|False|False|vistas a un patio interior|True|terraza|True|baño privado|True
-False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|baño privado|True
+False|False|False|False|False|False|False|False|piscina privada|True|False|False|aire acondicionado|True|False|False|vistas a un patio interior|True|terraza|True|False|False
+False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False
 False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|vistas al jardín|True|terraza|True|baño privado|True
 parking gratis|True|parking gratis|True|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|False|bath or shower|True
 parking gratis|True|parking gratis|True|False|False|False|False|piscina privada|True|False|False|False|False|heating|True|vistas al río|True|terraza|True|baño privado|True
