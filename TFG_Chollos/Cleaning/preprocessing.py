@@ -20,6 +20,7 @@ Uso:
 # =============================================================================
 #Librerías estándar (vienen incluidas con Python):
 import ast
+import json
 
 #Librerías de terceros (es necesario instalarlas):
 import pandas as pd
@@ -95,8 +96,7 @@ def extraer_servicios_influyentes(ficha:pd.DataFrame) -> pd.DataFrame:
                 tamaño_habitacion = servicio_habitacion
 
 
-        lista.append({
-            'url_estancia' : fila['url_estancia'],             
+        lista.append({            
             'Parking': parking != False,
             'Parking_gratis' : parking_gratis != False,             
             'Gimnasio': gimnasio != False,             
@@ -109,6 +109,7 @@ def extraer_servicios_influyentes(ficha:pd.DataFrame) -> pd.DataFrame:
             'Terraza': terraza != False,
             'Baño_privado': baño_privado != False,
             # 'Tamaño_habitacion' : tamaño_habitacion != False,
+            'url_estancia' : fila['url_estancia'], 
 
             'Parking_texto': parking,
             'Parking_gratis_texto': parking_gratis,
@@ -127,6 +128,14 @@ def extraer_servicios_influyentes(ficha:pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(lista)
 
 
+def extraer_fecha_precios_disponibles(ficha:pd.DataFrame) -> pd.DataFrame:
+    
+    for _, fila in ficha.iterrows():
+        fila['calendario']
+        
+        # fila*len(x)
+
+
 # =============================================================================
 # PUNTO DE ENTRADA
 # =============================================================================
@@ -142,13 +151,16 @@ def main():
 
     for provincia in provincias.iloc[0:2,0]:
         raw = pd.read_csv( BASE / "data" / "raw" / "fichas" / f"resultados_booking_{provincia}.csv", sep="|")
+        raw = raw.drop(columns=['fecha_entrada','fecha_salida','n_habitaciones','n_adultos','n_menores','hotel_id','direccion','google_maps','nombre_booking','error','ciudad','pais'])
 
         servicios_generales = extraer_servicios_influyentes(raw)
         print(f'Este es el número de servicios no encontrados en {provincia}:\n{(extraer_servicios_influyentes(raw)==False).sum()}')
         servicios_generales.to_csv(BASE / "data" / "processed" / "servicios_binarios" / f"servicios_generales_binarios_{provincia}.csv", index=False, sep="|")
 
-        df = servicios_generales.merge(tamaño_habitacion[['url_estancia','room_size_m2']])
-        df.to_csv(BASE / "data" / "processed" / "servicios_binarios" / f"servicios_generales_binarios_tamaño_habitacion_{provincia}.csv", index=False, sep="|")
+        df_1 = raw.merge(servicios_generales)
+        df_2 = df_1.merge(tamaño_habitacion[['url_estancia','room_size_m2']])
+        df_2.to_csv(BASE / "data" / "processed" / "servicios_binarios" / f"db_final_{provincia}.csv", index=False, sep="|")
+
 
 if __name__ == "__main__":
     main()
