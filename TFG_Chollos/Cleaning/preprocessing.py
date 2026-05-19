@@ -65,6 +65,7 @@ def extraer_servicios_influyentes(ficha:pd.DataFrame) -> pd.DataFrame:
         servicios_habitacion = [serv.lower().strip('"') for serv in ast.literal_eval(fila['servicios_habitacion'])]
         
         parking = parking_gratis = gimnasio = restaurante = piscina = piscina_interior = aire = calefaccion = vistas = terraza = baño_privado = False
+        #Incluir tamaño_habitacion cuando esté listo
 
         for servicio,servicio_habitacion in zip(servicios,servicios_habitacion):
             if 'parking' in servicio and ('parking fuera del alojamiento' not in servicio and 'parking en la calle' not in servicio):
@@ -90,20 +91,37 @@ def extraer_servicios_influyentes(ficha:pd.DataFrame) -> pd.DataFrame:
                 terraza = servicio_habitacion
             if ('baño' in servicio_habitacion or 'bath' in servicio_habitacion) and ('shared bathroom' not in servicio_habitacion and 'bath-robe' not in servicio_habitacion):
                 baño_privado = servicio_habitacion
+            if ('m²' in servicio_habitacion):
+                tamaño_habitacion = servicio_habitacion
 
 
         lista.append({
-            'Parking_texto': parking, 'Parking': parking != False,
-            'Parking_gratis_texto': parking_gratis, 'Parking_gratis' : parking_gratis != False,
-            'Gimnasio_texto': gimnasio, 'Gimnasio': gimnasio != False,
-            'Restaurante_texto': restaurante, 'Restaurante': restaurante != False,
-            'Piscina_texto': piscina, 'Piscina': piscina != False,
-            'Piscina_interior_texto': piscina_interior, 'Piscina_interior': piscina_interior != False,
-            'Aire_texto': aire, 'Aire': aire != False,
-            'Calefaccion_texto': calefaccion, 'Calefaccion': calefaccion != False,
-            'Vistas_texto': vistas, 'Vistas': vistas != False,
-            'Terraza_texto': terraza, 'Terraza': terraza != False,
-            'Baño_privado_texto': baño_privado, 'Baño_privado': baño_privado != False
+            'url_estancia' : fila['url_estancia'],             
+            'Parking': parking != False,
+            'Parking_gratis' : parking_gratis != False,             
+            'Gimnasio': gimnasio != False,             
+            'Restaurante': restaurante != False,             
+            'Piscina': piscina != False,
+            'Piscina_interior': piscina_interior != False,
+            'Aire': aire != False,
+            'Calefaccion': calefaccion != False,
+            'Vistas': vistas != False,
+            'Terraza': terraza != False,
+            'Baño_privado': baño_privado != False,
+            # 'Tamaño_habitacion' : tamaño_habitacion != False,
+
+            'Parking_texto': parking,
+            'Parking_gratis_texto': parking_gratis,
+            'Gimnasio_texto': gimnasio,
+            'Restaurante_texto': restaurante,
+            'Piscina_texto': piscina,
+            'Piscina_interior_texto': piscina_interior,
+            'Aire_texto': aire, 
+            'Calefaccion_texto': calefaccion, 
+            'Vistas_texto': vistas, 
+            'Terraza_texto': terraza, 
+            'Baño_privado_texto': baño_privado
+            # 'Tamaño_habitacion_texto' : tamaño_habitacion 
             })
 
     return pd.DataFrame(lista)
@@ -118,15 +136,19 @@ def main():
 
     BASE = conseguir_ruta_general_TFG()
     provincias = pd.read_csv( BASE / "data" / "raw" / "inputs" / "urls_busqueda_booking_provincias.csv", sep="|" )
+    tamaño_habitacion = pd.read_csv( BASE / "data" / "raw" / "fichas" / "room_sizes.csv", sep="|")
+    tamaño_habitacion['room_size_m2'] = tamaño_habitacion['room_size_m2'].fillna(0)   #Rellenamos con 0 valores vacíos
+    tamaño_habitacion = tamaño_habitacion.astype({'room_size_m2' : 'int16'})     #Cambiamos tipo a entero
 
     for provincia in provincias.iloc[0:2,0]:
         raw = pd.read_csv( BASE / "data" / "raw" / "fichas" / f"resultados_booking_{provincia}.csv", sep="|")
-        print(f'Este es el número de servicios no encontrados en {provincia}:\n{(extraer_servicios_influyentes(raw)==False).sum()}')
+
         servicios_generales = extraer_servicios_influyentes(raw)
-        print(servicios_generales.head())
+        print(f'Este es el número de servicios no encontrados en {provincia}:\n{(extraer_servicios_influyentes(raw)==False).sum()}')
+        servicios_generales.to_csv(BASE / "data" / "processed" / "servicios_binarios" / f"servicios_generales_binarios_{provincia}.csv", index=False, sep="|")
 
-        servicios_generales.to_csv(BASE / "data" / "processed" / "servicios_binarios" / f"servicios_generales_binarios_{provincia}.csv", index=False, columns=servicios_generales.columns, sep="|")
-
+        df = servicios_generales.merge(tamaño_habitacion[['url_estancia','room_size_m2']])
+        df.to_csv(BASE / "data" / "processed" / "servicios_binarios" / f"servicios_generales_binarios_tamaño_habitacion_{provincia}.csv", index=False, sep="|")
 
 if __name__ == "__main__":
     main()
