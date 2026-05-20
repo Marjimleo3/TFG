@@ -65,7 +65,7 @@ def extraer_servicios_influyentes(ficha:pd.DataFrame) -> pd.DataFrame:
         servicios = [serv.lower().strip('"') for serv in ast.literal_eval(fila['servicios'])]   #La lista de servicios es un 'str' porque esta entre "", la función ast.literal_eval convierte un string que parece una estructura de Python (lista) en la estructura real.
         servicios_habitacion = [serv.lower().strip('"') for serv in ast.literal_eval(fila['servicios_habitacion'])]
         
-        parking = parking_gratis = gimnasio = restaurante = piscina = piscina_interior = aire = calefaccion = vistas = terraza = baño_privado = False
+        parking = parking_gratis = gimnasio = restaurante = piscina = piscina_interior = piscina_infinita = aire = calefaccion = vistas = terraza = baño_privado = False
         #Incluir tamaño_habitacion cuando esté listo
 
         for servicio,servicio_habitacion in zip(servicios,servicios_habitacion):
@@ -73,7 +73,7 @@ def extraer_servicios_influyentes(ficha:pd.DataFrame) -> pd.DataFrame:
                 parking = servicio
             if 'parking gratis' in servicio or 'free parking' in servicio:
                 parking_gratis = servicio
-            if 'gimnasio' in servicio or 'gym' in servicio:
+            if ('gimnasio' in servicio or 'gym' in servicio) and 'taquillas en el gimnasio / spa' not in servicio:
                 gimnasio = servicio
             if 'restaurante' in servicio or 'restaurant' in servicio:
                 restaurante = servicio
@@ -81,6 +81,8 @@ def extraer_servicios_influyentes(ficha:pd.DataFrame) -> pd.DataFrame:
                 piscina = servicio
             if 'piscina interior' in servicio or 'cubierta' in servicio:
                 piscina_interior = servicio
+            if 'piscina infinita' in servicio or 'nfinity pool' in servicio:
+                piscina_infinita = servicio
 
             if ('aire' in servicio_habitacion or 'air' in servicio_habitacion) and ('aire libre' not in servicio_habitacion and 'stairs' not in servicio_habitacion and 'hair' not in servicio_habitacion and 'chair' not in servicio_habitacion and 'purifier' not in servicio_habitacion):
                 aire = servicio_habitacion
@@ -103,26 +105,14 @@ def extraer_servicios_influyentes(ficha:pd.DataFrame) -> pd.DataFrame:
             'Restaurante': restaurante != False,             
             'Piscina': piscina != False,
             'Piscina_interior': piscina_interior != False,
+            'Piscina_infinita': piscina_infinita != False,
             'Aire': aire != False,
             'Calefaccion': calefaccion != False,
             'Vistas': vistas != False,
             'Terraza': terraza != False,
             'Baño_privado': baño_privado != False,
             # 'Tamaño_habitacion' : tamaño_habitacion != False,
-            'url_estancia' : fila['url_estancia'], 
-
-            'Parking_texto': parking,
-            'Parking_gratis_texto': parking_gratis,
-            'Gimnasio_texto': gimnasio,
-            'Restaurante_texto': restaurante,
-            'Piscina_texto': piscina,
-            'Piscina_interior_texto': piscina_interior,
-            'Aire_texto': aire, 
-            'Calefaccion_texto': calefaccion, 
-            'Vistas_texto': vistas, 
-            'Terraza_texto': terraza, 
-            'Baño_privado_texto': baño_privado
-            # 'Tamaño_habitacion_texto' : tamaño_habitacion 
+            'url_estancia' : fila['url_estancia']
             })
 
     return pd.DataFrame(lista)
@@ -157,30 +147,45 @@ def limpiar_room_size(room_size:pd.DataFrame) -> pd.DataFrame:
 
 def añadir_columnas_fechas(db_semifinal:pd.DataFrame) -> pd.DataFrame:
     
-    for _,fila in db_semifinal:
+    mapa_fechas = {
+        'Sevilla':  '2026-05-13',
+        'Cádiz':    '2026-05-14',
+        'Huelva':   '2026-05-14',
+        'Jaén':     '2026-05-14',
+        'Granada':  '2026-05-15',
+        'Almería':  '2026-05-15',
+        'Córdoba':  '2026-05-15',
+        'Málaga':   '2026-05-16'
+        }
 
-        if fila['lugar'] == 'Sevilla':
-            fila['fecha_extraccion'] = '2026-05-13'
-        elif fila['lugar'] in ['Cádiz','Huelva','Jaén']:
-            fila['fecha_extraccion'] = '2026-05-14'
-        elif fila['lugar'] in ['Granada','Almería','Córdoba']:
-            fila['fecha_extraccion'] = '2026-05-15'
-        elif fila['lugar'] == 'Málaga':
-            fila['fecha_extraccion'] = '2026-05-16'
-        else:
-            fila['fecha_extraccion'] = 'ERROR'
+    db_semifinal['fecha_extraccion'] = db_semifinal['lugar'].map(mapa_fechas)
 
-    db_semifinal['fecha_extraccion'] = db_semifinal['fecha_extraccion'].astype('datetime')
-    db_semifinal['fecha_disponible'] = db_semifinal['fecha_disponible'].astype('datetime')
-    db_semifinal['dias_faltantes'] = db_semifinal['fecha_extraccion'] - db_semifinal['fecha_disponible']
+    db_semifinal['fecha_extraccion'] = pd.to_datetime(db_semifinal['fecha_extraccion'])
+    db_semifinal['fecha_disponible'] = pd.to_datetime(db_semifinal['fecha_disponible'])
+    db_semifinal['dias_restantes'] = db_semifinal['fecha_disponible'] - db_semifinal['fecha_extraccion']
+    db_semifinal['dias_restantes'] = db_semifinal['dias_restantes'].dt.days
 
     return db_semifinal
 
 
+def reordenar_df(db_semifinal:pd.DataFrame) -> pd.DataFrame:
+    col = db_semifinal.pop('fecha_extraccion')      #Extraemos columna 'fecha_extraccion'
+    db_semifinal.insert(23, 'fecha_extraccion', col)   #Inserta la columna en la posición trasantepenúltima (4º por el final)
+    col1 = db_semifinal.pop('dias_restantes')      #Extraemos columna 'dias_restantes'
+    db_semifinal.insert(25, 'dias_restantes', col1)   #Inserta la columna en la posición penúltima (3º por el final)
+
+    return db_semifinal
+
 # def añadir_distancia_centro
 
-# def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:          --> poner bien todos los tipos 
+def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
+    db_final['estrellas'] = db_final['estrellas'].fillna(0)
+    db_final['valoracion_clientes'] = db_final['valoracion_clientes'].str.replace(',','.')
+    db_final['fecha_disponible'] = pd.to_datetime(db_final['fecha_disponible'])
+    db_final = db_final.astype({'lugar':'category', 'codigo_postal':'category', 'tipo':'category', 'valoracion_clientes':'float32','n_valoraciones':'int32','precio':'int32'})
+    # db_final['estrellas'].category()
 
+    return db_final
 
 
 
@@ -206,13 +211,16 @@ def main():
         servicios_generales.to_csv(BASE / "data" / "processed" / "servicios_binarios" / f"servicios_generales_binarios_{provincia}.csv", index=False, sep="|")
 
         precios_disponibles = extraer_fecha_precios_disponibles(raw)
-        precios_disponibles.to_csv(BASE / "data" / "processed" / "servicios_binarios" / f"precios_disponibles_{provincia}.csv", index=False, sep="|")
+        precios_disponibles.to_csv(BASE / "data" / "processed" / "precios" / f"precios_disponibles_{provincia}.csv", index=False, sep="|")
 
-        raw_limpio = raw[['lugar','titulo','codigo_postal','latitud','longitud','tipo','estrellas','valoracion_clientes','n_valoraciones','url_estancia']]
+        raw_limpio = raw[['lugar','titulo','codigo_postal','latitud','longitud','tipo','estrellas','valoracion_clientes','n_valoraciones','url_estancia']]  #Extraemos filas necesarias
         df_1 = raw_limpio.merge(servicios_generales)
         df_2 = df_1.merge(tamaño_habitacion[['url_estancia','room_size_m2']])
         df_3 = df_2.merge(precios_disponibles)
-        df_3.to_csv(BASE / "data" / "processed" / "final" / f"db_final_{provincia}.csv", index=False, sep="|")    #Cambiar a parquet
+        df_4 = añadir_columnas_fechas(df_3)
+        df_5 = reordenar_df(df_4)
+        df_6 = limpiar_db_final(df_5)
+        df_6.to_csv(BASE / "data" / "processed" / "final" / f"db_final_{provincia}.csv", index=False)    #Cambiar a parquet
 
 
 if __name__ == "__main__":
