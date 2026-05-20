@@ -92,8 +92,8 @@ def extraer_servicios_influyentes(ficha:pd.DataFrame) -> pd.DataFrame:
                 terraza = servicio_habitacion
             if ('baño' in servicio_habitacion or 'bath' in servicio_habitacion) and ('shared bathroom' not in servicio_habitacion and 'bath-robe' not in servicio_habitacion):
                 baño_privado = servicio_habitacion
-            if ('m²' in servicio_habitacion):
-                tamaño_habitacion = servicio_habitacion
+            # if ('m²' in servicio_habitacion):
+            #     tamaño_habitacion = servicio_habitacion
 
 
         lista.append({            
@@ -130,10 +130,59 @@ def extraer_servicios_influyentes(ficha:pd.DataFrame) -> pd.DataFrame:
 
 def extraer_fecha_precios_disponibles(ficha:pd.DataFrame) -> pd.DataFrame:
     
+    lista_precios = []
     for _, fila in ficha.iterrows():
-        fila['calendario']
+        calendario_limpio = json.loads(fila['calendario'])    #Para que pase bien el json de calendario a python, usamos json.loads
+
+        # print(type(calendario_limpio))
+        # print(calendario_limpio)
+
+        for registro in calendario_limpio:
+            if registro['disponible'] == True:
+                lista_precios.append({
+                    'fecha_disponible' : registro['fecha'],
+                    'precio' : registro['precio'],
+                    'url_estancia' : fila['url_estancia']
+                })
         
-        # fila*len(x)
+    return pd.DataFrame(lista_precios)
+
+
+def limpiar_room_size(room_size:pd.DataFrame) -> pd.DataFrame:
+    room_size['room_size_m2'] = room_size['room_size_m2'].fillna(0)   #Rellenamos con 0 valores vacíos
+    room_size = room_size.astype({'room_size_m2' : 'int16'})     #Cambiamos tipo a entero
+
+    return room_size
+
+
+def añadir_columnas_fechas(db_semifinal:pd.DataFrame) -> pd.DataFrame:
+    
+    for _,fila in db_semifinal:
+
+        if fila['lugar'] == 'Sevilla':
+            fila['fecha_extraccion'] = '2026-05-13'
+        elif fila['lugar'] in ['Cádiz','Huelva','Jaén']:
+            fila['fecha_extraccion'] = '2026-05-14'
+        elif fila['lugar'] in ['Granada','Almería','Córdoba']:
+            fila['fecha_extraccion'] = '2026-05-15'
+        elif fila['lugar'] == 'Málaga':
+            fila['fecha_extraccion'] = '2026-05-16'
+        else:
+            fila['fecha_extraccion'] = 'ERROR'
+
+    db_semifinal['fecha_extraccion'] = db_semifinal['fecha_extraccion'].astype('datetime')
+    db_semifinal['fecha_disponible'] = db_semifinal['fecha_disponible'].astype('datetime')
+    db_semifinal['dias_faltantes'] = db_semifinal['fecha_extraccion'] - db_semifinal['fecha_disponible']
+
+    return db_semifinal
+
+
+# def añadir_distancia_centro
+
+# def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:          --> poner bien todos los tipos 
+
+
+
 
 
 # =============================================================================
@@ -146,20 +195,24 @@ def main():
     BASE = conseguir_ruta_general_TFG()
     provincias = pd.read_csv( BASE / "data" / "raw" / "inputs" / "urls_busqueda_booking_provincias.csv", sep="|" )
     tamaño_habitacion = pd.read_csv( BASE / "data" / "raw" / "fichas" / "room_sizes.csv", sep="|")
-    tamaño_habitacion['room_size_m2'] = tamaño_habitacion['room_size_m2'].fillna(0)   #Rellenamos con 0 valores vacíos
-    tamaño_habitacion = tamaño_habitacion.astype({'room_size_m2' : 'int16'})     #Cambiamos tipo a entero
+    
+    tamaño_habitacion = limpiar_room_size(tamaño_habitacion)
 
-    for provincia in provincias.iloc[0:2,0]:
-        raw = pd.read_csv( BASE / "data" / "raw" / "fichas" / f"resultados_booking_{provincia}.csv", sep="|")
-        raw = raw.drop(columns=['fecha_entrada','fecha_salida','n_habitaciones','n_adultos','n_menores','hotel_id','direccion','google_maps','nombre_booking','error','ciudad','pais'])
+    for provincia in provincias.iloc[0:1,0]:
+        raw = pd.read_csv( BASE / "data" / "raw" / "fichas" / f"resultados_booking_{provincia}.csv", sep="|")  
 
         servicios_generales = extraer_servicios_influyentes(raw)
         print(f'Este es el número de servicios no encontrados en {provincia}:\n{(extraer_servicios_influyentes(raw)==False).sum()}')
         servicios_generales.to_csv(BASE / "data" / "processed" / "servicios_binarios" / f"servicios_generales_binarios_{provincia}.csv", index=False, sep="|")
 
-        df_1 = raw.merge(servicios_generales)
+        precios_disponibles = extraer_fecha_precios_disponibles(raw)
+        precios_disponibles.to_csv(BASE / "data" / "processed" / "servicios_binarios" / f"precios_disponibles_{provincia}.csv", index=False, sep="|")
+
+        raw_limpio = raw[['lugar','titulo','codigo_postal','latitud','longitud','tipo','estrellas','valoracion_clientes','n_valoraciones','url_estancia']]
+        df_1 = raw_limpio.merge(servicios_generales)
         df_2 = df_1.merge(tamaño_habitacion[['url_estancia','room_size_m2']])
-        df_2.to_csv(BASE / "data" / "processed" / "servicios_binarios" / f"db_final_{provincia}.csv", index=False, sep="|")
+        df_3 = df_2.merge(precios_disponibles)
+        df_3.to_csv(BASE / "data" / "processed" / "final" / f"db_final_{provincia}.csv", index=False, sep="|")    #Cambiar a parquet
 
 
 if __name__ == "__main__":
