@@ -21,8 +21,10 @@ Uso:
 #Librerías estándar (vienen incluidas con Python):
 import ast
 import json
+import math
 
 #Librerías de terceros (es necesario instalarlas):
+import numpy as np
 import pandas as pd
 
 #Módulos propios del proyecto
@@ -166,26 +168,77 @@ def añadir_columnas_fechas(db_semifinal:pd.DataFrame) -> pd.DataFrame:
 
 
 def reordenar_df(db_semifinal:pd.DataFrame) -> pd.DataFrame:
-    col = db_semifinal.pop('fecha_extraccion')      #Extraemos columna 'fecha_extraccion'
-    db_semifinal.insert(23, 'fecha_extraccion', col)   #Inserta la columna en la posición trasantepenúltima (4º por el final)
-    col1 = db_semifinal.pop('dias_restantes')      #Extraemos columna 'dias_restantes'
-    db_semifinal.insert(25, 'dias_restantes', col1)   #Inserta la columna en la posición penúltima (3º por el final)
+    col = db_semifinal.pop('fecha_extraccion')
+    db_semifinal.insert(24, 'fecha_extraccion', col)
+    col1 = db_semifinal.pop('dias_restantes')
+    db_semifinal.insert(26, 'dias_restantes', col1)
 
     return db_semifinal
 
-# def añadir_distancia_centro():
+def extraer_localidad(raw: pd.DataFrame) -> pd.Series:
+    """
+    Extrae el nombre de la localidad del campo 'direccion' (patrón '12345 Ciudad, España') con regex.
+    """
+    localidad = raw['direccion'].str.extract(r',\s*\d{5}\s+([^,]+),')[0]
+    return localidad.fillna(raw['lugar'])
+
+
+def _haversine_km_vec(lats: pd.Series, lons: pd.Series, lat2: float, lon2: float) -> pd.Series:
+    '''
+    Calcula la distancia vectorizada con numpy (rápida para 100k+ filas) 
+    '''
+    R = 6371.0
+    dlat = np.radians(lat2 - lats)
+    dlon = np.radians(lon2 - lons)
+    a = np.sin(dlat / 2) ** 2 + np.cos(np.radians(lats)) * math.cos(math.radians(lat2)) * np.sin(dlon / 2) ** 2
+    return (R * 2 * np.arcsin(np.sqrt(a))).round(3)
+
+
+def cargar_coords_centros(base) -> dict[str, tuple[float, float]]:
+    ruta = base / 'data' / 'raw' / 'inputs' / 'coordenadas_centros.csv'
+    if not ruta.exists():
+        raise FileNotFoundError(
+            f'No se encontró {ruta}. Ejecuta primero Cleaning/obtener_coordenadas_centros.py'
+        )
+    df = pd.read_csv(ruta)
+    return {row['localidad']: (row['lat_centro'], row['lon_centro']) for _, row in df.iterrows()}
+
+
+def añadir_distancia_centro(df: pd.DataFrame, coords_centros: dict) -> pd.DataFrame:
+    distancias  = pd.Series(np.nan, index=df.index, dtype='float32')
+    lat_centros = pd.Series(np.nan, index=df.index, dtype='float32')
+    lon_centros = pd.Series(np.nan, index=df.index, dtype='float32')
+
+    for loc, grupo in df.groupby('localidad', observed=True):
+        coords = coords_centros.get(loc)
+        if coords is not None:
+            lat_c, lon_c = coords
+            distancias.loc[grupo.index]  = _haversine_km_vec(
+                grupo['latitud'], grupo['longitud'], lat_c, lon_c
+            ).astype('float32')
+            lat_centros.loc[grupo.index] = np.float32(lat_c)
+            lon_centros.loc[grupo.index] = np.float32(lon_c)
+        else:
+            logger.warning(f'Sin coordenadas para "{loc}", distancia será NaN')
+
+    idx = df.columns.get_loc('longitud') + 1
+    df.insert(idx,     'distancia_centro_km', distancias)
+    df.insert(idx + 1, 'latitud_centro',   lat_centros)
+    df.insert(idx + 2, 'longitud_centro',  lon_centros)
+    return df
+
 
 def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
     db_final['estrellas'] = db_final['estrellas'].fillna(0)
     db_final['valoracion_clientes'] = db_final['valoracion_clientes'].str.replace(',','.')
     db_final['fecha_disponible'] = pd.to_datetime(db_final['fecha_disponible'])
-    db_final = db_final.astype({'lugar':'category', 'codigo_postal':'category', 'tipo':'category', 'valoracion_clientes':'float32','n_valoraciones':'Int32', 'room_size_m2':'Int16', 'dias_restantes':'int16', 'precio':'int32'})
+    db_final = db_final.astype({'lugar':'category', 'localidad':'category', 'codigo_postal':'category', 'tipo':'category', 'valoracion_clientes':'float32','n_valoraciones':'Int32', 'room_size_m2':'Int16', 'dias_restantes':'int16', 'precio':'int32'})
     db_final['estrellas'] = pd.Categorical(
                                 db_final['estrellas'].astype('int8'),
                                 categories=[0, 1, 2, 3, 4, 5])
+    db_final = db_final.rename(columns={'lugar': 'provincia'})   #Cambiamos el nombre de lugar a provincia
 
     return db_final
-
 
 
 
@@ -194,16 +247,16 @@ def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
 # =============================================================================
 def main():
 
-    # limpieza_datos()
-
     BASE = conseguir_ruta_general_TFG()
     provincias = pd.read_csv( BASE / "data" / "raw" / "inputs" / "urls_busqueda_booking_provincias.csv", sep="|" )
     tamaño_habitacion = pd.read_csv( BASE / "data" / "raw" / "fichas" / "room_sizes.csv", sep="|")
-    
+
     tamaño_habitacion = limpiar_room_size(tamaño_habitacion)
+    coords_centros = cargar_coords_centros(BASE)
 
     for provincia in provincias.iloc[:,0]:
-        raw = pd.read_csv( BASE / "data" / "raw" / "fichas" / f"resultados_booking_{provincia}.csv", sep="|")  
+        raw = pd.read_csv( BASE / "data" / "raw" / "fichas" / f"resultados_booking_{provincia}.csv", sep="|")
+        raw['localidad'] = extraer_localidad(raw)
 
         servicios_generales = extraer_servicios_influyentes(raw)
         # print(f'Este es el número de servicios no encontrados en {provincia}:\n{(servicios_generales==False).sum()}')
@@ -212,17 +265,17 @@ def main():
         precios_disponibles = extraer_fecha_precios_disponibles(raw)
         precios_disponibles.to_csv(BASE / "data" / "processed" / "precios" / f"precios_disponibles_{provincia}.csv", index=False, sep="|")
 
-        raw_limpio = raw[['lugar','titulo','codigo_postal','latitud','longitud','tipo','estrellas','valoracion_clientes','n_valoraciones','url_estancia']]  #Extraemos filas necesarias
+        raw_limpio = raw[['lugar','localidad','titulo','codigo_postal','latitud','longitud','tipo','estrellas','valoracion_clientes','n_valoraciones','url_estancia']]  #Extraemos filas necesarias
         df_1 = raw_limpio.merge(servicios_generales)
         df_2 = df_1.merge(tamaño_habitacion[['url_estancia','room_size_m2']])
         df_3 = df_2.merge(precios_disponibles)
 
         df_4 = añadir_columnas_fechas(df_3)
         df_5 = reordenar_df(df_4)
+        df_5 = añadir_distancia_centro(df_5, coords_centros)
         df_6 = limpiar_db_final(df_5)
 
-
-        df_6.to_parquet(BASE / "data" / "processed" / "final" / f"db_final_{provincia}.parquet", index=False) 
+        df_6.to_parquet(BASE / "data" / "processed" / "final" / f"db_final_{provincia}.parquet", index=False)
         logger.info(f'✅ Datos de {provincia} guardados correctamente')
 
 
