@@ -20,15 +20,24 @@ import pandas as pd
 import requests
 
 from TFG_Chollos.utils import configurar_logger, conseguir_ruta_general_TFG
-from TFG_Chollos.Cleaning.preprocessing import extraer_localidad
 
 logger = configurar_logger(__name__)
 
 RUTA_SALIDA = 'data/raw/inputs/coordenadas_centros.csv'
 
 
+def extraer_localidad(raw: pd.DataFrame) -> pd.Series:
+    """
+    Extrae el nombre de la localidad del campo 'direccion' (patrón '12345 Ciudad, España') con regex.
+    """
+    localidad = raw['direccion'].str.extract(r',\s*\d{5}\s+([^,]+),')[0]
+    return localidad.fillna(raw['lugar'])
+
+
 def obtener_localidades_raw(base) -> dict[str, str]:
-    """Devuelve {localidad: provincia} para todas las localidades únicas en los raw."""
+    """ 
+    Recorre todos los CSV raw del disco, llama a extraer_localidad en cada uno y construye un diccionario {localidad: provincia} con las 943 localidades únicas de todas las provincias
+    """
     archivos = glob.glob(str(base / 'data' / 'raw' / 'fichas' / 'resultados_booking_*.csv'))
     localidades = {}
     for ruta in sorted(archivos):

@@ -43,22 +43,6 @@ logger = configurar_logger(__name__)
 # =============================================================================
 # FUNCIONES
 # =============================================================================
-# def limpieza_datos(): 
-    
-#     BASE = conseguir_ruta_general_TFG()
-#     provincias = pd.read_csv( BASE / "data" / "raw" / "inputs" / "urls_busqueda_booking_provincias.csv", sep="|" )
-#     print(provincias.head())
-#     for provincia in provincias.iloc[0:1,0]:
-#         raw = pd.read_csv( BASE / "data" / "raw" / "fichas" / f"resultados_booking_{provincia}.csv", sep="|")
-#         print(raw.head())
-#         print(raw['servicios_habitacion'].head())
-#         for servicio,servicio_hab in zip(raw['servicios'],raw['servicios_habitacion']):
-#             if 'parking' in servicio.lower() or 'parking' in servicio_hab.lower():
-#                 parking = servicio
-#                 break
-#             else:
-#                 continue
-
 def extraer_servicios_influyentes(ficha:pd.DataFrame) -> pd.DataFrame:
 
     lista = []
@@ -120,6 +104,7 @@ def extraer_servicios_influyentes(ficha:pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(lista)
 
 
+
 def extraer_fecha_precios_disponibles(ficha:pd.DataFrame) -> pd.DataFrame:
     
     lista_precios = []
@@ -137,11 +122,13 @@ def extraer_fecha_precios_disponibles(ficha:pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(lista_precios)
 
 
+
 def limpiar_room_size(room_size:pd.DataFrame) -> pd.DataFrame:
     room_size['room_size_m2'] = room_size['room_size_m2'].fillna(0)   #Rellenamos con 0 valores vacíos
     room_size = room_size.astype({'room_size_m2' : 'int16'})     #Cambiamos tipo a entero
 
     return room_size
+
 
 
 def añadir_columnas_fechas(db_semifinal:pd.DataFrame) -> pd.DataFrame:
@@ -167,6 +154,7 @@ def añadir_columnas_fechas(db_semifinal:pd.DataFrame) -> pd.DataFrame:
     return db_semifinal
 
 
+
 def reordenar_df(db_semifinal:pd.DataFrame) -> pd.DataFrame:
     col = db_semifinal.pop('fecha_extraccion')
     db_semifinal.insert(24, 'fecha_extraccion', col)
@@ -175,6 +163,8 @@ def reordenar_df(db_semifinal:pd.DataFrame) -> pd.DataFrame:
 
     return db_semifinal
 
+
+
 def extraer_localidad(raw: pd.DataFrame) -> pd.Series:
     """
     Extrae el nombre de la localidad del campo 'direccion' (patrón '12345 Ciudad, España') con regex.
@@ -182,16 +172,6 @@ def extraer_localidad(raw: pd.DataFrame) -> pd.Series:
     localidad = raw['direccion'].str.extract(r',\s*\d{5}\s+([^,]+),')[0]
     return localidad.fillna(raw['lugar'])
 
-
-def _haversine_km_vec(lats: pd.Series, lons: pd.Series, lat2: float, lon2: float) -> pd.Series:
-    '''
-    Calcula la distancia vectorizada con numpy (rápida para 100k+ filas) 
-    '''
-    R = 6371.0
-    dlat = np.radians(lat2 - lats)
-    dlon = np.radians(lon2 - lons)
-    a = np.sin(dlat / 2) ** 2 + np.cos(np.radians(lats)) * math.cos(math.radians(lat2)) * np.sin(dlon / 2) ** 2
-    return (R * 2 * np.arcsin(np.sqrt(a))).round(3)
 
 
 def cargar_coords_centros(base) -> dict[str, tuple[float, float]]:
@@ -204,6 +184,19 @@ def cargar_coords_centros(base) -> dict[str, tuple[float, float]]:
     return {row['localidad']: (row['lat_centro'], row['lon_centro']) for _, row in df.iterrows()}
 
 
+
+def haversine_km_vec(lats: pd.Series, lons: pd.Series, lat2: float, lon2: float) -> pd.Series:
+    '''
+    Calcula la distancia vectorizada con numpy (rápida para 100k+ filas) a través de las latitudes y las longitudes
+    '''
+    R = 6371.0
+    dlat = np.radians(lat2 - lats)
+    dlon = np.radians(lon2 - lons)
+    a = np.sin(dlat / 2) ** 2 + np.cos(np.radians(lats)) * math.cos(math.radians(lat2)) * np.sin(dlon / 2) ** 2
+    return (R * 2 * np.arcsin(np.sqrt(a))).round(3)
+
+
+
 def añadir_distancia_centro(df: pd.DataFrame, coords_centros: dict) -> pd.DataFrame:
     distancias  = pd.Series(np.nan, index=df.index, dtype='float32')
     lat_centros = pd.Series(np.nan, index=df.index, dtype='float32')
@@ -213,7 +206,7 @@ def añadir_distancia_centro(df: pd.DataFrame, coords_centros: dict) -> pd.DataF
         coords = coords_centros.get(loc)
         if coords is not None:
             lat_c, lon_c = coords
-            distancias.loc[grupo.index]  = _haversine_km_vec(
+            distancias.loc[grupo.index]  = haversine_km_vec(
                 grupo['latitud'], grupo['longitud'], lat_c, lon_c
             ).astype('float32')
             lat_centros.loc[grupo.index] = np.float32(lat_c)
@@ -226,6 +219,7 @@ def añadir_distancia_centro(df: pd.DataFrame, coords_centros: dict) -> pd.DataF
     df.insert(idx + 1, 'latitud_centro',   lat_centros)
     df.insert(idx + 2, 'longitud_centro',  lon_centros)
     return df
+
 
 
 def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
