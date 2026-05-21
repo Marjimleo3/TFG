@@ -15,3 +15,4 @@ wheels/
 # Datos grandes (>100 MB)
 TFG_Chollos/data/raw/fichas/resultados_booking_Cádiz.csv
 TFG_Chollos/data/raw/fichas/resultados_booking_Málaga.csv
+TFG_Chollos/data/processed/precios/precios_disponibles_Málaga.csv
