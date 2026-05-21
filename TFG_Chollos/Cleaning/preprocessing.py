@@ -33,7 +33,7 @@ from TFG_Chollos.utils import configurar_logger, conseguir_ruta_general_TFG
 # =============================================================================
 # CONSTANTES
 # =============================================================================
-
+BASE = conseguir_ruta_general_TFG()
 
 # =============================================================================
 # CONFIGURACIÓN DEL LOGGER
@@ -241,7 +241,6 @@ def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
 # =============================================================================
 def main():
 
-    BASE = conseguir_ruta_general_TFG()
     provincias = pd.read_csv( BASE / "data" / "raw" / "inputs" / "urls_busqueda_booking_provincias.csv", sep="|" )
     tamaño_habitacion = pd.read_csv( BASE / "data" / "raw" / "fichas" / "room_sizes.csv", sep="|")
 
