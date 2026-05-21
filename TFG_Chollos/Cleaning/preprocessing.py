@@ -41,21 +41,21 @@ logger = configurar_logger(__name__)
 # =============================================================================
 # FUNCIONES
 # =============================================================================
-def limpieza_datos(): 
+# def limpieza_datos(): 
     
-    BASE = conseguir_ruta_general_TFG()
-    provincias = pd.read_csv( BASE / "data" / "raw" / "inputs" / "urls_busqueda_booking_provincias.csv", sep="|" )
-    print(provincias.head())
-    for provincia in provincias.iloc[0:1,0]:
-        raw = pd.read_csv( BASE / "data" / "raw" / "fichas" / f"resultados_booking_{provincia}.csv", sep="|")
-        print(raw.head())
-        print(raw['servicios_habitacion'].head())
-        for servicio,servicio_hab in zip(raw['servicios'],raw['servicios_habitacion']):
-            if 'parking' in servicio.lower() or 'parking' in servicio_hab.lower():
-                parking = servicio
-                break
-            else:
-                continue
+#     BASE = conseguir_ruta_general_TFG()
+#     provincias = pd.read_csv( BASE / "data" / "raw" / "inputs" / "urls_busqueda_booking_provincias.csv", sep="|" )
+#     print(provincias.head())
+#     for provincia in provincias.iloc[0:1,0]:
+#         raw = pd.read_csv( BASE / "data" / "raw" / "fichas" / f"resultados_booking_{provincia}.csv", sep="|")
+#         print(raw.head())
+#         print(raw['servicios_habitacion'].head())
+#         for servicio,servicio_hab in zip(raw['servicios'],raw['servicios_habitacion']):
+#             if 'parking' in servicio.lower() or 'parking' in servicio_hab.lower():
+#                 parking = servicio
+#                 break
+#             else:
+#                 continue
 
 def extraer_servicios_influyentes(ficha:pd.DataFrame) -> pd.DataFrame:
 
@@ -124,9 +124,6 @@ def extraer_fecha_precios_disponibles(ficha:pd.DataFrame) -> pd.DataFrame:
     for _, fila in ficha.iterrows():
         calendario_limpio = json.loads(fila['calendario'])    #Para que pase bien el json de calendario a python, usamos json.loads
 
-        # print(type(calendario_limpio))
-        # print(calendario_limpio)
-
         for registro in calendario_limpio:
             if registro['disponible'] == True:
                 lista_precios.append({
@@ -176,14 +173,16 @@ def reordenar_df(db_semifinal:pd.DataFrame) -> pd.DataFrame:
 
     return db_semifinal
 
-# def añadir_distancia_centro
+# def añadir_distancia_centro():
 
 def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
     db_final['estrellas'] = db_final['estrellas'].fillna(0)
     db_final['valoracion_clientes'] = db_final['valoracion_clientes'].str.replace(',','.')
     db_final['fecha_disponible'] = pd.to_datetime(db_final['fecha_disponible'])
-    db_final = db_final.astype({'lugar':'category', 'codigo_postal':'category', 'tipo':'category', 'valoracion_clientes':'float32','n_valoraciones':'int32','precio':'int32'})
-    # db_final['estrellas'].category()
+    db_final = db_final.astype({'lugar':'category', 'codigo_postal':'category', 'tipo':'category', 'valoracion_clientes':'float32','n_valoraciones':'Int32', 'room_size_m2':'Int16', 'dias_restantes':'int16', 'precio':'int32'})
+    db_final['estrellas'] = pd.Categorical(
+                                db_final['estrellas'].astype('int8'),
+                                categories=[0, 1, 2, 3, 4, 5])
 
     return db_final
 
@@ -203,11 +202,11 @@ def main():
     
     tamaño_habitacion = limpiar_room_size(tamaño_habitacion)
 
-    for provincia in provincias.iloc[0:1,0]:
+    for provincia in provincias.iloc[:,0]:
         raw = pd.read_csv( BASE / "data" / "raw" / "fichas" / f"resultados_booking_{provincia}.csv", sep="|")  
 
         servicios_generales = extraer_servicios_influyentes(raw)
-        print(f'Este es el número de servicios no encontrados en {provincia}:\n{(extraer_servicios_influyentes(raw)==False).sum()}')
+        # print(f'Este es el número de servicios no encontrados en {provincia}:\n{(servicios_generales==False).sum()}')
         servicios_generales.to_csv(BASE / "data" / "processed" / "servicios_binarios" / f"servicios_generales_binarios_{provincia}.csv", index=False, sep="|")
 
         precios_disponibles = extraer_fecha_precios_disponibles(raw)
@@ -217,10 +216,14 @@ def main():
         df_1 = raw_limpio.merge(servicios_generales)
         df_2 = df_1.merge(tamaño_habitacion[['url_estancia','room_size_m2']])
         df_3 = df_2.merge(precios_disponibles)
+
         df_4 = añadir_columnas_fechas(df_3)
         df_5 = reordenar_df(df_4)
         df_6 = limpiar_db_final(df_5)
-        df_6.to_csv(BASE / "data" / "processed" / "final" / f"db_final_{provincia}.csv", index=False)    #Cambiar a parquet
+
+
+        df_6.to_parquet(BASE / "data" / "processed" / "final" / f"db_final_{provincia}.parquet", index=False) 
+        logger.info(f'✅ Datos de {provincia} guardados correctamente')
 
 
 if __name__ == "__main__":
