@@ -74,9 +74,9 @@ def train_test_validation_particion(features:pd.DataFrame, target:pd.Series) -> 
     return X_train, X_val, X_test, y_train, y_val, y_test      #Resultado final: 70% train / 15% validation / 15% test:
 
 
-def regresion_lineal(features:pd.DataFrame, target:pd.Series):
+def regresion_lineal(features_train:pd.DataFrame, target_train:pd.Series):
     modelo = linear_model.LinearRegression()   #Creamos el modelo
-    modelo.fit(features, target)   #Le pasamos al modelo nuestros datos (Entrenamos con nuestros datos)
+    modelo.fit(features_train, target_train)   #Le pasamos al modelo nuestros datos (Entrenamos con nuestros datos)
     return modelo
 
 
@@ -90,6 +90,8 @@ def main():
     db_Sevilla = pd.read_parquet(BASE / 'data' / 'processed' / 'final' / 'db_final_Sevilla.parquet')
     X, y = X_y_partition(db_Sevilla)
     X_train, X_val, X_test, y_train, y_val, y_test = train_test_validation_particion(X, y)
+    regresion = regresion_lineal(X_train, y_train)
+    regresion.predict({''})
 
 if __name__ == '__main__':
     main()

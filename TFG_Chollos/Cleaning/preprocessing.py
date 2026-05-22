@@ -126,6 +126,7 @@ def extraer_fecha_precios_disponibles(ficha:pd.DataFrame) -> pd.DataFrame:
 def limpiar_room_size(room_size:pd.DataFrame) -> pd.DataFrame:
     room_size['room_size_m2'] = room_size['room_size_m2'].fillna(0)   #Rellenamos con 0 valores vacíos
     room_size = room_size.astype({'room_size_m2' : 'int16'})     #Cambiamos tipo a entero
+    room_size = room_size.drop_duplicates(subset='url_estancia')
 
     return room_size
 
@@ -223,14 +224,42 @@ def añadir_distancia_centro(df: pd.DataFrame, coords_centros: dict) -> pd.DataF
 
 
 def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
-    db_final['estrellas'] = db_final['estrellas'].fillna(0)
+    
+    #Transformaciones necesarias para el tipado:
     db_final['valoracion_clientes'] = db_final['valoracion_clientes'].str.replace(',','.')
-    db_final['fecha_disponible'] = pd.to_datetime(db_final['fecha_disponible'])
-    db_final = db_final.astype({'lugar':'category', 'localidad':'category', 'codigo_postal':'category', 'tipo':'category', 'valoracion_clientes':'float32','n_valoraciones':'Int32', 'room_size_m2':'Int16', 'dias_restantes':'int16', 'precio':'int32'})
-    db_final['estrellas'] = pd.Categorical(
-                                db_final['estrellas'].astype('int8'),
-                                categories=[0, 1, 2, 3, 4, 5])
+    db_final['codigo_postal'] = db_final['codigo_postal'].astype(str).str.strip()   #Elimina los espacios en blanco de los extremos. En pandas, para aplicar métodos de texto a una Serie tienes que usar el accesor .str primero
+
+    #Renombramiento de columnas
     db_final = db_final.rename(columns={'lugar': 'provincia'})   #Cambiamos el nombre de lugar a provincia
+    db_final = db_final.rename(columns={'room_size_m2':'tamaño_habitacion'})
+
+    #Procesamiento de valores nulos:
+    ###Eliminación registros:
+    cols_obligatorias = ['latitud', 'longitud', 'latitud_centro', 'longitud_centro', 'distancia_centro_km']
+    db_final = db_final.dropna(subset=cols_obligatorias)
+
+    ###Reemplazo de valores:
+    nuevos_valores = {
+        'codigo_postal':'Desconocido',      #Nan: valor desconocido
+        'tipo':'Apartamento/Casa/Estudio',      #Nan: lo metemos en el saco grande 'Apartamento/Casa/Estudio
+        'estrellas':0,      #Nan: no tiene estrellas
+        'n_valoraciones':0,     #Nan: no tiene valoraciones
+        'valoracion_clientes':db_final['valoracion_clientes'].astype(float).mean()}     #Nan: no tiene nota (sería injusto rellenar con 0, así que rellenamos con la media total de la provincia)
+    db_final = db_final.fillna(nuevos_valores)
+
+    #Tipado de datos:
+    db_final['fecha_disponible'] = pd.to_datetime(db_final['fecha_disponible'])
+    db_final = db_final.astype({
+        'provincia':'category', 
+        'localidad':'category', 
+        'codigo_postal':'category', 
+        'tipo':'category', 
+        'valoracion_clientes':'float32',
+        'n_valoraciones':'Int32', 
+        'tamaño_habitacion':'Int16', 
+        'dias_restantes':'int16', 
+        'precio':'int32'})
+    db_final['estrellas'] = pd.Categorical(db_final['estrellas'].astype('int8'), categories=[0, 1, 2, 3, 4, 5])    #Lo hacemos aparte porque en el fondo lo guardaba como float
 
     return db_final
 
