@@ -26,6 +26,7 @@ import math
 #Librerías de terceros (es necesario instalarlas):
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import LabelEncoder
 
 #Módulos propios del proyecto
 from TFG_Chollos.utils import configurar_logger, conseguir_ruta_general_TFG
@@ -227,7 +228,7 @@ def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
     
     #Transformaciones necesarias para el tipado:
     db_final['valoracion_clientes'] = db_final['valoracion_clientes'].str.replace(',','.')
-    db_final['codigo_postal'] = db_final['codigo_postal'].astype(str).str.strip()   #Elimina los espacios en blanco de los extremos. En pandas, para aplicar métodos de texto a una Serie tienes que usar el accesor .str primero
+    db_final['codigo_postal'] = db_final['codigo_postal'].astype(str).str.extract(r'(\d{5})')[0]  #Esto busca el primer grupo de 5 dígitos y descarta el resto. En pandas, para aplicar métodos de texto a una Serie tienes que usar el accesor .str primero
 
     #Renombramiento de columnas
     db_final = db_final.rename(columns={'lugar': 'provincia'})   #Cambiamos el nombre de lugar a provincia
@@ -240,11 +241,11 @@ def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
 
     ###Reemplazo de valores:
     nuevos_valores = {
-        'codigo_postal':'Desconocido',      #Nan: valor desconocido
+        'codigo_postal':-1,      #Nan: valor desconocido
         'tipo':'Apartamento/Casa/Estudio',      #Nan: lo metemos en el saco grande 'Apartamento/Casa/Estudio
         'estrellas':0,      #Nan: no tiene estrellas
         'n_valoraciones':0,     #Nan: no tiene valoraciones
-        'valoracion_clientes':db_final['valoracion_clientes'].astype(float).mean()}     #Nan: no tiene nota (sería injusto rellenar con 0, así que rellenamos con la media total de la provincia)
+        'valoracion_clientes':db_final['valoracion_clientes'].astype(float).mean()}     #Nan: no tiene nota (sería injusto rellenar con 0, así que rellenamos con la media total de la provincia. Y así evita sesgar el modelo que creemos hacia valoraciones extremas.
     db_final = db_final.fillna(nuevos_valores)
 
     #Tipado de datos:
@@ -252,17 +253,33 @@ def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
     db_final = db_final.astype({
         'provincia':'category', 
         'localidad':'category', 
-        'codigo_postal':'category', 
+        'codigo_postal':'int32', 
         'tipo':'category', 
+        'estrellas': 'int8',
         'valoracion_clientes':'float32',
         'n_valoraciones':'Int32', 
         'tamaño_habitacion':'Int16', 
         'dias_restantes':'int16', 
         'precio':'int32'})
-    db_final['estrellas'] = pd.Categorical(db_final['estrellas'].astype('int8'), categories=[0, 1, 2, 3, 4, 5])    #Lo hacemos aparte porque en el fondo lo guardaba como float
 
     return db_final
 
+
+def encoding(db_final:pd.DataFrame) -> pd.DataFrame:
+    '''
+    Para variables catergóricas:
+    One-Hot Encoding → crea columnas binarias (0/1) por cada categoría. Label Encoding → asigna un número entero a cada categoría. Ordinal Encoding → como label encoding pero respetando un orden lógico. Target Encoding → reemplaza la categoría por la media del target.
+    Para variables de fecha/hora: Extraer componentes numéricos: día, mes, hora, día de la semana, etc.
+    '''
+    db_final = db_final.drop(columns=['titulo', 'codigo_postal', 'url_estancia', 'fecha_extraccion'])
+    db_final = pd.get_dummies(db_final, columns=['provincia', 'tipo'], drop_first=True)
+    le = LabelEncoder()
+    db_final['localidad'] = le.fit_transform(db_final['localidad'])   #Introducimos los datos que queremos codificar 
+
+    db_final['mes_disponible'] = pd.to_datetime(db_final['fecha_disponible']).dt.month
+    db_final = db_final.drop(columns=['fecha_disponible'])
+
+    return db_final
 
 
 # =============================================================================
@@ -300,6 +317,9 @@ def main():
         df_6.to_parquet(BASE / "data" / "processed" / "final" / f"db_final_{provincia}.parquet", index=False)
         logger.info(f'✅ Datos de {provincia} guardados correctamente')
 
+        codificada = encoding(df_6)
+        codificada.to_parquet(BASE / "data" / "processed" / "modelizacion" / f"db_final_codificada_{provincia}.parquet", index=False)
+        logger.info(f'✅ Datos codificados de {provincia} guardados correctamente')
 
 if __name__ == "__main__":
     main()

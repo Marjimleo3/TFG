@@ -4,13 +4,15 @@ preprocessing.py
 Dado el volumen del dataset, se optó por una partición holdout 70/15/15. Sobre el conjunto de entrenamiento se aplicó validación cruzada K-Fold (K=5) mediante GridSearchCV para el ajuste de hiperparámetros de cada modelo de forma independiente. Posteriormente, el conjunto de validación se empleó para la comparación y selección del modelo final entre los candidatos ya optimizados. El conjunto de test permaneció intacto hasta la evaluación final, garantizando una estimación del rendimiento libre de sesgos.
 En resumen, hacemos una combinación entre partición train-validation-test y Cross-Validation con 5 folds.
 
+Dado que todos los algoritmos de aprendizaje automático operan sobre espacios vectoriales numéricos, las variables categóricas presentes en el dataset fueron codificadas mediante get_dummies y LabelEncoder
+
 Dependencias:
     - Python >= 3.10
     - pandas >= 3.0.1
 
 Requisitos:
     uv
-    uv add pandas, sklearn --active --link-mode=copy
+    uv add matplotlib, scikit-learn --active --link-mode=copy
 
 Uso:
     python preprocessing.py --input data_Booking/resultados/resultados_booking_{provincia}.csv  --output data_Booking/final/db_final_{provincia}.parquet
@@ -27,10 +29,9 @@ import math
 #Librerías de terceros (es necesario instalarlas):
 import numpy as np
 import pandas as pd
+import matplotlib as plt
 from sklearn.model_selection import train_test_split
 from sklearn import linear_model   #Biblioteca Machine Learning
-
-
 
 #Módulos propios del proyecto
 from TFG_Chollos.utils import configurar_logger, conseguir_ruta_general_TFG
@@ -47,13 +48,6 @@ logger = configurar_logger(__name__)
 # =============================================================================
 # FUNCIONES
 # =============================================================================
-def X_y_partition(db_final: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
-    
-    X = db_final.drop(columns=['precio'])
-    y = db_final['precio']
-
-    return X, y
-
 
 def train_test_validation_particion(features:pd.DataFrame, target:pd.Series) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.Series, pd.Series, pd.Series]:
 
@@ -88,10 +82,15 @@ def regresion_lineal(features_train:pd.DataFrame, target_train:pd.Series):
 def main():
 
     db_Sevilla = pd.read_parquet(BASE / 'data' / 'processed' / 'final' / 'db_final_Sevilla.parquet')
-    X, y = X_y_partition(db_Sevilla)
+    X = db_Sevilla.drop(columns=['precio'])
+    y = db_Sevilla['precio']
     X_train, X_val, X_test, y_train, y_val, y_test = train_test_validation_particion(X, y)
     regresion = regresion_lineal(X_train, y_train)
-    regresion.predict({''})
+    # regresion.predict({''})
+    plt.scatter(X['valoracion_clientes'],
+           X['precio'])
+    plt.plot(X['valoracion_clientes'],
+        regresion.predict(X))
 
 if __name__ == '__main__':
     main()
