@@ -33,6 +33,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn import linear_model   #Biblioteca Machine Learning
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+
 
 #Módulos propios del proyecto
 from TFG_Chollos.utils import configurar_logger, conseguir_ruta_general_TFG
@@ -70,13 +72,51 @@ def train_test_validation_particion(features:pd.DataFrame, target:pd.Series) -> 
     return X_train, X_val, X_test, y_train, y_val, y_test      #Resultado final: 70% train / 15% validation / 15% test:
 
 
-def regresion_lineal(features_train:pd.DataFrame, target_train:pd.Series):
+
+def crear_grafico_correlacion_lineal(db_codificada:pd.DataFrame):
+    matriz_correlacion = db_codificada.corr(numeric_only=True).round(2)
+    sns.heatmap(matriz_correlacion, annot=True, cmap="vlag", vmin=-1, vmax=1)
+    plt.xticks(rotation=45, ha='right')
+    plt.yticks([i + 0.5 for i in range(len(matriz_correlacion.index))], matriz_correlacion.index)   #Se añade esto para que los yticks estén en medio de los recuadros y aparezcan todas las variables 
+    plt.title('Matriz de correlación de variables')
+    plt.show()
+
+
+
+def crear_regresion_lineal(features_train:pd.DataFrame, target_train:pd.Series, variable_representar:pd.Series):
+    '''
+    Crea y entrena un modelo de regresión lineal Múltiple
+    '''
     modelo = linear_model.LinearRegression()   #Creamos el modelo
     modelo.fit(features_train, target_train)   #Le pasamos al modelo nuestros datos (Entrenamos con nuestros datos)
-    logger.info('✅ Creado y entrenado el modelo de regresión lineal corectamente')
+    logger.info('✅ Creado y entrenado el modelo de "Regresión Lineal Múltiple" correctamente')
+
+    sns.scatterplot(
+        x=features_train[variable_representar],
+        y=target_train)
+    sns.lineplot(
+        x=features_train[variable_representar],
+        y=modelo.predict(features_train))   #Dibujamos la recta de regresión junto a nuestros datos
+    
+    plt.title(f'Regresión Lineal: {variable_representar} vs {target_train.name}')
+    plt.show()
 
     return modelo
 
+
+
+def crear_arbol_decision(features_train:pd.DataFrame, target_train:pd.Series):
+    arbol = DecisionTreeClassifier()   #Creamos el modelo
+    arbol.fit(features_train, target_train)   #Entrenamos el modelo con nuestros datos
+    logger.info('✅ Creado y entrenado el modelo de "Árbol de Decisión" correctamente')
+
+    # plot_tree(
+    #     decision_tree = arbol,    #Representamos el árbol
+    #      filled=True,   #Añadimos colores a la clase predicha en cada nodo
+    #      class_names=['setosa', 'versicolor', 'virginica'],   #Añadimos etiquetas a las especies
+    #      features_names=iris_df.columns.to_list())   #Añadimos los nombres de las variables predictoras
+    
+    return arbol
 
 # def scatter_regresion():
 
@@ -85,17 +125,30 @@ def regresion_lineal(features_train:pd.DataFrame, target_train:pd.Series):
 # =============================================================================
 def main():
 
-    db_Sevilla = pd.read_parquet(BASE / 'data' / 'processed' / 'modelizacion' / 'db_final_codificada_Sevilla.parquet')
+    db_Sevilla = pd.read_parquet(BASE / 'data' / 'processed' / 'modelizacion' / 'db_final_codificada_Almería.parquet')
+
+    crear_grafico_correlacion_lineal(db_Sevilla)
+
     X = db_Sevilla.drop(columns=['precio'])
     y = db_Sevilla['precio']
+
     X_train, X_val, X_test, y_train, y_val, y_test = train_test_validation_particion(X, y)
-    regresion = regresion_lineal(X_train, y_train)
-    # regresion.predict({''})
-    sns.histplot(data=db_Sevilla, x='tamaño_habitacion')
-    print(len(db_Sevilla))
-    plt.show()
-    # plt.plot(X['valoracion_clientes'],
-    #     regresion.predict(X))
+    # regresion = crear_regresion_lineal(X_train, y_train, 'tamaño_habitacion')
+    # arbol = crear_arbol_decision(X_train, y_train)
+
+    # modelos = [
+    #     ("Regresión Logística", regresion),
+    #     ("Árbol de Decisión", arbol),
+    #     ("Bosque Aleatorio", bosque_aleatorio)
+    #     ]
+
+    # for nombre, modelo in modelos:
+    #     precisión = modelo.score(X_test, y_test)
+    #     print(f'{nombre}: {precisión:.4f}')   #:.4f --> formato con 4 decimales
+
+    # sns.histplot(data=db_Sevilla, x='precio')
+    # plt.show()
+
 
 if __name__ == '__main__':
     main()
