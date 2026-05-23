@@ -253,12 +253,14 @@ def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
     db_final = db_final.astype({
         'provincia':'category', 
         'localidad':'category', 
-        'codigo_postal':'int32', 
+        'codigo_postal':'int32',
+        'latitud_centro':'float64',
+        'longitud_centro':'float64',
         'tipo':'category', 
         'estrellas': 'int8',
         'valoracion_clientes':'float32',
-        'n_valoraciones':'Int32', 
-        'tamaño_habitacion':'Int16', 
+        'n_valoraciones':'int64', 
+        'tamaño_habitacion':'int16', 
         'dias_restantes':'int16', 
         'precio':'int32'})
 
