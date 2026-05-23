@@ -277,6 +277,7 @@ def encoding(db_final:pd.DataFrame) -> pd.DataFrame:
     db_final['localidad'] = le.fit_transform(db_final['localidad'])   #Introducimos los datos que queremos codificar 
 
     db_final['mes_disponible'] = pd.to_datetime(db_final['fecha_disponible']).dt.month
+    db_final['dia_disponible'] = pd.to_datetime(db_final['fecha_disponible']).dt.day
     db_final = db_final.drop(columns=['fecha_disponible'])
 
     return db_final
