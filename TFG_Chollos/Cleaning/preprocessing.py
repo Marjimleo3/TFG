@@ -125,10 +125,7 @@ def extraer_fecha_precios_disponibles(ficha:pd.DataFrame) -> pd.DataFrame:
 
 
 def limpiar_room_size(room_size:pd.DataFrame) -> pd.DataFrame:
-    room_size['room_size_m2'] = room_size['room_size_m2'].fillna(0)   #Rellenamos con 0 valores vacíos
-    room_size = room_size.astype({'room_size_m2' : 'int16'})     #Cambiamos tipo a entero
     room_size = room_size.drop_duplicates(subset='url_estancia')
-
     return room_size
 
 
@@ -172,7 +169,7 @@ def extraer_localidad(raw: pd.DataFrame) -> pd.Series:
     Extrae el nombre de la localidad del campo 'direccion' (patrón '12345 Ciudad, España') con regex.
     """
     localidad = raw['direccion'].str.extract(r',\s*\d{5}\s+([^,]+),')[0]
-    return localidad.fillna(raw['lugar'])
+    return localidad
 
 
 
@@ -236,16 +233,17 @@ def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
 
     #Procesamiento de valores nulos:
     ###Eliminación registros:
-    cols_obligatorias = ['latitud', 'longitud', 'latitud_centro', 'longitud_centro', 'distancia_centro_km']
+    cols_obligatorias = ['latitud', 'longitud', 'latitud_centro', 'longitud_centro', 'distancia_centro_km']   #Con latitud_centro, longitud_centro y dist_centro de pierde el 2.2% total (muy asumible), también se incluyen ahí los NaN de localidad, porque sin localidad no se puede calcular las variables que acabo de mencionar
     db_final = db_final.dropna(subset=cols_obligatorias)
 
     ###Reemplazo de valores:
     nuevos_valores = {
-        'codigo_postal':-1,      #Nan: valor desconocido
-        'tipo':'Apartamento/Casa/Estudio',      #Nan: lo metemos en el saco grande 'Apartamento/Casa/Estudio
-        'estrellas':0,      #Nan: no tiene estrellas
-        'n_valoraciones':0,     #Nan: no tiene valoraciones
-        'valoracion_clientes':db_final['valoracion_clientes'].astype(float).mean()}     #Nan: no tiene nota (sería injusto rellenar con 0, así que rellenamos con la media total de la provincia. Y así evita sesgar el modelo que creemos hacia valoraciones extremas.
+        'codigo_postal':-1,                                                             #Nan: valor desconocido
+        'tipo':'Apartamento/Casa/Estudio',                                              #Nan: lo metemos en el saco grande 'Apartamento/Casa/Estudio
+        'estrellas':0,                                                                  #Nan: no tiene estrellas
+        'n_valoraciones':0,                                                             #Nan: no tiene valoraciones
+        'valoracion_clientes':db_final['valoracion_clientes'].astype(float).mean(),    #Nan: rellenamos con la media para no sesgar el modelo hacia valoraciones extremas
+        'tamaño_habitacion':db_final['tamaño_habitacion'].median()}                    #Nan: la mediana es más robusta que la media ante suites con m² extremos
     db_final = db_final.fillna(nuevos_valores)
 
     #Tipado de datos:

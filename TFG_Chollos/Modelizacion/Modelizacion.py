@@ -91,7 +91,8 @@ def main():
     X_train, X_val, X_test, y_train, y_val, y_test = train_test_validation_particion(X, y)
     regresion = regresion_lineal(X_train, y_train)
     # regresion.predict({''})
-    sns.scatterplot(data=db_Sevilla.iloc[0:500], x='valoracion_clientes', y='precio')
+    sns.histplot(data=db_Sevilla, x='tamaño_habitacion')
+    print(len(db_Sevilla))
     plt.show()
     # plt.plot(X['valoracion_clientes'],
     #     regresion.predict(X))
