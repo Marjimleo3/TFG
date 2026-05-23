@@ -12,7 +12,7 @@ Dependencias:
 
 Requisitos:
     uv
-    uv add matplotlib, scikit-learn --active --link-mode=copy
+    uv add seaborn, scikit-learn --active --link-mode=copy
 
 Uso:
     python preprocessing.py --input data_Booking/resultados/resultados_booking_{provincia}.csv  --output data_Booking/final/db_final_{provincia}.parquet
@@ -29,12 +29,14 @@ import math
 #Librerías de terceros (es necesario instalarlas):
 import numpy as np
 import pandas as pd
-import matplotlib as plt
+import seaborn as sns
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn import linear_model   #Biblioteca Machine Learning
 
 #Módulos propios del proyecto
 from TFG_Chollos.utils import configurar_logger, conseguir_ruta_general_TFG
+
 # =============================================================================
 # CONSTANTES
 # =============================================================================
@@ -71,6 +73,8 @@ def train_test_validation_particion(features:pd.DataFrame, target:pd.Series) -> 
 def regresion_lineal(features_train:pd.DataFrame, target_train:pd.Series):
     modelo = linear_model.LinearRegression()   #Creamos el modelo
     modelo.fit(features_train, target_train)   #Le pasamos al modelo nuestros datos (Entrenamos con nuestros datos)
+    logger.info('✅ Creado y entrenado el modelo de regresión lineal corectamente')
+
     return modelo
 
 
@@ -81,16 +85,16 @@ def regresion_lineal(features_train:pd.DataFrame, target_train:pd.Series):
 # =============================================================================
 def main():
 
-    db_Sevilla = pd.read_parquet(BASE / 'data' / 'processed' / 'final' / 'db_final_Sevilla.parquet')
+    db_Sevilla = pd.read_parquet(BASE / 'data' / 'processed' / 'modelizacion' / 'db_final_codificada_Sevilla.parquet')
     X = db_Sevilla.drop(columns=['precio'])
     y = db_Sevilla['precio']
     X_train, X_val, X_test, y_train, y_val, y_test = train_test_validation_particion(X, y)
     regresion = regresion_lineal(X_train, y_train)
     # regresion.predict({''})
-    plt.scatter(X['valoracion_clientes'],
-           X['precio'])
-    plt.plot(X['valoracion_clientes'],
-        regresion.predict(X))
+    sns.scatterplot(data=db_Sevilla.iloc[0:500], x='valoracion_clientes', y='precio')
+    plt.show()
+    # plt.plot(X['valoracion_clientes'],
+    #     regresion.predict(X))
 
 if __name__ == '__main__':
     main()

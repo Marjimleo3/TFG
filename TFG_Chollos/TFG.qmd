@@ -62,6 +62,10 @@ El proyecto sigue una arquitectura modular: consiste en dividir un programa en p
 - Es testeable — se puede probar cada módulo por separado
 - Sigue estándares de la industria
 
+
+En mi proyecto usamos 2 tipos de librerías, los paquetes externos, y los paquetes propios (utils). El problema es que Python no sabe dónde está tu código a menos que alguien se lo diga. El bloque de [build-system] alojado en pyproject.toml es básicamente una nota que le dice a uv: "Este proyecto también tiene código propio. Usa setuptools para instalarlo." Y el uv pip install -e . es el comando que ejecuta eso: registra tu carpeta TFG_Chollos en el entorno para que Python la encuentre cuando haga from TFG_Chollos.utils import ....
+
+
 <br>
 
 ### 1. Estructura Base de datos
