@@ -265,7 +265,7 @@ def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
     return db_final
 
 
-def encoding(db_final:pd.DataFrame) -> pd.DataFrame:
+def encoding(db_final:pd.DataFrame, incluir_provincia:bool=True) -> pd.DataFrame:
     '''
     Para variables catergóricas:
     One-Hot Encoding → crea columnas binarias (0/1) por cada categoría. Label Encoding → asigna un número entero a cada categoría. Ordinal Encoding → como label encoding pero respetando un orden lógico. Target Encoding → reemplaza la categoría por la media del target.
@@ -280,8 +280,11 @@ def encoding(db_final:pd.DataFrame) -> pd.DataFrame:
 
     #Pasamos a variable numérica (asigna un número entero a cada categoría). Se optó por Label Encoding debido al elevado número de categorías en estas variables, lo que habría generado una dimensionalidad excesiva con One-Hot Encoding.
     le = LabelEncoder()
-    db_final['provincia'] = le.fit_transform(db_final['provincia'])
     db_final['localidad'] = le.fit_transform(db_final['localidad'])
+    if incluir_provincia:
+        db_final['provincia'] = le.fit_transform(db_final['provincia'])
+    else:
+        db_final = db_final.drop(columns=['provincia'])
 
     #Extraemos día de la semana y mes de 'fecha_disponible' y la eliminamos
     db_final['mes_disponible'] = db_final['fecha_disponible'].dt.month
@@ -307,6 +310,8 @@ def main():
     tamaño_habitacion = limpiar_room_size(tamaño_habitacion)
     coords_centros = cargar_coords_centros(BASE)
 
+    dfs_finales = []
+
     for provincia in provincias.iloc[:,0]:
         raw = pd.read_csv( BASE / "data" / "raw" / "fichas" / f"resultados_booking_{provincia}.csv", sep="|")
         raw['localidad'] = extraer_localidad(raw)
@@ -331,9 +336,18 @@ def main():
         df_6.to_parquet(BASE / "data" / "processed" / "final" / f"db_final_{provincia}.parquet", index=False)
         logger.info(f'✅ Datos de {provincia} guardados correctamente')
 
-        codificada = encoding(df_6)
+        codificada = encoding(df_6, incluir_provincia=False)
         codificada.to_parquet(BASE / "data" / "processed" / "modelizacion" / f"db_final_codificada_{provincia}.parquet", index=False)
         logger.info(f'✅ Datos codificados de {provincia} guardados correctamente')
+
+        dfs_finales.append(df_6)
+
+    db_completa = pd.concat(dfs_finales, ignore_index=True)
+    codificada_completa = encoding(db_completa)
+    codificada_completa.to_parquet(BASE / "data" / "processed" / "modelizacion" / "db_final_codificada.parquet", index=False)
+    logger.info('✅ Dataset completo codificado guardado correctamente')
+
+    
 
 if __name__ == "__main__":
     main()

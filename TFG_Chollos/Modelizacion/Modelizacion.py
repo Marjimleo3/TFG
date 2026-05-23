@@ -76,7 +76,7 @@ def train_test_validation_particion(features:pd.DataFrame, target:pd.Series) -> 
 def crear_grafico_correlacion_lineal(db_codificada:pd.DataFrame):
     matriz_correlacion = db_codificada.corr(numeric_only=True).round(2)
     sns.heatmap(matriz_correlacion, annot=True, cmap="vlag", vmin=-1, vmax=1)
-    plt.xticks(rotation=45, ha='right')
+    plt.xticks(rotation=45)
     plt.yticks([i + 0.5 for i in range(len(matriz_correlacion.index))], matriz_correlacion.index)   #Se añade esto para que los yticks estén en medio de los recuadros y aparezcan todas las variables 
     plt.title('Matriz de correlación de variables')
     plt.show()
@@ -125,7 +125,7 @@ def crear_arbol_decision(features_train:pd.DataFrame, target_train:pd.Series):
 # =============================================================================
 def main():
 
-    db_Sevilla = pd.read_parquet(BASE / 'data' / 'processed' / 'modelizacion' / 'db_final_codificada_Almería.parquet')
+    db_Sevilla = pd.read_parquet(BASE / 'data' / 'processed' / 'modelizacion' / 'db_final_codificada_Sevilla.parquet')
 
     crear_grafico_correlacion_lineal(db_Sevilla)
 
