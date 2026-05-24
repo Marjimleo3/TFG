@@ -4,7 +4,7 @@ preprocessing.py
 Dado el volumen del dataset, se optó por una partición holdout 70/15/15. Sobre el conjunto de entrenamiento se aplicó validación cruzada K-Fold (K=5) mediante GridSearchCV para el ajuste de hiperparámetros de cada modelo de forma independiente. Posteriormente, el conjunto de validación se empleó para la comparación y selección del modelo final entre los candidatos ya optimizados. El conjunto de test permaneció intacto hasta la evaluación final, garantizando una estimación del rendimiento libre de sesgos.
 En resumen, hacemos una combinación entre partición train-validation-test y Cross-Validation con 5 folds.
 
-Dado que todos los algoritmos de aprendizaje automático operan sobre espacios vectoriales numéricos, las variables categóricas presentes en el dataset fueron codificadas mediante get_dummies y LabelEncoder
+Dado que la mayoría de los algoritmos de aprendizaje automático operan sobre espacios vectoriales numéricos, las variables categóricas presentes en el dataset fueron codificadas mediante get_dummies y LabelEncoder.
 
 Dependencias:
     - Python >= 3.10
@@ -35,7 +35,8 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn import linear_model
-from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.tree import DecisionTreeRegressor, plot_tree
+from sklearn.ensemble import RandomForestRegressor
 
 
 #Módulos propios del proyecto
@@ -94,13 +95,13 @@ def centrar_datos(conjunto_entrenamiento:pd.DataFrame, conjunto_validacion:pd.Da
     y_test = target_test - media_y_train        #Porque validación y test sólo comprueba, no actúa sobre la centralización de datos
 
     return X_train, X_val, X_test, y_train, y_val, y_test, media_X_train, media_y_train
-
+# Para hacer la transformación inversa: precio_real = pred_y + media_y_train
 
 
 def estandarizar_datos(conjunto_entrenamiento:pd.DataFrame, conjunto_validacion:pd.DataFrame, conjunto_test:pd.DataFrame, target_entrenamiento:pd.DataFrame, target_validacion:pd.DataFrame, target_test:pd.DataFrame):
     '''
     Estandarizar (Z-score scaling) transforma los datos para que cada columna tenga media 0, y desviación típica 1
-    Fórmula: z = (x-\mu)/\sigma. --> Restamos la media y dividimos por la desviación típica de cada columna (z-score).
+    Fórmula: z = (x-\\mu)/\\sigma. --> Restamos la media y dividimos por la desviación típica de cada columna (z-score).
     Se suele utilizar para Regresión y SVM.
     Sensible a outliers
     '''
@@ -109,22 +110,22 @@ def estandarizar_datos(conjunto_entrenamiento:pd.DataFrame, conjunto_validacion:
 
     # TRAIN: aprende y transforma
     X_train = scaler_X.fit_transform(conjunto_entrenamiento)
-    y_train = scaler_y.fit_transform(target_entrenamiento)
+    y_train = scaler_y.fit_transform(target_entrenamiento.values.reshape(-1, 1)).ravel()    #y_train es una pd.Series (1D) y el StandardScaler necesita 2D. La solución es hacer .reshape(-1, 1) en la y antes de transformar. ravel devuelve el 2D generado a 1D
 
     # VALIDATION y TEST: transforma con los mismos parámetros (no aprende nada nuevo). Porque si llamas a estandarizar_datos(X_test) por separado, estás calculando la media y std del test, cuando deberías usar la media y std del train
     X_val = scaler_X.transform(conjunto_validacion)
     X_test = scaler_X.transform(conjunto_test)   # aplica los parámetros del train
-    y_val = scaler_y.transform(target_validacion)
-    y_test = scaler_y.transform(target_test)
+    y_val = scaler_y.transform(target_validacion.values.reshape(-1, 1)).ravel()
+    y_test = scaler_y.transform(target_test.values.reshape(-1, 1)).ravel()
     
     return X_train, X_val, X_test, y_train, y_val, y_test, scaler_X, scaler_y
-
+# Para hacer la transformación inversa: precio_real = scaler_y.inverse_transform(y_pred.reshape(-1, 1))
 
 
 def normalizar_datos(conjunto_entrenamiento:pd.DataFrame, conjunto_validacion:pd.DataFrame, conjunto_test:pd.DataFrame, target_entrenamiento:pd.DataFrame, target_validacion:pd.DataFrame, target_test:pd.DataFrame):
     '''
     Normalizar (Min-Max Scaling, rescaling) transforma los datos para que todos ellos tengan valores entre 0 y 1.
-    La fórmula utilizada es $$y = \frac{x - x_{\min}}{x_{\max} - x_{\min}}$$. --> Restamos el mínimo, y dividimos entre la diferencia entre el máximo y el mínimo
+    La fórmula utilizada es $$y = \\frac{x - x_{\\min}}{x_{\\max} - x_{\\min}}$$. --> Restamos el mínimo, y dividimos entre la diferencia entre el máximo y el mínimo
     Se suele utilizar para Redes Neuronales.
     Muy sensible a outliers
     '''
@@ -134,16 +135,16 @@ def normalizar_datos(conjunto_entrenamiento:pd.DataFrame, conjunto_validacion:pd
 
     # TRAIN: aprende y transforma
     X_train = norm_X.fit_transform(conjunto_entrenamiento)   #Nos devuelve un array de np sin columnas
-    y_train = norm_y.fit_transform(target_entrenamiento)    #Nos devuelve un array de np sin columnas
+    y_train = norm_y.fit_transform(target_entrenamiento.values.reshape(-1, 1)).ravel()    #Nos devuelve un array de np sin columnas
 
     # VALIDATION y TEST: transforma con los mismos parámetros (no aprende nada nuevo). Porque si llamas a estandarizar_datos(X_test) por separado, estás calculando la media y std del test, cuando deberías usar la media y std del train
     X_val = norm_X.transform(conjunto_validacion)    #Nos devuelve un array de np sin columnas
     X_test = norm_X.transform(conjunto_test)    #Nos devuelve un array de np sin columnas
-    y_val = norm_y.transform(target_validacion)     #Nos devuelve un array de np sin columnas
-    y_test = norm_y.transform(target_test)    #Nos devuelve un array de np sin columnas
+    y_val = norm_y.transform(target_validacion.values.reshape(-1, 1)).ravel()     #Nos devuelve un array de np sin columnas
+    y_test = norm_y.transform(target_test.values.reshape(-1, 1)).ravel()    #Nos devuelve un array de np sin columnas
     
     return X_train, X_val, X_test, y_train, y_val, y_test, norm_X, norm_y
-
+# Para hacer la transformación inversa: precio_real = norm_y.inverse_transform(y_pred.reshape(-1, 1))
 
 
 def crear_grafico_correlacion_lineal(db_codificada:pd.DataFrame):
@@ -189,15 +190,19 @@ def crear_arbol_decision(features_train:pd.DataFrame, target_train:pd.Series):
     No es necesario escalar los datos porque solo pregunta "¿es X mayor que umbral?", la magnitud no importa
     '''
 
-    arbol = DecisionTreeClassifier()   #Creamos el modelo
+    arbol = DecisionTreeRegressor()   #Creamos el modelo
     arbol.fit(features_train, target_train)   #Entrenamos el modelo con nuestros datos
     logger.info('✅ Creado y entrenado el modelo de "Árbol de Decisión" correctamente')
 
-    # plot_tree(
-    #     decision_tree = arbol,    #Representamos el árbol
-    #      filled=True,   #Añadimos colores a la clase predicha en cada nodo
-    #      class_names=['setosa', 'versicolor', 'virginica'],   #Añadimos etiquetas a las especies
-    #      features_names=iris_df.columns.to_list())   #Añadimos los nombres de las variables predictoras
+    plt.figure(figsize=(20, 10))
+    plot_tree(
+        decision_tree = arbol,    #Representamos el árbol
+        filled=True,   #Añadimos colores a los valores predichos en cada nodo. filled no colorea cada valor individual colorea cada nodo del árbol. Coge la media de todas las muestras que caen en ese nodo, y cuanto más se aleje del promedio, más intenso el color
+        max_depth=3,    #Con max_depth=3 vemos las primeras decisiones más importantes (las que más reducen el error)
+        fontsize=9,    #Se ven muy pequeñas las letras
+        feature_names=features_train.columns.to_list())   #Añadimos los nombres de las variables predictoras
+    plt.show()
+    logger.info('✅ Representado el "Árbol de Decisión" correctamente')
     
     return arbol
 
@@ -205,7 +210,8 @@ def crear_bosque_aleatorio():
     '''
     No es necesario escalar los datos porque solo pregunta "¿es X mayor que umbral?", la magnitud no importa
     '''
-
+    forest = RandomForestClassifier()
+    forest.fit(X_train, y_train)
 
 
 def crear_maquinas_vectores_soporte(X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est):
@@ -242,7 +248,7 @@ def main():
 
     db_Sevilla = pd.read_parquet(BASE / 'data' / 'processed' / 'modelizacion' / 'db_final_codificada_Almería.parquet')
 
-    crear_grafico_correlacion_lineal(db_Sevilla)
+    # crear_grafico_correlacion_lineal(db_Sevilla)
 
     X = db_Sevilla.drop(columns=['precio'])
     y = db_Sevilla['precio']
@@ -255,7 +261,7 @@ def main():
 
     # regresion = crear_regresion_lineal(X_train, y_train, 'tamaño_habitacion')
 
-    # arbol = crear_arbol_decision(X_train, y_train)
+    arbol = crear_arbol_decision(X_train, y_train)
 
     # modelos = [
     #     ("Regresión Logística", regresion),
