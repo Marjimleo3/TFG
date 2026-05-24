@@ -31,6 +31,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn import linear_model   #Biblioteca Machine Learning
 from sklearn.tree import DecisionTreeClassifier, plot_tree
@@ -70,6 +71,37 @@ def train_test_validation_particion(features:pd.DataFrame, target:pd.Series) -> 
                                         random_state=42)
 
     return X_train, X_val, X_test, y_train, y_val, y_test      #Resultado final: 70% train / 15% validation / 15% test:
+
+
+
+def centrar_datos(db_codificada:pd.DataFrame):
+    '''
+    Restamos la media en cada columna.
+    Importante para la técnica de Análisis de Componentes Principales
+    '''
+    db_cod_cen = db_codificada - np.mean(db_codificada, axis=0)
+    return db_cod_cen
+
+
+
+def estandarizar_datos(conjunto_entrenamiento:pd.DataFrame, conjunto_validacion:pd.DataFrame, conjunto_test:pd.DataFrame, target_entrenamiento:pd.DataFrame, target_validacion:pd.DataFrame, target_test:pd.DataFrame):
+    '''
+    Restamos la media y dividimos por la desviación de cada columna (z-score).
+    '''
+    scaler_X = StandardScaler()
+    scaler_y = StandardScaler()
+
+    # TRAIN: aprende y transforma
+    X_train = scaler_X.fit_transform(conjunto_entrenamiento)
+    y_train = scaler_y.fit_transform(target_entrenamiento)
+
+    # VALIDATION y TEST: transforma con los mismos parámetros (no aprende nada nuevo). Porque si llamas a estandarizar_datos(X_test) por separado, estás calculando la media y std del test, cuando deberías usar la media y std del train
+    X_val = scaler_X.transform(conjunto_validacion)
+    X_test = scaler_X.transform(conjunto_test)   # aplica los parámetros del train
+    y_val = scaler_y.transform(target_validacion)
+    y_test = scaler_y.transform(target_test)
+    
+    return X_train, X_val, X_test, y_train, y_val, y_test, scaler_X, scaler_y
 
 
 
@@ -137,7 +169,11 @@ def main():
     y = db_Sevilla['precio']
 
     X_train, X_val, X_test, y_train, y_val, y_test = train_test_validation_particion(X, y)
+
+    X_train, X_val, X_test, y_train, y_val, y_test, scaler_X, scaler_y = estandarizar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
+
     # regresion = crear_regresion_lineal(X_train, y_train, 'tamaño_habitacion')
+
     # arbol = crear_arbol_decision(X_train, y_train)
 
     # modelos = [
