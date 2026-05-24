@@ -134,13 +134,13 @@ def normalizar_datos(conjunto_entrenamiento:pd.DataFrame, conjunto_validacion:pd
 
     # TRAIN: aprende y transforma
     X_train = norm_X.fit_transform(conjunto_entrenamiento)   #Nos devuelve un array de np sin columnas
-    y_train = norm_y.fit_transform(target_entrenamiento)
+    y_train = norm_y.fit_transform(target_entrenamiento)    #Nos devuelve un array de np sin columnas
 
     # VALIDATION y TEST: transforma con los mismos parámetros (no aprende nada nuevo). Porque si llamas a estandarizar_datos(X_test) por separado, estás calculando la media y std del test, cuando deberías usar la media y std del train
-    X_val = norm_X.transform(conjunto_validacion)
-    X_test = norm_X.transform(conjunto_test)   # aplica los parámetros del train
-    y_val = norm_y.transform(target_validacion)
-    y_test = norm_y.transform(target_test)
+    X_val = norm_X.transform(conjunto_validacion)    #Nos devuelve un array de np sin columnas
+    X_test = norm_X.transform(conjunto_test)    #Nos devuelve un array de np sin columnas
+    y_val = norm_y.transform(target_validacion)     #Nos devuelve un array de np sin columnas
+    y_test = norm_y.transform(target_test)    #Nos devuelve un array de np sin columnas
     
     return X_train, X_val, X_test, y_train, y_val, y_test, norm_X, norm_y
 
@@ -160,22 +160,24 @@ def crear_grafico_correlacion_lineal(db_codificada:pd.DataFrame):
 
 
 
-def crear_regresion_lineal(features_train:pd.DataFrame, target_train:pd.Series, variable_representar:pd.Series):
+def crear_regresion_lineal(X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est, variable_representar:pd.Series):
     '''
-    Crea y entrena un modelo de regresión lineal Múltiple
+    Crea y entrena un modelo de regresión lineal Múltiple.
+    Estandarizamos los datos
     '''
+
     modelo = linear_model.LinearRegression()   #Creamos el modelo
-    modelo.fit(features_train, target_train)   #Le pasamos al modelo nuestros datos (Entrenamos con nuestros datos)
+    modelo.fit(X_train_est, y_train_est)   #Le pasamos al modelo nuestros datos estandarizados(Entrenamos con nuestros datos)
     logger.info('✅ Creado y entrenado el modelo de "Regresión Lineal Múltiple" correctamente')
 
     sns.scatterplot(
-        x=features_train[variable_representar],
-        y=target_train)
+        x=X_train_est[variable_representar],
+        y=y_train_est)
     sns.lineplot(
-        x=features_train[variable_representar],
-        y=modelo.predict(features_train))   #Dibujamos la recta de regresión junto a nuestros datos
+        x=X_train_est[variable_representar],
+        y=modelo.predict(X_train_est))   #Dibujamos la recta de regresión junto a nuestros datos
     
-    plt.title(f'Regresión Lineal: {variable_representar} vs {target_train.name}')
+    plt.title(f'Regresión Lineal: {variable_representar} vs {y_train_est.name}')
     plt.show()
 
     return modelo
@@ -183,6 +185,10 @@ def crear_regresion_lineal(features_train:pd.DataFrame, target_train:pd.Series, 
 
 
 def crear_arbol_decision(features_train:pd.DataFrame, target_train:pd.Series):
+    '''
+    No es necesario escalar los datos porque solo pregunta "¿es X mayor que umbral?", la magnitud no importa
+    '''
+
     arbol = DecisionTreeClassifier()   #Creamos el modelo
     arbol.fit(features_train, target_train)   #Entrenamos el modelo con nuestros datos
     logger.info('✅ Creado y entrenado el modelo de "Árbol de Decisión" correctamente')
@@ -195,7 +201,39 @@ def crear_arbol_decision(features_train:pd.DataFrame, target_train:pd.Series):
     
     return arbol
 
-# def scatter_regresion():
+def crear_bosque_aleatorio():
+    '''
+    No es necesario escalar los datos porque solo pregunta "¿es X mayor que umbral?", la magnitud no importa
+    '''
+
+
+
+def crear_maquinas_vectores_soporte(X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est):
+    '''
+    Estandarizamos los datos porque SVM maximiza márgenes → sensible a la magnitud
+    '''
+
+
+
+def crear_k_vecinos_cercanos(X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est):
+    '''
+    Estandarizamos los datos porque KNN mide distancia entre puntos → una variable en miles de euros dominaría sobre una en m²
+    '''
+
+
+
+def crear_redes_neuronales(X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm):
+    '''
+    Normalizamos los datos porque las Redes Neuronales aprenden con gradientes → convergen mejor con datos en [0,1]
+    '''
+
+
+
+def crear_boosting():
+    '''
+    No es necesario escalar los datos porque solo pregunta "¿es X mayor que umbral?", la magnitud no importa
+    '''
+
 
 # =============================================================================
 # PUNTO DE ENTRADA
@@ -211,7 +249,9 @@ def main():
 
     X_train, X_val, X_test, y_train, y_val, y_test = train_test_validation_particion(X, y)
 
-    X_train, X_val, X_test, y_train, y_val, y_test, scaler_X, scaler_y = estandarizar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
+    X_train_cen, X_val_cen, X_test_cen, y_train_cen, y_val_cen, y_test_cen, media_X_train, media_y_train = centrar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
+    X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est, scaler_X, scaler_y = estandarizar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
+    X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm, norm_X, norm_y = normalizar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
 
     # regresion = crear_regresion_lineal(X_train, y_train, 'tamaño_habitacion')
 
