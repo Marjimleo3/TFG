@@ -31,9 +31,10 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn import linear_model   #Biblioteca Machine Learning
+from sklearn import linear_model
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 
 
@@ -74,19 +75,34 @@ def train_test_validation_particion(features:pd.DataFrame, target:pd.Series) -> 
 
 
 
-def centrar_datos(db_codificada:pd.DataFrame):
+def centrar_datos(conjunto_entrenamiento:pd.DataFrame, conjunto_validacion:pd.DataFrame, conjunto_test:pd.DataFrame, target_entrenamiento:pd.DataFrame, target_validacion:pd.DataFrame, target_test:pd.DataFrame):
     '''
+    Centrar transforma los datos para que cada columna tenga media 0
     Restamos la media en cada columna.
-    Importante para la técnica de Análisis de Componentes Principales
+    Se suele utilizar en Análisis de Componentes Principales.
+    Sensible a outliers
     '''
-    db_cod_cen = db_codificada - np.mean(db_codificada, axis=0)
-    return db_cod_cen
+    media_X_train = np.mean(conjunto_entrenamiento, axis=0)
+    media_y_train = np.mean(target_entrenamiento, axis=0)
+
+    X_train = conjunto_entrenamiento - media_X_train
+    y_train = target_entrenamiento - media_y_train   
+
+    X_val = conjunto_validacion - media_X_train     #Porque validación y test sólo comprueba, no actúa sobre la centralización de datos
+    X_test = conjunto_test - media_X_train      #Porque validación y test sólo comprueba, no actúa sobre la centralización de datos
+    y_val = target_validacion - media_y_train       #Porque validación y test sólo comprueba, no actúa sobre la centralización de datos
+    y_test = target_test - media_y_train        #Porque validación y test sólo comprueba, no actúa sobre la centralización de datos
+
+    return X_train, X_val, X_test, y_train, y_val, y_test, media_X_train, media_y_train
 
 
 
 def estandarizar_datos(conjunto_entrenamiento:pd.DataFrame, conjunto_validacion:pd.DataFrame, conjunto_test:pd.DataFrame, target_entrenamiento:pd.DataFrame, target_validacion:pd.DataFrame, target_test:pd.DataFrame):
     '''
-    Restamos la media y dividimos por la desviación de cada columna (z-score).
+    Estandarizar (Z-score scaling) transforma los datos para que cada columna tenga media 0, y desviación típica 1
+    Fórmula: z = (x-\mu)/\sigma. --> Restamos la media y dividimos por la desviación típica de cada columna (z-score).
+    Se suele utilizar para Regresión y SVM.
+    Sensible a outliers
     '''
     scaler_X = StandardScaler()
     scaler_y = StandardScaler()
@@ -102,6 +118,31 @@ def estandarizar_datos(conjunto_entrenamiento:pd.DataFrame, conjunto_validacion:
     y_test = scaler_y.transform(target_test)
     
     return X_train, X_val, X_test, y_train, y_val, y_test, scaler_X, scaler_y
+
+
+
+def normalizar_datos(conjunto_entrenamiento:pd.DataFrame, conjunto_validacion:pd.DataFrame, conjunto_test:pd.DataFrame, target_entrenamiento:pd.DataFrame, target_validacion:pd.DataFrame, target_test:pd.DataFrame):
+    '''
+    Normalizar (Min-Max Scaling, rescaling) transforma los datos para que todos ellos tengan valores entre 0 y 1.
+    La fórmula utilizada es $$y = \frac{x - x_{\min}}{x_{\max} - x_{\min}}$$. --> Restamos el mínimo, y dividimos entre la diferencia entre el máximo y el mínimo
+    Se suele utilizar para Redes Neuronales.
+    Muy sensible a outliers
+    '''
+
+    norm_X = MinMaxScaler(feature_range=(0,1))   #Construimos el modelo de normalización
+    norm_y = MinMaxScaler(feature_range=(0,1))
+
+    # TRAIN: aprende y transforma
+    X_train = norm_X.fit_transform(conjunto_entrenamiento)   #Nos devuelve un array de np sin columnas
+    y_train = norm_y.fit_transform(target_entrenamiento)
+
+    # VALIDATION y TEST: transforma con los mismos parámetros (no aprende nada nuevo). Porque si llamas a estandarizar_datos(X_test) por separado, estás calculando la media y std del test, cuando deberías usar la media y std del train
+    X_val = norm_X.transform(conjunto_validacion)
+    X_test = norm_X.transform(conjunto_test)   # aplica los parámetros del train
+    y_val = norm_y.transform(target_validacion)
+    y_test = norm_y.transform(target_test)
+    
+    return X_train, X_val, X_test, y_train, y_val, y_test, norm_X, norm_y
 
 
 
