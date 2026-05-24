@@ -334,17 +334,20 @@ def main():
         df_6 = limpiar_db_final(df_5)
 
         df_6.to_parquet(BASE / "data" / "processed" / "final" / f"db_final_{provincia}.parquet", index=False)
-        logger.info(f'✅ Datos de {provincia} guardados correctamente')
+        logger.info(f'✅ Dataset de {provincia} guardado correctamente')
 
         codificada = encoding(df_6, incluir_provincia=False)
         codificada.to_parquet(BASE / "data" / "processed" / "modelizacion" / f"db_final_codificada_{provincia}.parquet", index=False)
-        logger.info(f'✅ Datos codificados de {provincia} guardados correctamente')
+        logger.info(f'✅ Dataset codificado de {provincia} guardado correctamente')
 
         dfs_finales.append(df_6)
 
     db_completa = pd.concat(dfs_finales, ignore_index=True)
-    codificada_completa = encoding(db_completa)
-    codificada_completa.to_parquet(BASE / "data" / "processed" / "modelizacion" / "db_final_codificada.parquet", index=False)
+    db_completa.to_parquet(BASE / "data" / "processed" / "final" / "db_final.parquet", index=False)
+    logger.info('✅ Dataset completo guardado correctamente')
+
+    db_completa_codificada = encoding(db_completa)
+    db_completa_codificada.to_parquet(BASE / "data" / "processed" / "modelizacion" / "db_final_codificada.parquet", index=False)
     logger.info('✅ Dataset completo codificado guardado correctamente')
 
     
