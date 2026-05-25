@@ -265,7 +265,7 @@ def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
     return db_final
 
 
-def encoding(db_final:pd.DataFrame, incluir_provincia:bool=True) -> pd.DataFrame:
+def encoding(db_final:pd.DataFrame, incluir_provincia:bool) -> pd.DataFrame:
     '''
     Para variables catergóricas:
     One-Hot Encoding → crea columnas binarias (0/1) por cada categoría. Label Encoding → asigna un número entero a cada categoría. Ordinal Encoding → como label encoding pero respetando un orden lógico. Target Encoding → reemplaza la categoría por la media del target.
@@ -288,6 +288,7 @@ def encoding(db_final:pd.DataFrame, incluir_provincia:bool=True) -> pd.DataFrame
 
     #Extraemos día de la semana y mes de 'fecha_disponible' y la eliminamos
     db_final['mes_disponible'] = db_final['fecha_disponible'].dt.month
+    db_final['dia_disponible'] = db_final['fecha_disponible'].dt.day
     db_final['es_finde'] = db_final['fecha_disponible'].dt.dayofweek.isin([4, 5]).astype('int8')
     db_final['es_domingo'] = (db_final['fecha_disponible'].dt.dayofweek==6).astype('int8')
     db_final = db_final.drop(columns=['fecha_disponible'])
@@ -312,7 +313,7 @@ def main():
 
     dfs_finales = []
 
-    for provincia in provincias.iloc[:,0]:
+    for provincia in provincias.iloc[0:1,0]:
         raw = pd.read_csv( BASE / "data" / "raw" / "fichas" / f"resultados_booking_{provincia}.csv", sep="|")
         raw['localidad'] = extraer_localidad(raw)
 
@@ -346,7 +347,7 @@ def main():
     db_completa.to_parquet(BASE / "data" / "processed" / "final" / "db_final.parquet", index=False)
     logger.info('✅ Dataset completo guardado correctamente')
 
-    db_completa_codificada = encoding(db_completa)
+    db_completa_codificada = encoding(db_completa, incluir_provincia=True)
     db_completa_codificada.to_parquet(BASE / "data" / "processed" / "modelizacion" / "db_final_codificada.parquet", index=False)
     logger.info('✅ Dataset completo codificado guardado correctamente')
 
