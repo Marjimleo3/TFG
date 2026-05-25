@@ -173,6 +173,7 @@ def normalizar_datos(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conju
 # Para hacer la transformación inversa: precio_real = norm_y.inverse_transform(y_pred.reshape(-1, 1))
 
 
+
 def crear_grafico_correlacion_lineal(db_codificada:pd.DataFrame):
     if db_codificada['Piscina_infinita'].sum() == 0:
         db_codificada_modificada = db_codificada.drop(columns=['Piscina_infinita'])
@@ -193,8 +194,8 @@ def crear_regresion_lineal(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.Da
     Estandarizamos los datos
     '''
 
-    modelo = linear_model.LinearRegression()   #Creamos el modelo
-    modelo.fit(conjunto_ent_est, target_ent_est)   #Le pasamos al modelo nuestros datos estandarizados(Entrenamos con nuestros datos)
+    regresion = linear_model.LinearRegression()   #Creamos el modelo
+    regresion.fit(conjunto_ent_est, target_ent_est)   #Le pasamos al modelo nuestros datos estandarizados(Entrenamos con nuestros datos)
     logger.info('✅ Creado y entrenado el modelo de "Regresión Lineal Múltiple" correctamente')
 
     sns.scatterplot(
@@ -202,12 +203,12 @@ def crear_regresion_lineal(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.Da
         y=target_ent_est)
     sns.lineplot(
         x=conjunto_ent_est[variable_representar],
-        y=modelo.predict(conjunto_ent_est))   #Dibujamos la recta de regresión junto a nuestros datos
+        y=regresion.predict(conjunto_ent_est))   #Dibujamos la recta de regresión junto a nuestros datos
 
     plt.title(f'Regresión Lineal: {variable_representar} vs {target_ent_est.name}')
     plt.show()
 
-    return modelo
+    return regresion
 
 
 
@@ -255,6 +256,8 @@ def crear_arbol_decision(conjunto_ent:pd.DataFrame, target_ent:pd.Series):
     # print(mean_squared_error(y_val, y_pred_val))
     
     return mejor_arbol
+
+
 
 def crear_bosque_aleatorio(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunto_test:pd.DataFrame, target_ent:pd.Series, target_val:pd.Series, target_test:pd.Series):
     '''
@@ -322,6 +325,8 @@ def crear_k_vecinos_cercanos(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.
     r2_val = mejor_knn.score(conjunto_val_est, target_val_est)    #Devuelve el porcentaje de predicciones correctas en clasificación, y la precisión o R^2 en regresión
     logger.info(f'R² en validación: {r2_val:.4f}')
 
+    return mejor_knn
+
 
 
 def crear_maquinas_vectores_soporte(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, conjunto_test_est:pd.DataFrame, target_ent_est:pd.Series, target_val_est:pd.Series, target_test_est:pd.Series):
@@ -352,6 +357,8 @@ def crear_maquinas_vectores_soporte(conjunto_ent_est:pd.DataFrame, conjunto_val_
 
     r2_val = mejor_svm.score(conjunto_val_est, target_val_est)    #Devuelve la precisión o R^2 en regresión
     logger.info(f'R² en validación: {r2_val:.4f}')
+
+    return mejor_svm
 
 
 def crear_redes_neuronales(conjunto_ent_norm:pd.DataFrame, conjunto_val_norm:pd.DataFrame, conjunto_test_norm:pd.DataFrame, target_ent_norm:pd.Series, target_val_norm:pd.Series, target_test_norm:pd.Series):
@@ -427,27 +434,29 @@ def crear_boosting(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunt
 
 
 # =============================================================================
-# MODELOS DE CLASIFICACIÓN (chollo / no chollo)
+# MODELOS DE CLASIFICACIÓN (inflado / chollo / super_chollo / hiper-chollo)
 # =============================================================================
 
 def crear_etiqueta_chollo(y_real:pd.Series, y_predicho:pd.Series) -> pd.Series:
     '''
     Clasifica cada alojamiento según la diferencia entre precio real y predicho:
-        hiper_chollo : precio_real < precio_predicho * 0.80  (>20% más barato)
-        super_chollo : precio_predicho * 0.80 <= precio_real < precio_predicho * 0.88  (12-20% más barato)
-        chollo       : precio_predicho * 0.88 <= precio_real < precio_predicho * 0.94  (6-12% más barato)
-        barato       : precio_predicho * 0.94 <= precio_real < precio_predicho         (0-6% más barato)
-        inflado      : precio_real >= precio_predicho                                  (más caro que predicho)
+        hiper_chollo : 3  -->  y_real/y_predicho <= 0.75  (>25% más barato)
+        super_chollo : 2  -->  0.75 < y_real/y_predicho < 0.85  (15-25% más barato)
+        chollo       : 1  -->  0.85 <= y_real/y_predicho < 0.95  (5-15% más barato)
+        normal       : 0  -->  0.95 <= y_real/y_predicho < 1.05  (5%-5% más barato y más caro respectivamente)
+        inflado      : -1 -->  y_real/y_predicho > 1.05   (>5% más caro)
     '''
+    real_predicho = y_real / y_predicho
+
     condiciones = [
-        y_real < y_predicho * 0.80,
-        (y_real >= y_predicho * 0.80) & (y_real < y_predicho * 0.88),
-        (y_real >= y_predicho * 0.88) & (y_real < y_predicho * 0.94),
-        (y_real >= y_predicho * 0.94) & (y_real < y_predicho),
-        y_real >= y_predicho,
+        real_predicho <= 0.75,
+        (real_predicho > 0.75) & (real_predicho < 0.85),
+        (real_predicho >= 0.85) & (real_predicho < 0.95),
+        (real_predicho >= 0.95) & (real_predicho <= 1.05),
+        real_predicho > 1.05
     ]
-    etiquetas = ['hiper_chollo', 'super_chollo', 'chollo', 'barato', 'inflado']
-    return pd.Series(np.select(condiciones, etiquetas), index=y_real.index, name='categoria')
+    etiquetas = [3, 2, 1, 0, -1]
+    return pd.Series(np.select(condiciones, etiquetas), index=y_real.index, name='categoria')   #Condición: lista booleanos, etiquetas: lista de valores a asignar cuando condición sea True
 
 
 def crear_regresion_logistica(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, conjunto_test_est:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series, objetivo_test:pd.Series):
@@ -457,26 +466,26 @@ def crear_regresion_logistica(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd
         # C : Inverso de la regularización. C alto → menos regularización (riesgo de overfitting)
         # solver : Algoritmo de optimización (lbfgs, liblinear...)
     '''
-    modelo = linear_model.LogisticRegression(max_iter=1000, random_state=42)
+    regresion = linear_model.LogisticRegression(max_iter=1000, random_state=42)
     param_grid = {
         'C': [0.01, 0.1, 1, 10, 100],
     }
     grid_search = GridSearchCV(
-        estimator=modelo,
+        estimator=regresion,
         param_grid=param_grid,
         cv=5,
         scoring='f1_weighted',
         n_jobs=-1)
     grid_search.fit(conjunto_ent_est, objetivo_ent)
 
-    mejor_modelo = grid_search.best_estimator_
+    mejor_regresion = grid_search.best_estimator_
     logger.info('✅ Creado y entrenado el modelo de "Regresión Logística" correctamente')
     logger.info(f'Mejores hiperparámetros: {grid_search.best_params_}')
 
-    f1_val = f1_score(objetivo_val, mejor_modelo.predict(conjunto_val_est), average='weighted')
+    f1_val = f1_score(objetivo_val, mejor_regresion.predict(conjunto_val_est), average='weighted')
     logger.info(f'F1 en validación: {f1_val:.4f}')
 
-    return mejor_modelo
+    return mejor_regresion
 
 
 def crear_arbol_decision_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunto_test:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series, objetivo_test:pd.Series):
@@ -672,19 +681,19 @@ def main():
     X = db.drop(columns=['precio'])
     y = db['precio']
 
-    # -------------------------------------------------------------------------
+
     # 1. PARTICIÓN
     # -------------------------------------------------------------------------
     X_train, X_val, X_test, y_train, y_val, y_test = train_test_validation_particion(X, y)
 
-    # -------------------------------------------------------------------------
+
     # 2. TRANSFORMACIONES
     # -------------------------------------------------------------------------
     X_train_cen, X_val_cen, X_test_cen, y_train_cen, y_val_cen, y_test_cen, media_X_train, media_y_train = centrar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
     X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est, scaler_X, scaler_y = estandarizar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
     X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm, norm_X, norm_y = normalizar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
 
-    # -------------------------------------------------------------------------
+
     # 3. MODELOS DE REGRESIÓN (predicción de precio)
     # -------------------------------------------------------------------------
     regresion   = crear_regresion_lineal(X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est, 'tamaño_habitacion')
@@ -695,35 +704,47 @@ def main():
     red         = crear_redes_neuronales(X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm)
     boosting    = crear_boosting(X_train, X_val, X_test, y_train, y_val, y_test)
 
-    # -------------------------------------------------------------------------
+
     # 4. SELECCIÓN DEL MEJOR MODELO DE REGRESIÓN (por R² en validación)
     # -------------------------------------------------------------------------
     modelos_regresion = [
-        ('Regresión Lineal',  regresion,  X_val_est,  y_val_est),
-        ('Árbol de Decisión', arbol,      X_val,      y_val),
-        ('Bosque Aleatorio',  bosque,     X_val,      y_val),
-        ('SVM',               svm,        X_val_est,  y_val_est),
-        ('KNN',               knn,        X_val_est,  y_val_est),
-        ('Redes Neuronales',  red,        X_val_norm, y_val_norm),
-        ('Boosting',          boosting,   X_val,      y_val),
+        ('Regresión Lineal',  regresion,  X_train_est,  X_val_est,  X_test_est,  y_train_est,  y_val_est,  y_test_est),
+        ('Árbol de Decisión', arbol,      X_train,      X_val,      X_test,      y_train,      y_val,      y_test),
+        ('Bosque Aleatorio',  bosque,     X_train,      X_val,      X_test,      y_train,      y_val,      y_test),
+        ('SVM',               svm,        X_train_est,  X_val_est,  X_test_est,  y_train_est,  y_val_est,  y_test_est),
+        ('KNN',               knn,        X_train_est,  X_val_est,  X_test_est,  y_train_est,  y_val_est,  y_test_est),
+        ('Redes Neuronales',  red,        X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm),
+        ('Boosting',          boosting,   X_train,      X_val,      X_test,      y_train,      y_val,      y_test),
     ]
-    mejor_nombre, mejor_modelo_reg, mejor_X_val, mejor_y_val = max(
-        modelos_regresion, key=lambda t: t[1].score(t[2], t[3]))
-    logger.info(f'✅ Mejor modelo de regresión: {mejor_nombre} (R²={mejor_modelo_reg.score(mejor_X_val, mejor_y_val):.4f})')
 
-    # -------------------------------------------------------------------------
+    data_score = []
+    mejor_score = None
+    mejor_nombre = mejor_modelo_reg = None
+    mejor_X_train = mejor_X_val = mejor_X_test = None
+    mejor_y_train = mejor_y_val = mejor_y_test = None
+    for nombre, modelo, X_tr, X_va, X_te, y_tr, y_va, y_te in modelos_regresion:
+        score = modelo.score(X_va, y_va)
+        data_score.append(score)
+        if mejor_score is None or score > mejor_score:
+            mejor_score = score
+            mejor_nombre, mejor_modelo_reg = nombre, modelo
+            mejor_X_train, mejor_X_val, mejor_X_test, mejor_y_train, mejor_y_val, mejor_y_test = X_tr, X_va, X_te, y_tr, y_va, y_te
+
+    logger.info(f'✅ Mejor modelo de regresión: {mejor_nombre} (R²={mejor_score:.4f})')
+
+
     # 5. CREAR ETIQUETA CHOLLO con el mejor modelo de regresión
     # -------------------------------------------------------------------------
-    y_pred_train  = mejor_modelo_reg.predict(X_train if mejor_X_val is X_val else X_train_est if mejor_X_val is X_val_est else X_train_norm)
+    y_pred_train  = mejor_modelo_reg.predict(mejor_X_train)
     y_pred_val    = mejor_modelo_reg.predict(mejor_X_val)
-    y_pred_test   = mejor_modelo_reg.predict(X_test if mejor_X_val is X_val else X_test_est if mejor_X_val is X_val_est else X_test_norm)
+    y_pred_test   = mejor_modelo_reg.predict(mejor_X_test)
 
-    chollo_train  = crear_etiqueta_chollo(y_train, pd.Series(y_pred_train, index=y_train.index))
-    chollo_val    = crear_etiqueta_chollo(y_val,   pd.Series(y_pred_val,   index=y_val.index))
-    chollo_test   = crear_etiqueta_chollo(y_test,  pd.Series(y_pred_test,  index=y_test.index))
-    logger.info(f'Chollos en train: {chollo_train.sum()} / {len(chollo_train)}')
+    chollo_train  = crear_etiqueta_chollo(mejor_y_train, pd.Series(y_pred_train, index=mejor_y_train.index))
+    chollo_val    = crear_etiqueta_chollo(mejor_y_val,   pd.Series(y_pred_val,   index=mejor_y_val.index))
+    chollo_test   = crear_etiqueta_chollo(mejor_y_test,  pd.Series(y_pred_test,  index=mejor_y_test.index))
+    logger.info(f'Distribución categorías train: {chollo_train.value_counts().to_dict()}')
 
-    # -------------------------------------------------------------------------
+
     # 6. MODELOS DE CLASIFICACIÓN (chollo / no chollo)
     # -------------------------------------------------------------------------
     reg_log     = crear_regresion_logistica(X_train_est, X_val_est, X_test_est, chollo_train, chollo_val, chollo_test)
@@ -734,21 +755,29 @@ def main():
     red_clf     = crear_redes_neuronales_clasificacion(X_train_norm, X_val_norm, X_test_norm, chollo_train, chollo_val, chollo_test)
     boost_clf   = crear_boosting_clasificacion(X_train, X_val, X_test, chollo_train, chollo_val, chollo_test)
 
-    # -------------------------------------------------------------------------
+
     # 7. SELECCIÓN DEL MEJOR MODELO DE CLASIFICACIÓN (por F1 en validación)
     # -------------------------------------------------------------------------
     modelos_clasificacion = [
-        ('Regresión Logística',  reg_log,    X_val_est,  chollo_val),
-        ('Árbol Clasificación',  arbol_clf,  X_val,      chollo_val),
-        ('Bosque Clasificación', bosque_clf, X_val,      chollo_val),
-        ('SVM Clasificación',    svm_clf,    X_val_est,  chollo_val),
-        ('KNN Clasificación',    knn_clf,    X_val_est,  chollo_val),
-        ('Red Neuronal Clf',     red_clf,    X_val_norm, chollo_val),
-        ('Boosting Clf',         boost_clf,  X_val,      chollo_val),
+        ('Regresión Logística',  reg_log,    X_train_est,  X_val_est,  X_test_est,  chollo_val),
+        ('Árbol Clasificación',  arbol_clf,  X_train,      X_val,      X_test,      chollo_val),
+        ('Bosque Clasificación', bosque_clf, X_train,      X_val,      X_test,      chollo_val),
+        ('SVM Clasificación',    svm_clf,    X_train_est,  X_val_est,  X_test_est,  chollo_val),
+        ('KNN Clasificación',    knn_clf,    X_train_est,  X_val_est,  X_test_est,  chollo_val),
+        ('Red Neuronal Clf',     red_clf,    X_train_norm, X_val_norm, X_test_norm, chollo_val),
+        ('Boosting Clf',         boost_clf,  X_train,      X_val,      X_test,      chollo_val),
     ]
-    mejor_nombre_clf, mejor_modelo_clf, mejor_X_val_clf, _ = max(
-        modelos_clasificacion, key=lambda t: f1_score(t[3], t[1].predict(t[2]), average='weighted'))
-    logger.info(f'✅ Mejor modelo de clasificación: {mejor_nombre_clf} (F1={f1_score(chollo_val, mejor_modelo_clf.predict(mejor_X_val_clf), average="weighted"):.4f})')
+
+    mejor_f1 = None
+    mejor_nombre_clf = mejor_modelo_clf = mejor_X_train_clf = mejor_X_val_clf = mejor_X_test_clf = None
+    for nombre, modelo, X_tr, X_va, X_te, chollo_va in modelos_clasificacion:
+        f1 = f1_score(chollo_va, modelo.predict(X_va), average='weighted')
+        if mejor_f1 is None or f1 > mejor_f1:
+            mejor_f1 = f1
+            mejor_nombre_clf, mejor_modelo_clf = nombre, modelo
+            mejor_X_train_clf, mejor_X_val_clf, mejor_X_test_clf = X_tr, X_va, X_te
+
+    logger.info(f'✅ Mejor modelo de clasificación: {mejor_nombre_clf} (F1={mejor_f1:.4f})')
 
 
 if __name__ == '__main__':
