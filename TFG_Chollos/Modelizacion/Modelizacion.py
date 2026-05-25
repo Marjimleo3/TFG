@@ -91,29 +91,29 @@ def train_test_validation_particion(features:pd.DataFrame, target:pd.Series) -> 
 
 
 
-def centrar_datos(conjunto_entrenamiento:pd.DataFrame, conjunto_validacion:pd.DataFrame, conjunto_test:pd.DataFrame, target_entrenamiento:pd.DataFrame, target_validacion:pd.DataFrame, target_test:pd.DataFrame):
+def centrar_datos(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunto_test:pd.DataFrame, target_ent:pd.Series, target_val:pd.Series, target_test:pd.Series):
     '''
     Centrar transforma los datos para que cada columna tenga media 0
     Restamos la media en cada columna.
     Se suele utilizar en Análisis de Componentes Principales.
     Sensible a outliers
     '''
-    media_X_train = np.mean(conjunto_entrenamiento, axis=0)
-    media_y_train = np.mean(target_entrenamiento, axis=0)
+    media_X_train = np.mean(conjunto_ent, axis=0)
+    media_y_train = np.mean(target_ent, axis=0)
 
-    X_train = conjunto_entrenamiento - media_X_train
-    y_train = target_entrenamiento - media_y_train   
+    X_train = conjunto_ent - media_X_train
+    y_train = target_ent - media_y_train
 
-    X_val = conjunto_validacion - media_X_train     #Porque validación y test sólo comprueba, no actúa sobre la centralización de datos
+    X_val = conjunto_val - media_X_train     #Porque validación y test sólo comprueba, no actúa sobre la centralización de datos
     X_test = conjunto_test - media_X_train      #Porque validación y test sólo comprueba, no actúa sobre la centralización de datos
-    y_val = target_validacion - media_y_train       #Porque validación y test sólo comprueba, no actúa sobre la centralización de datos
+    y_val = target_val - media_y_train       #Porque validación y test sólo comprueba, no actúa sobre la centralización de datos
     y_test = target_test - media_y_train        #Porque validación y test sólo comprueba, no actúa sobre la centralización de datos
 
     return X_train, X_val, X_test, y_train, y_val, y_test, media_X_train, media_y_train
 # Para hacer la transformación inversa: precio_real = pred_y + media_y_train
 
 
-def estandarizar_datos(conjunto_entrenamiento:pd.DataFrame, conjunto_validacion:pd.DataFrame, conjunto_test:pd.DataFrame, target_entrenamiento:pd.DataFrame, target_validacion:pd.DataFrame, target_test:pd.DataFrame):
+def estandarizar_datos(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunto_test:pd.DataFrame, target_ent:pd.Series, target_val:pd.Series, target_test:pd.Series):
     '''
     Estandarizar (Z-score scaling) transforma los datos para que cada columna tenga media 0, y desviación típica 1
     Fórmula: z = (x-\\mu)/\\sigma. --> Restamos la media y dividimos por la desviación típica de cada columna (z-score).
@@ -124,20 +124,24 @@ def estandarizar_datos(conjunto_entrenamiento:pd.DataFrame, conjunto_validacion:
     scaler_y = StandardScaler()
 
     # TRAIN: aprende y transforma
-    X_train = scaler_X.fit_transform(conjunto_entrenamiento)
-    y_train = scaler_y.fit_transform(target_entrenamiento.values.reshape(-1, 1)).ravel()    #y_train es una pd.Series (1D) y el StandardScaler necesita 2D. La solución es hacer .reshape(-1, 1) en la y antes de transformar. ravel devuelve el 2D generado a 1D
+    X_train = scaler_X.fit_transform(conjunto_ent)
+    y_train = scaler_y.fit_transform(target_ent.values.reshape(-1, 1)).ravel()    #y_train es una pd.Series (1D) y el StandardScaler necesita 2D. La solución es hacer .reshape(-1, 1) en la y antes de transformar. ravel devuelve el 2D generado a 1D
 
     # VALIDATION y TEST: transforma con los mismos parámetros (no aprende nada nuevo). Porque si llamas a estandarizar_datos(X_test) por separado, estás calculando la media y std del test, cuando deberías usar la media y std del train
-    X_val = scaler_X.transform(conjunto_validacion)
+    X_val = scaler_X.transform(conjunto_val)
     X_test = scaler_X.transform(conjunto_test)   # aplica los parámetros del train
-    y_val = scaler_y.transform(target_validacion.values.reshape(-1, 1)).ravel()
+    y_val = scaler_y.transform(target_val.values.reshape(-1, 1)).ravel()
     y_test = scaler_y.transform(target_test.values.reshape(-1, 1)).ravel()
-    
+
+    #Pasamos los np.Arrays a pd.DataFrames o pd.Series:
+    X_train, X_val, X_test = [pd.DataFrame(a, columns=conjunto_ent.columns) for a in [X_train, X_val, X_test]]    #a, b, c = [1, 2, 3] --> a=1, b=2, c=3
+    y_train, y_val, y_test = [pd.Series(a, name=target_ent.name) for a in [y_train, y_val, y_test]]
+
     return X_train, X_val, X_test, y_train, y_val, y_test, scaler_X, scaler_y
 # Para hacer la transformación inversa: precio_real = scaler_y.inverse_transform(y_pred.reshape(-1, 1))
 
 
-def normalizar_datos(conjunto_entrenamiento:pd.DataFrame, conjunto_validacion:pd.DataFrame, conjunto_test:pd.DataFrame, target_entrenamiento:pd.DataFrame, target_validacion:pd.DataFrame, target_test:pd.DataFrame):
+def normalizar_datos(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunto_test:pd.DataFrame, target_ent:pd.Series, target_val:pd.Series, target_test:pd.Series):
     '''
     Normalizar (Min-Max Scaling, rescaling) transforma los datos para que todos ellos tengan valores entre 0 y 1.
     La fórmula utilizada es $$y = \\frac{x - x_{\\min}}{x_{\\max} - x_{\\min}}$$. --> Restamos el mínimo, y dividimos entre la diferencia entre el máximo y el mínimo
@@ -149,15 +153,18 @@ def normalizar_datos(conjunto_entrenamiento:pd.DataFrame, conjunto_validacion:pd
     norm_y = MinMaxScaler(feature_range=(0,1))
 
     # TRAIN: aprende y transforma
-    X_train = norm_X.fit_transform(conjunto_entrenamiento)   #Nos devuelve un array de np sin columnas
-    y_train = norm_y.fit_transform(target_entrenamiento.values.reshape(-1, 1)).ravel()    #Nos devuelve un array de np sin columnas
+    X_train = norm_X.fit_transform(conjunto_ent)   #Nos devuelve un array de np sin columnas
+    y_train = norm_y.fit_transform(target_ent.values.reshape(-1, 1)).ravel()    #Nos devuelve un array de np sin columnas
 
     # VALIDATION y TEST: transforma con los mismos parámetros (no aprende nada nuevo). Porque si llamas a estandarizar_datos(X_test) por separado, estás calculando la media y std del test, cuando deberías usar la media y std del train
-    X_val = norm_X.transform(conjunto_validacion)    #Nos devuelve un array de np sin columnas
+    X_val = norm_X.transform(conjunto_val)    #Nos devuelve un array de np sin columnas
     X_test = norm_X.transform(conjunto_test)    #Nos devuelve un array de np sin columnas
-    y_val = norm_y.transform(target_validacion.values.reshape(-1, 1)).ravel()     #Nos devuelve un array de np sin columnas
+    y_val = norm_y.transform(target_val.values.reshape(-1, 1)).ravel()     #Nos devuelve un array de np sin columnas
     y_test = norm_y.transform(target_test.values.reshape(-1, 1)).ravel()    #Nos devuelve un array de np sin columnas
-    
+
+    X_train, X_val, X_test = [pd.DataFrame(a, columns=conjunto_ent.columns) for a in [X_train, X_val, X_test]]
+    y_train, y_val, y_test = [pd.Series(a, name=target_ent.name) for a in [y_train, y_val, y_test]]
+
     return X_train, X_val, X_test, y_train, y_val, y_test, norm_X, norm_y
 # Para hacer la transformación inversa: precio_real = norm_y.inverse_transform(y_pred.reshape(-1, 1))
 
@@ -176,35 +183,35 @@ def crear_grafico_correlacion_lineal(db_codificada:pd.DataFrame):
 
 
 
-def crear_regresion_lineal(X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est, variable_representar:pd.Series):
+def crear_regresion_lineal(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, conjunto_test_est:pd.DataFrame, target_ent_est:pd.Series, target_val_est:pd.Series, target_test_est:pd.Series, variable_representar:str):
     '''
     Crea y entrena un modelo de regresión lineal Múltiple.
     Estandarizamos los datos
     '''
 
     modelo = linear_model.LinearRegression()   #Creamos el modelo
-    modelo.fit(X_train_est, y_train_est)   #Le pasamos al modelo nuestros datos estandarizados(Entrenamos con nuestros datos)
+    modelo.fit(conjunto_ent_est, target_ent_est)   #Le pasamos al modelo nuestros datos estandarizados(Entrenamos con nuestros datos)
     logger.info('✅ Creado y entrenado el modelo de "Regresión Lineal Múltiple" correctamente')
 
     sns.scatterplot(
-        x=X_train_est[variable_representar],
-        y=y_train_est)
+        x=conjunto_ent_est[variable_representar],
+        y=target_ent_est)
     sns.lineplot(
-        x=X_train_est[variable_representar],
-        y=modelo.predict(X_train_est))   #Dibujamos la recta de regresión junto a nuestros datos
-    
-    plt.title(f'Regresión Lineal: {variable_representar} vs {y_train_est.name}')
+        x=conjunto_ent_est[variable_representar],
+        y=modelo.predict(conjunto_ent_est))   #Dibujamos la recta de regresión junto a nuestros datos
+
+    plt.title(f'Regresión Lineal: {variable_representar} vs {target_ent_est.name}')
     plt.show()
 
     return modelo
 
 
 
-def crear_arbol_decision(conjunto_entrenamiento:pd.DataFrame, target_entrenamiento:pd.Series):
+def crear_arbol_decision(conjunto_ent:pd.DataFrame, target_ent:pd.Series):
     '''
     No es necesario escalar los datos porque solo pregunta "¿es X mayor que umbral?", la magnitud no importa.
-    Hay que decidir entre estos hiperparámetros: 
-        # max_depth : Profundidad máxima del árbol. Sin límite → overfitting. Valor bajo → underfitting   
+    Hay que decidir entre estos hiperparámetros:
+        # max_depth : Profundidad máxima del árbol. Sin límite → overfitting. Valor bajo → underfitting
         min_samples_split : Mínimo de muestras que debe tener un nodo para poder dividirse. Se dejaron los valores por defecto por ser suficientemente robustos
         min_samples_leaf :  Mínimo de muestras que debe tener una hoja (nodo final). Evita hojas con 1 sola muestra. Se dejaron los valores por defecto por ser suficientemente robustos
     '''
@@ -221,11 +228,11 @@ def crear_arbol_decision(conjunto_entrenamiento:pd.DataFrame, target_entrenamien
       scoring='neg_mean_squared_error',  # métrica a optimizar
       n_jobs=-1                      # usa todos los núcleos del procesador
     )
-    grid_search.fit(conjunto_entrenamiento, target_entrenamiento)   #Entrenamos el modelo con nuestros datos
+    grid_search.fit(conjunto_ent, target_ent)   #Entrenamos el modelo con nuestros datos
     logger.info('✅ Creado y entrenado el modelo de "Árbol de Decisión" correctamente')
 
     mejor_arbol = grid_search.best_estimator_
-    print(grid_search.best_params_)    # {'max_depth': 5}
+    logger.info(f'Mejores hiperparámetros: {grid_search.best_params_}')
 
     plt.figure(figsize=(20, 10))
     plot_tree(
@@ -233,7 +240,7 @@ def crear_arbol_decision(conjunto_entrenamiento:pd.DataFrame, target_entrenamien
         filled=True,   #Añadimos colores a los valores predichos en cada nodo. filled no colorea cada valor individual colorea cada nodo del árbol. Coge la media de todas las muestras que caen en ese nodo, y cuanto más se aleje del promedio, más intenso el color
         max_depth=3,    #Con max_depth=3 vemos las primeras decisiones más importantes (las que más reducen el error)
         fontsize=9,    #Se ven muy pequeñas las letras
-        feature_names=conjunto_entrenamiento.columns.to_list())   #Añadimos los nombres de las variables predictoras
+        feature_names=conjunto_ent.columns.to_list())   #Añadimos los nombres de las variables predictoras
     plt.show()
     logger.info('✅ Representado el "Árbol de Decisión" correctamente')
 
@@ -244,11 +251,11 @@ def crear_arbol_decision(conjunto_entrenamiento:pd.DataFrame, target_entrenamien
     
     return mejor_arbol
 
-def crear_bosque_aleatorio(conjunto_entrenamiento:pd.DataFrame, conjunto_validacion:pd.DataFrame, conjunto_test:pd.DataFrame, target_entrenamiento:pd.DataFrame, target_validacion:pd.DataFrame, target_test:pd.DataFrame):
+def crear_bosque_aleatorio(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunto_test:pd.DataFrame, target_ent:pd.Series, target_val:pd.Series, target_test:pd.Series):
     '''
     No es necesario escalar los datos porque solo pregunta "¿es X mayor que umbral?", la magnitud no importa.
-    Hay que decidir entre estos hiperparámetros: 
-        # n_estimators : Número de árboles del bosque. Más árboles → más estable, más lento  
+    Hay que decidir entre estos hiperparámetros:
+        # n_estimators : Número de árboles del bosque. Más árboles → más estable, más lento
         # max_depth :  Igual que en el árbol individual
         max_features : Cuántas features considera en cada división. Introduce aleatoriedad para que los árboles sean distintos entre sí. Se dejaron los valores por defecto por ser suficientemente robustos
     '''
@@ -264,22 +271,24 @@ def crear_bosque_aleatorio(conjunto_entrenamiento:pd.DataFrame, conjunto_validac
       scoring='neg_mean_squared_error',  # métrica a optimizar
       n_jobs=-1                      # usa todos los núcleos del procesador
     )
-    grid_search.fit(conjunto_entrenamiento, target_entrenamiento)
+    grid_search.fit(conjunto_ent, target_ent)
 
     mejor_bosque = grid_search.best_estimator_
-    print(grid_search.best_params_)    # {'max_depth': 5}
+    logger.info('✅ Creado y entrenado el modelo de "Bosque Aleatorio" correctamente')
+    logger.info(f'Mejores hiperparámetros: {grid_search.best_params_}')
 
     #  Después, usas X_val para comparar modelos:
     # y_pred_val = mejor_arbol.predict(X_val)
     # print(r2_score(y_val, y_pred_val))
     # print(mean_squared_error(y_val, y_pred_val))
 
-    mejor_bosque.score(conjunto_test, target_test)  #Devuelve el porcentaje de predicciones correctas en clasificación, y la precisión o R^2 en regresión
+    r2_val = mejor_bosque.score(conjunto_val, target_val)    #Devuelve el porcentaje de predicciones correctas en clasificación, y la precisión o R^2 en regresión
+    logger.info(f'R² en validación: {r2_val:.4f}')
 
     return mejor_bosque
 
 
-def crear_maquinas_vectores_soporte(X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est):
+def crear_maquinas_vectores_soporte(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, conjunto_test_est:pd.DataFrame, target_ent_est:pd.Series, target_val_est:pd.Series, target_test_est:pd.Series):
     '''
     Estandarizamos los datos porque SVM maximiza márgenes → sensible a la magnitud.
     Hay que decidir entre estos hiperparámetros: 
@@ -293,7 +302,7 @@ def crear_maquinas_vectores_soporte(X_train_est, X_val_est, X_test_est, y_train_
     }
 
 
-def crear_k_vecinos_cercanos(X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est):
+def crear_k_vecinos_cercanos(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, conjunto_test_est:pd.DataFrame, target_ent_est:pd.Series, target_val_est:pd.Series, target_test_est:pd.Series):
     '''
     Estandarizamos los datos porque KNN mide distancia entre puntos → una variable en miles de euros dominaría sobre una en m².
     Hay que decidir entre estos hiperparámetros: 
@@ -306,7 +315,7 @@ def crear_k_vecinos_cercanos(X_train_est, X_val_est, X_test_est, y_train_est, y_
     }
 
 
-def crear_redes_neuronales(X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm):
+def crear_redes_neuronales(conjunto_ent_norm:pd.DataFrame, conjunto_val_norm:pd.DataFrame, conjunto_test_norm:pd.DataFrame, target_ent_norm:pd.Series, target_val_norm:pd.Series, target_test_norm:pd.Series):
     '''
     Normalizamos los datos porque las Redes Neuronales aprenden con gradientes → convergen mejor con datos en [0,1].
     Hay que decidir el 'early stopping' y entre estos hiperparámetros: 
@@ -356,7 +365,7 @@ def main():
     X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est, scaler_X, scaler_y = estandarizar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
     X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm, norm_X, norm_y = normalizar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
 
-    # regresion = crear_regresion_lineal(X_train, y_train, 'tamaño_habitacion')
+    # regresion = crear_regresion_lineal(X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est, 'tamaño_habitacion')
 
     arbol = crear_arbol_decision(X_train, y_train)
 
