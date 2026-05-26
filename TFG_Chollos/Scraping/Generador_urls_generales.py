@@ -1,6 +1,6 @@
 """
 Generador_urls_generales.py
-====================
+==============================================================================
 Define y guarda las variables necesarias para la búsqueda en booking.
 
 Dependencias:

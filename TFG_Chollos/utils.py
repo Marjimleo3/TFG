@@ -19,6 +19,7 @@ def conseguir_ruta_general_TFG():
     return BASE
 
 
+
 def configurar_logger(nombre: str = __name__) -> logging.Logger:
     '''
     Configura la salida del logger
@@ -29,6 +30,18 @@ def configurar_logger(nombre: str = __name__) -> logging.Logger:
     )
     logger = logging.getLogger(nombre)
     return logger
+
+
+
+def abrir_streamlit():
+    '''
+    Cargamos las constantes del archivo .env como variables de entorno del sistema y extraemos todas las variables de entorno.
+    *Nota. 'Path' se usa para poder concatenar más cómodamente la ruta (convierte un string en un objeto de ruta inteligente) y 'getenv' significa get environment variable 
+    '''
+    load_dotenv()  #Carga las rutas del archivo .env como variables de entorno del sistema
+    STREAMLIT = Path(os.getenv("STREAMLIT"))
+    return STREAMLIT
+
 
 
 def denegar_cookies(driver, timeout=2):

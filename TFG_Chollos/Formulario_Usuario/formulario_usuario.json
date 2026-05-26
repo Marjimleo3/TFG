@@ -1,19 +1,21 @@
 [
   {
     "lugar":[
-      "Punta Umbría",
-      "Mazagón",
-      "Barcelona",
-      "Rota"
+
     ],
-    "fecha_entrada":"2026-02-27",
-    "fecha_salida":"2026-02-27",
+    "fecha_entrada":"2026-05-26",
+    "fecha_salida":"2026-05-26",
     "n_noches":[
-      "4",
-      "6"
+
+    ],
+    "tipo_dias":[
+
+    ],
+    "servicios":[
+
     ],
     "tipo_estancia":[
-      "Casa rural"
+
     ]
   }
 ]
