@@ -47,17 +47,6 @@ logger = configurar_logger(__name__)
 # =============================================================================
 # FUNCIONES
 # =============================================================================
-
-def cargar_destinos_db(db_final_unida : str) -> pd.DataFrame:
-    db = pd.read_parquet(db_final_unida)
-    provincias = db['provincia'].unique().tolist()
-    localidades = sorted(db['localidad'].unique().tolist())
-    destinos = provincias + localidades  # une las dos listas en una
-
-    return destinos
-
-
-
 def generador_urls(FECHA_ENTRADA:str, FECHA_SALIDA:str, N_ADULTOS:int, N_HABITACIONES:int, N_MENORES:int, LUGARES:dict, PROVINCIAS:dict) -> tuple:
     """
     Genera las URLs de búsqueda de Booking para los lugares y provincias definidos previamente.

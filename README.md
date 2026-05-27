@@ -27,7 +27,6 @@ TFG/
 │   │   ├── Generador_urls_generales.py
 │   │   ├── Scrp_estancias_provincias.py      # Scraping de listados por provincia
 │   │   ├── Scrp_caracteristicas_estancias.py # Scraping de fichas individuales
-│   │   ├── obtener_coordenadas_centros.py
 │   │   └── patch_room_size.py
 │   ├── Cleaning/
 │   │   └── preprocessing.py    # Limpieza y estructuración del dataset
@@ -36,7 +35,9 @@ TFG/
 │   ├── Graficos/
 │   │   └── Grafico_Alojamientos_Andalucia.py
 │   ├── Formulario_Usuario/
-│   │   └── Formulario_Web.py   # Aplicación Streamlit
+│   │   ├── Busqueda.py
+│   │   ├── formulario_usuario.json
+│   │   └── Formulario_Web.py         # Aplicación Streamlit
 │   └── utils.py
 ├── data/
 │   ├── raw/                    # Datos en bruto del scraping
@@ -57,18 +58,26 @@ $env:UV_PROJECT_ENVIRONMENT = "Disco:\ruta\.venv"   #Activa el entorno automáti
 Disco:\ruta\.venv\Scripts\Activate.ps1              #Activa el entorno automáticamente cada vez que abre powershell
 ```
 
-**2. Instalar Chromium para Playwright (Scraping)**
+**2. Instalación de módulos (archivos .py) como paquetes**
+Permite usar las funciones de tus propios archivos .py desde cualquier otro archivo del proyecto, instalándolas como librerías editables (para no tener que reinstalarlas con cualquier cambio). Con -e, el paquete queda "vinculado" a tu carpeta.
+
+```powershell
+pip install -e .
+```
+
+**3. Instalar Chromium para Playwright (Scraping)**
 
 ```powershell
 playwright install chromium
 ```
 
-**3. Configurar variables de entorno**
+**4. Configurar variables de entorno**
 
-Crea un archivo `.env` en la raíz del proyecto con la ruta base:
+Crea un archivo `.env` en la raíz del proyecto con la ruta base, necesitas modificar "Disco" y "ruta":
 
 ```
-BASE = Disco:/ruta/TFG/TFG_Chollos
+BASE=Disco:/ruta/TFG/TFG_Chollos
+STREAMLIT=Disco:/ruta/TFG/TFG_Chollos/Formulario_Usuario/Formulario_Web.py
 ```
 
 ---

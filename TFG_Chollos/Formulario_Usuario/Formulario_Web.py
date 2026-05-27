@@ -4,7 +4,7 @@ Formulario_Web
 Aplicación utilizada para la búsqueda de chollos según las preferencias del cliente y nuestra base de datos
 
 Para ejecutar, escribir en el terminal: 
-streamlit run STREAMLIT
+streamlit run C:/Users/usuario/OneDrive/UNI_Mario5/TFG/TFG_Chollos/Formulario_Usuario/Formulario_Web.py
 '''
 
 # =============================================================================
@@ -19,7 +19,6 @@ from TFG_Chollos.utils import conseguir_ruta_general_TFG, configurar_logger, abr
 # CONSTANTES
 # =============================================================================
 BASE = conseguir_ruta_general_TFG()
-STREAMLIT = abrir_streamlit()
 db_final_completa = BASE / 'data' / 'processed' / 'final' / 'db_final.parquet'
 
 # =============================================================================
@@ -30,6 +29,13 @@ logger = configurar_logger(__name__)
 # =============================================================================
 # FUNCIONES
 # =============================================================================
+def cargar_destinos_db(db_final_unida : str) -> pd.DataFrame:
+    db = pd.read_parquet(db_final_unida)
+    provincias = db['provincia'].unique().tolist()
+    localidades = sorted(db['localidad'].unique().tolist())
+    destinos = provincias + localidades  # une las dos listas en una
+
+    return destinos
 
 
 # =============================================================================
