@@ -231,13 +231,16 @@ def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
     db_final = db_final.rename(columns={'lugar': 'provincia'})   #Cambiamos el nombre de lugar a provincia
     db_final = db_final.rename(columns={'room_size_m2':'tamaño_habitacion'})
 
+    #Reemplazo de valores (Eliminar en posteriores Scrapings):
+    db_final['tipo'] = db_final['tipo'].replace('Apartamento/Casa/Estudio', 'Otro')
+
     #Procesamiento de valores nulos:
     ###Eliminación registros:
     cols_obligatorias = ['latitud', 'longitud', 'latitud_centro', 'longitud_centro', 'distancia_centro_km']   #Con latitud_centro, longitud_centro y dist_centro de pierde el 2.2% total (muy asumible), también se incluyen ahí los NaN de localidad, porque sin localidad no se puede calcular las variables que acabo de mencionar
     db_final = db_final.dropna(subset=cols_obligatorias)
     db_final = db_final[db_final['localidad'] != '9']   #Hay una localidad que se llama '9'
 
-    ###Reemplazo de valores:
+    ###Reemplazo de valores nulos:
     nuevos_valores = {
         'codigo_postal':-1,                                                             #Nan: valor desconocido
         'tipo':'Apartamento/Casa/Estudio',                                              #Nan: lo metemos en el saco grande 'Apartamento/Casa/Estudio
@@ -267,6 +270,10 @@ def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
     db_final['es_finde'] = db_final['fecha_disponible'].dt.dayofweek.isin([4, 5]).astype('int8')
     db_final['es_domingo'] = (db_final['fecha_disponible'].dt.dayofweek == 6).astype('int8')
 
+    #Reordenamos la columna 'precio':
+    precio = db_final.pop('precio')
+    db_final.insert(len(db_final.columns), 'precio', precio)
+
     return db_final
 
 
@@ -295,10 +302,6 @@ def encoding(db_final:pd.DataFrame, incluir_provincia:bool) -> pd.DataFrame:
     db_final['mes_disponible'] = db_final['fecha_disponible'].dt.month
     db_final['dia_disponible'] = db_final['fecha_disponible'].dt.day
     db_final = db_final.drop(columns=['fecha_disponible'])
-
-    #Reordenamos la columna 'precio':
-    precio = db_final.pop('precio')
-    db_final.insert(len(db_final.columns), 'precio', precio)
 
     return db_final
 
