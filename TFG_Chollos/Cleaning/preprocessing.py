@@ -235,6 +235,7 @@ def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
     ###Eliminación registros:
     cols_obligatorias = ['latitud', 'longitud', 'latitud_centro', 'longitud_centro', 'distancia_centro_km']   #Con latitud_centro, longitud_centro y dist_centro de pierde el 2.2% total (muy asumible), también se incluyen ahí los NaN de localidad, porque sin localidad no se puede calcular las variables que acabo de mencionar
     db_final = db_final.dropna(subset=cols_obligatorias)
+    db_final = db_final[db_final['localidad'] != '9']   #Hay una localidad que se llama '9'
 
     ###Reemplazo de valores:
     nuevos_valores = {
@@ -261,6 +262,10 @@ def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
         'tamaño_habitacion':'int16', 
         'dias_restantes':'int16', 
         'precio':'int32'})
+
+    #Nuevas variables:
+    db_final['es_finde'] = db_final['fecha_disponible'].dt.dayofweek.isin([4, 5]).astype('int8')
+    db_final['es_domingo'] = (db_final['fecha_disponible'].dt.dayofweek == 6).astype('int8')
 
     return db_final
 
@@ -289,8 +294,6 @@ def encoding(db_final:pd.DataFrame, incluir_provincia:bool) -> pd.DataFrame:
     #Extraemos día de la semana y mes de 'fecha_disponible' y la eliminamos
     db_final['mes_disponible'] = db_final['fecha_disponible'].dt.month
     db_final['dia_disponible'] = db_final['fecha_disponible'].dt.day
-    db_final['es_finde'] = db_final['fecha_disponible'].dt.dayofweek.isin([4, 5]).astype('int8')
-    db_final['es_domingo'] = (db_final['fecha_disponible'].dt.dayofweek==6).astype('int8')
     db_final = db_final.drop(columns=['fecha_disponible'])
 
     #Reordenamos la columna 'precio':
@@ -313,7 +316,7 @@ def main():
 
     dfs_finales = []
 
-    for provincia in provincias.iloc[0:1,0]:
+    for provincia in provincias.iloc[:,0]:
         raw = pd.read_csv( BASE / "data" / "raw" / "fichas" / f"resultados_booking_{provincia}.csv", sep="|")
         raw['localidad'] = extraer_localidad(raw)
 
