@@ -13,7 +13,7 @@ streamlit run STREAMLIT
 import json
 import streamlit as st
 import pandas as pd
-from TFG_Chollos.utils import conseguir_ruta_general_TFG, configurar_logger, abrir_streamlit
+from TFG_Chollos.utils import conseguir_ruta_general_TFG, configurar_logger
 
 # =============================================================================
 # CONSTANTES
@@ -29,11 +29,20 @@ N_MENORES = 0
 FILTROS = {
     'Hotel' : 'ht_id=204',
     'Apartamento' : 'ht_id=204',
+    'Hostales y Pensiones' : 'ht_id=216',
+    'Casas Rurales' : 'ht_id=223',
+    'Casas y Chalets' : 'ht_id=220',
+    'Villa' : 'ht_id=213',
     'Parking' : 'hotelfacility=2',
+    'Spa' : 'hotelfacility=54',
+    'Gimnasio' : 'hotelfacility=11',
+    'Piscina' : 'hotelfacility=433',
+    'Restaurante' : 'hotelfacility=3',
     'Cancelación Gratuita' : 'fc=2',
     'Desayuno incluido' : 'mealplan=1',
-    'Piscina' : 'hotelfacility=433',
-    'Valoración >= 8': 'review_score=80' 
+    'Valoración >= 8': 'review_score=80',
+    '3 o más estrellas' : 'class=3;class=4;class=5',
+    'Admite Mascotas' : 'stay_type=1',
 }
 
 #'%3B' significa ';'
@@ -47,6 +56,12 @@ logger = configurar_logger(__name__)
 # =============================================================================
 # FUNCIONES
 # =============================================================================
+def cargar_json_cliente():
+    df = pd.read_json(BASE / 'Formulario_Usuario' / 'formulario_usuario.json')
+    return df
+
+
+
 def generador_urls(FECHA_ENTRADA:str, FECHA_SALIDA:str, N_ADULTOS:int, N_HABITACIONES:int, N_MENORES:int, LUGARES:dict, PROVINCIAS:dict) -> tuple:
     """
     Genera las URLs de búsqueda de Booking para los lugares y provincias definidos previamente.
@@ -75,6 +90,33 @@ def generador_urls(FECHA_ENTRADA:str, FECHA_SALIDA:str, N_ADULTOS:int, N_HABITAC
 
 
 
+def generador_filtros(Servicios_Web: list, Tipos_destinos_Web: list):
+    filtro1 = None
+    filtro2 = None
+
+    if Servicios_Web:
+        filtro1 = '&'.join(FILTROS[s] for s in Servicios_Web if s in FILTROS)
+        logger.info(filtro1)
+
+    if Tipos_destinos_Web and 'Cualquiera' not in Tipos_destinos_Web:
+        filtro2 = '&'.join(FILTROS[t] for t in Tipos_destinos_Web if t in FILTROS)
+        logger.info(filtro2)
+
+    return filtro1, filtro2
+
+
+
 # =============================================================================
 # PUNTO DE ENTRADA
 # =============================================================================
+def main():
+    df = cargar_json_cliente()
+    servicios = df['servicios'].iloc[0]
+    tipos = df['tipo_estancia'].iloc[0]
+    # logger.info(df)
+    print(df['servicios'])
+    filtros = generador_filtros(servicios,tipos)
+
+
+if __name__ == '__main__':
+    main()

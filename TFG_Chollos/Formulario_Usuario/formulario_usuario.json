@@ -1,20 +1,18 @@
 [
   {
     "lugar":[
-
+      "Aguilar",
+      "Adra",
+      "Albaida del Aljarafe",
+      "Albolote",
+      "Alanís"
     ],
-    "fecha_entrada":"2026-05-26",
-    "fecha_salida":"2026-05-26",
-    "n_noches":[
-
-    ],
-    "tipo_dias":[
-
+    "fecha_entrada":"2026-05-28",
+    "fecha_salida":"2026-05-28",
+    "tipo_estancia":[
+      "Cualquiera"
     ],
     "servicios":[
-
-    ],
-    "tipo_estancia":[
 
     ]
   }

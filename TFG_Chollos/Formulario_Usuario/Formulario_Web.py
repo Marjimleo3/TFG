@@ -13,7 +13,7 @@ streamlit run C:/Users/usuario/OneDrive/UNI_Mario5/TFG/TFG_Chollos/Formulario_Us
 import json
 import streamlit as st
 import pandas as pd
-from TFG_Chollos.utils import conseguir_ruta_general_TFG, configurar_logger, abrir_streamlit
+from TFG_Chollos.utils import conseguir_ruta_general_TFG, configurar_logger
 
 # =============================================================================
 # CONSTANTES
@@ -48,37 +48,40 @@ def main():
 
     st.subheader('Seleccione el lugar/es donde quiera realizar la estancia (máximo 5):')
     destinos = cargar_destinos_db(db_final_completa)
-    # destinos = ["Madrid", "Sevilla", "Barcelona", "Valencia", "Bilbao", "Rota", "Punta Umbría", "Mazagón", "Chiclana de la Frontera"]
+
     destino = st.multiselect(
         "Elije uno o varios destinos:",
         options = destinos,
         max_selections=5)
 
     # Formulario
-    st.subheader('Fecha exacta:')
+    st.subheader('Fecha:')
     fecha_entrada = st.date_input('Introduce la fecha de entrada')
     fecha_salida = st.date_input('Introduce la fecha de salida')
 
-    st.subheader('Buscar por X días:')
-    n_noches = st.multiselect(
-        "Número de noches:",
-        ["1", "2", "3", "4", "5", "6"])
+    # st.subheader('Buscar por X días:')
+    # n_noches = st.multiselect(
+    #     "Número de noches:",
+    #     ["1", "2", "3", "4", "5", "6"])
 
-    st.subheader('Flexibilidad horaria:')
-    tipo_días = st.multiselect(
-        "Buscar por:",
-        ["Fines de semana", "Un mes entero"]
+    # st.subheader('Flexibilidad horaria:')
+    # tipo_días = st.multiselect(
+    #     "Buscar por:",
+    #     ["Fines de semana", "Un mes entero"]
+    # )
+
+    st.subheader('Tipos de alojamiento:')
+    tipos_estancia = st.multiselect(
+        'Tipos',
+        ["Hotel", "Apartamento", "Hostales y Pensiones", "Casas Rurales", "Casas y Chalets", "Villa", "Cualquiera"]
     )
 
     st.subheader('¿Necesita algún servicio de los siguientes?')
     servicios = st.multiselect(
         'Servicios',
-        ["Parking", "Cancelación Gratuita", "Admite Mascotas", "Piscina", "Desayuno Incluido", "Gimnasio", "Spa", "Aire Acondicionado", "Balcón"])
+        ["Parking", "Spa", "Gimnasio", "Cancelación Gratuita", "Piscina", "Restaurante", "Desayuno Incluido", "Valoración >= 8", "3 o mas estrellas", "Admite Mascotas"])
+        #Aire Acondicionado, "Terraza"
 
-    st.subheader('Elija el tipo de estancia que prefieras (puede no elegir ninguna preferencia):')
-    tipos_estancia = st.multiselect(
-        "Tipo de estancia",
-        ["Hotel", "Apartamento", "Casa rural"])
 
     if st.button("Mostrar Chollos"):
 
@@ -86,10 +89,10 @@ def main():
             "lugar": destino,
             "fecha_entrada": str(fecha_entrada),
             "fecha_salida": str(fecha_salida),
-            "n_noches": n_noches,
-            "tipo_dias": tipo_días,
-            "servicios": servicios,       # ← faltaba
-            "tipo_estancia": tipos_estancia
+            # "n_noches": n_noches,
+            # "tipo_dias": tipo_días,
+            "tipo_estancia": tipos_estancia,
+            "servicios": servicios
                 }])
         
         BASE = conseguir_ruta_general_TFG()
