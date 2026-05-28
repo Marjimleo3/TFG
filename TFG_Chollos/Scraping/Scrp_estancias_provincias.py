@@ -224,7 +224,7 @@ def extraer_alojamientos(driver, clave):
                 n_valoraciones = 'NA'
 
             if estancia.find('div', {"data-testid":"rating-squares"}):
-                tipo = 'Apartamento/Casa/Estudio'
+                tipo = 'Otro'
                 n_estrellas = estancia.find('div', {"data-testid":"rating-squares"})   #Cuadrados = estrellas de booking
                 estrellas = len(n_estrellas.find_all('div', recursive=False))   #Recursive=F especifica los hijos Directos
             elif estancia.find('div', {"data-testid":"rating-stars"}):
