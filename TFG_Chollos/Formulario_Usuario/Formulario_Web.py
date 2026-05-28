@@ -11,6 +11,7 @@ streamlit run C:/Users/usuario/OneDrive/UNI_Mario5/TFG/TFG_Chollos/Formulario_Us
 # IMPORTS
 # =============================================================================
 import json
+from datetime import date, timedelta
 import streamlit as st
 import pandas as pd
 from TFG_Chollos.utils import conseguir_ruta_general_TFG, configurar_logger
@@ -56,8 +57,8 @@ def main():
 
     # Formulario
     st.subheader('Fecha:')
-    fecha_entrada = st.date_input('Introduce la fecha de entrada')
-    fecha_salida = st.date_input('Introduce la fecha de salida')
+    fecha_entrada = st.date_input('Introduce la fecha de entrada', min_value=date.today())
+    fecha_salida = st.date_input('Introduce la fecha de salida', value=fecha_entrada + timedelta(days=1), min_value=fecha_entrada + timedelta(days=1))
 
     # st.subheader('Buscar por X días:')
     # n_noches = st.multiselect(
@@ -79,7 +80,7 @@ def main():
     st.subheader('¿Necesita algún servicio de los siguientes?')
     servicios = st.multiselect(
         'Servicios',
-        ["Parking", "Spa", "Gimnasio", "Cancelación Gratuita", "Piscina", "Restaurante", "Desayuno Incluido", "Valoración >= 8", "3 o mas estrellas", "Admite Mascotas"])
+        ["Parking", "Spa", "Gimnasio", "Cancelación Gratuita", "Piscina", "Restaurante", "Desayuno Incluido", "Valoración >= 8", "3 o más estrellas", "Admite Mascotas"])
         #Aire Acondicionado, "Terraza"
 
 

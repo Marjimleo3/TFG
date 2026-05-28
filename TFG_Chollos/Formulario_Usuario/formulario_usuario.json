@@ -1,19 +1,17 @@
 [
   {
     "lugar":[
-      "Aguilar",
-      "Adra",
-      "Albaida del Aljarafe",
-      "Albolote",
-      "Alanís"
+
     ],
     "fecha_entrada":"2026-05-28",
-    "fecha_salida":"2026-05-28",
+    "fecha_salida":"2026-05-29",
     "tipo_estancia":[
-      "Cualquiera"
+      "Casas Rurales",
+      "Hotel"
     ],
     "servicios":[
-
+      "Piscina",
+      "Parking"
     ]
   }
 ]
