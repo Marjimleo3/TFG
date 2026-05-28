@@ -68,7 +68,7 @@ def extraer_servicios_influyentes(ficha:pd.DataFrame) -> pd.DataFrame:
                 piscina = servicio
             if 'piscina interior' in servicio or 'cubierta' in servicio:
                 piscina_interior = servicio
-            if 'piscina infinita' in servicio or 'nfinity pool' in servicio:
+            if 'piscina infinita' in servicio or 'infinity pool' in servicio:
                 piscina_infinita = servicio
 
             if ('aire' in servicio_habitacion or 'air' in servicio_habitacion) and ('aire libre' not in servicio_habitacion and 'stairs' not in servicio_habitacion and 'hair' not in servicio_habitacion and 'chair' not in servicio_habitacion and 'purifier' not in servicio_habitacion):
@@ -240,7 +240,7 @@ def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
     nuevos_valores = {
         'codigo_postal':-1,                                                             #Nan: valor desconocido
         'tipo':'Apartamento/Casa/Estudio',                                              #Nan: lo metemos en el saco grande 'Apartamento/Casa/Estudio
-        'estrellas':0,                                                                  #Nan: no tiene estrellas
+        'estrellas':1,                                                                  #Nan: no tiene estrellas
         'n_valoraciones':0,                                                             #Nan: no tiene valoraciones
         'valoracion_clientes':db_final['valoracion_clientes'].astype(float).mean(),    #Nan: rellenamos con la media para no sesgar el modelo hacia valoraciones extremas
         'tamaño_habitacion':db_final['tamaño_habitacion'].median()}                    #Nan: la mediana es más robusta que la media ante suites con m² extremos
