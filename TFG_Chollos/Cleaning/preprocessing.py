@@ -243,7 +243,7 @@ def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
     ###Reemplazo de valores nulos:
     nuevos_valores = {
         'codigo_postal':-1,                                                             #Nan: valor desconocido
-        'tipo':'Apartamento/Casa/Estudio',                                              #Nan: lo metemos en el saco grande 'Apartamento/Casa/Estudio
+        'tipo':'Otro',                                              #Nan: lo metemos en el saco grande 'Apartamento/Casa/Estudio
         'estrellas':1,                                                                  #Nan: no tiene estrellas
         'n_valoraciones':0,                                                             #Nan: no tiene valoraciones
         'valoracion_clientes':db_final['valoracion_clientes'].astype(float).mean(),    #Nan: rellenamos con la media para no sesgar el modelo hacia valoraciones extremas
@@ -252,6 +252,8 @@ def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
 
     #Tipado de datos:
     db_final['fecha_disponible'] = pd.to_datetime(db_final['fecha_disponible'])
+    bool_cols = db_final.select_dtypes(include='bool').columns  #Seleccionamos las columnas bool
+    db_final[bool_cols] = db_final[bool_cols].astype('int8')
     db_final = db_final.astype({
         'provincia':'category', 
         'localidad':'category', 
