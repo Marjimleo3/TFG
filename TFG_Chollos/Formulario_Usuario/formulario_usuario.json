@@ -1,17 +1,19 @@
 [
   {
     "lugar":[
-
+      "Alcalá de Guadaíra",
+      "Mairena del Aljarafe",
+      "Sevilla",
+      "Benacazón",
+      "Arenas del Rey"
     ],
-    "fecha_entrada":"2026-05-28",
-    "fecha_salida":"2026-05-29",
+    "fecha_entrada":"2026-09-16",
+    "fecha_salida":"2026-09-19",
     "tipo_estancia":[
-      "Casas Rurales",
       "Hotel"
     ],
     "servicios":[
-      "Piscina",
-      "Parking"
+      "Piscina"
     ]
   }
 ]

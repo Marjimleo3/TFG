@@ -246,7 +246,7 @@ def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
         'tipo':'Otro',                                              #Nan: lo metemos en el saco grande 'Apartamento/Casa/Estudio
         'estrellas':1,                                                                  #Nan: no tiene estrellas
         'n_valoraciones':0,                                                             #Nan: no tiene valoraciones
-        'valoracion_clientes':db_final['valoracion_clientes'].astype(float).mean(),    #Nan: rellenamos con la media para no sesgar el modelo hacia valoraciones extremas
+        'valoracion_clientes':db_final['valoracion_clientes'].astype(float).mean().round(1),    #Nan: rellenamos con la media de cada una de las provincias, para no sesgar el modelo hacia valoraciones extremas
         'tamaño_habitacion':db_final['tamaño_habitacion'].median()}                    #Nan: la mediana es más robusta que la media ante suites con m² extremos
     db_final = db_final.fillna(nuevos_valores)
 
@@ -275,6 +275,24 @@ def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
     #Reordenamos la columna 'precio':
     precio = db_final.pop('precio')
     db_final.insert(len(db_final.columns), 'precio', precio)
+
+    return db_final
+
+
+def transformar_post_analisis(db_final:pd.DataFrame) -> pd.DataFrame:
+
+    # Eliminación de outliers de precio por criterio de Tukey (Q3 + 1.5*IQR)
+    Q1 = db_final['precio'].quantile(0.25)
+    Q3 = db_final['precio'].quantile(0.75)
+    bigote_sup = Q3 + 1.5 * (Q3 - Q1)
+    antes = len(db_final)
+    db_final = db_final[db_final['precio'] <= bigote_sup]
+    logger.info(f'Outliers de precio eliminados: {antes - len(db_final)} registros (umbral Tukey: {bigote_sup:.2f}€)')
+
+    # Eliminación de villas/fincas por umbral de negocio en tamaño_habitacion
+    antes = len(db_final)
+    db_final = db_final[db_final['tamaño_habitacion'] <= 500]
+    logger.info(f'Registros eliminados por tamaño_habitacion > 500m²: {antes - len(db_final)} registros')
 
     return db_final
 
@@ -342,12 +360,14 @@ def main():
         df_5 = añadir_distancia_centro(df_5, coords_centros)
         df_6 = limpiar_db_final(df_5)
 
-        df_6.to_parquet(BASE / "data" / "processed" / "final" / f"db_final_{provincia}.parquet", index=False)
-        logger.info(f'✅ Dataset de {provincia} guardado correctamente')
+        # df_6.to_parquet(BASE / "data" / "processed" / "final" / f"db_final_{provincia}.parquet", index=False)
+        # logger.info(f'✅ Dataset de {provincia} guardado correctamente')
 
-        codificada = encoding(df_6, incluir_provincia=False)
-        codificada.to_parquet(BASE / "data" / "processed" / "modelizacion" / f"db_final_codificada_{provincia}.parquet", index=False)
-        logger.info(f'✅ Dataset codificado de {provincia} guardado correctamente')
+        # codificada = encoding(df_6, incluir_provincia=False)
+        # codificada.to_parquet(BASE / "data" / "processed" / "modelizacion" / f"db_final_codificada_{provincia}.parquet", index=False)
+        # logger.info(f'✅ Dataset codificado de {provincia} guardado correctamente')
+
+        logger.info(f'Ciclo de {provincia} completado')
 
         dfs_finales.append(df_6)
 
@@ -355,7 +375,11 @@ def main():
     db_completa.to_parquet(BASE / "data" / "processed" / "final" / "db_final.parquet", index=False)
     logger.info('✅ Dataset completo guardado correctamente')
 
-    db_completa_codificada = encoding(db_completa, incluir_provincia=True)
+    db_analisis = transformar_post_analisis(db_completa)
+    db_analisis.to_parquet(BASE / "data" / "processed" / "analisis" / "db_final_analisis.parquet", index=False)
+    logger.info('✅ Dataset analítico guardado correctamente')
+
+    db_completa_codificada = encoding(db_analisis, incluir_provincia=True)
     db_completa_codificada.to_parquet(BASE / "data" / "processed" / "modelizacion" / "db_final_codificada.parquet", index=False)
     logger.info('✅ Dataset completo codificado guardado correctamente')
 
