@@ -6,8 +6,8 @@ Búsqueda de Chollos
 # =============================================================================
 # IMPORTS
 # =============================================================================
-import json
 from datetime import date, timedelta
+from urllib.parse import quote
 
 import pandas as pd
 import streamlit as st
@@ -18,7 +18,30 @@ from TFG_Chollos.utils import conseguir_ruta_general_TFG, configurar_logger
 # CONSTANTES
 # =============================================================================
 BASE = conseguir_ruta_general_TFG()
-db_final_completa = BASE / 'data' / 'processed' / 'final' / 'db_final.parquet'
+DB_FINAL = BASE / 'data' / 'processed' / 'final' / 'db_final.parquet'
+
+N_ADULTOS = 2
+N_HABITACIONES = 1
+N_MENORES = 0
+
+FILTROS = {
+    'Hotel':                'ht_id=204',
+    'Apartamento':          'ht_id=201',
+    'Hostales y Pensiones': 'ht_id=216',
+    'Casas Rurales':        'ht_id=223',
+    'Casas y Chalets':      'ht_id=220',
+    'Villa':                'ht_id=213',
+    'Parking':              'hotelfacility=2',
+    'Spa':                  'hotelfacility=54',
+    'Gimnasio':             'hotelfacility=11',
+    'Piscina':              'hotelfacility=433',
+    'Restaurante':          'hotelfacility=3',
+    'Cancelación Gratuita': 'fc=2',
+    'Desayuno Incluido':    'mealplan=1',
+    'Valoración >= 8':      'review_score=80',
+    '3 o más estrellas':    'class=3;class=4;class=5',
+    'Admite Mascotas':      'stay_type=1',
+}
 
 # =============================================================================
 # CONFIGURACIÓN DEL LOGGER
@@ -28,62 +51,94 @@ logger = configurar_logger(__name__)
 # =============================================================================
 # FUNCIONES
 # =============================================================================
-def cargar_destinos_db(ruta: str) -> list:
-    db = pd.read_parquet(ruta)
+@st.cache_data
+def cargar_destinos_db() -> list:
+    db = pd.read_parquet(DB_FINAL, columns=['provincia', 'localidad'])
     provincias = db['provincia'].unique().tolist()
     localidades = sorted(db['localidad'].unique().tolist())
     return provincias + localidades
+
+
+def generador_urls(lugares: list, fecha_entrada: str, fecha_salida: str) -> dict:
+    urls = {}
+    for lugar in lugares:
+        ss = quote(f'{lugar}, España')
+        url = (
+            f'https://www.booking.com/searchresults.es.html'
+            f'?ss={ss}'
+            f'&checkin={fecha_entrada}'
+            f'&checkout={fecha_salida}'
+            f'&group_adults={N_ADULTOS}'
+            f'&no_rooms={N_HABITACIONES}'
+            f'&group_children={N_MENORES}'
+        )
+        urls[lugar] = url
+    logger.info(f'URLs generadas: {len(urls)}')
+    return urls
+
+
+def generador_filtros(tipos: list, servicios: list) -> str:
+    partes = []
+
+    if tipos and 'Cualquiera' not in tipos:
+        partes.append(';'.join(FILTROS[t] for t in tipos if t in FILTROS))
+
+    if servicios:
+        partes.append(';'.join(FILTROS[s] for s in servicios if s in FILTROS))
+
+    if partes:
+        return '&nflt=' + quote(';'.join(partes), safe='')
+    return ''
 
 
 # =============================================================================
 # PUNTO DE ENTRADA
 # =============================================================================
 def main():
-
     st.header('¡¡Bienvenidos al mejor buscador de chollos de todo internet!!')
 
-    st.subheader('Seleccione el lugar/es donde quiera realizar la estancia (máximo 5):')
-    destinos = cargar_destinos_db(db_final_completa)
-
-    destino = st.multiselect(
-        "Elije uno o varios destinos:",
-        options=destinos,
-        max_selections=5)
+    st.subheader('Seleccione el lugar/es donde quiera hospedarse (máximo 5):')
+    destinos = st.multiselect(
+        'Elige uno o varios destinos:',
+        options=cargar_destinos_db(),
+        max_selections=5
+    )
 
     st.subheader('Fecha:')
-    fecha_entrada = st.date_input('Introduce la fecha de entrada', min_value=date.today())
-    fecha_salida = st.date_input(
-        'Introduce la fecha de salida',
-        value=fecha_entrada + timedelta(days=1),
-        min_value=fecha_entrada + timedelta(days=1))
+    col1, col2 = st.columns(2)
+    with col1:
+        fecha_entrada = st.date_input('Fecha de entrada', min_value=date.today())
+    with col2:
+        fecha_salida = st.date_input(
+            'Fecha de salida',
+            value=fecha_entrada + timedelta(days=1),
+            min_value=fecha_entrada + timedelta(days=1)
+        )
 
     st.subheader('Tipos de alojamiento:')
     tipos_estancia = st.multiselect(
         'Tipos',
-        ["Hotel", "Apartamento", "Hostales y Pensiones", "Casas Rurales", "Casas y Chalets", "Villa", "Cualquiera"])
+        ['Hotel', 'Apartamento', 'Hostales y Pensiones', 'Casas Rurales', 'Casas y Chalets', 'Villa', 'Cualquiera']
+    )
 
     st.subheader('¿Necesita algún servicio de los siguientes?')
     servicios = st.multiselect(
         'Servicios',
-        ["Parking", "Spa", "Gimnasio", "Cancelación Gratuita", "Piscina", "Restaurante",
-         "Desayuno Incluido", "Valoración >= 8", "3 o más estrellas", "Admite Mascotas"])
+        ['Parking', 'Spa', 'Gimnasio', 'Cancelación Gratuita', 'Piscina', 'Restaurante',
+         'Desayuno Incluido', 'Valoración >= 8', '3 o más estrellas', 'Admite Mascotas']
+    )
 
-    if st.button("Mostrar Chollos"):
-        df = pd.DataFrame([{
-            "lugar": destino,
-            "fecha_entrada": str(fecha_entrada),
-            "fecha_salida": str(fecha_salida),
-            "tipo_estancia": tipos_estancia,
-            "servicios": servicios
-        }])
+    if st.button('Mostrar Chollos'):
+        if not destinos:
+            st.warning('Por favor, selecciona al menos un destino.')
+            return
 
-        df.to_json(
-            BASE / "Formulario_Usuario" / "formulario_usuario.json",
-            force_ascii=False,
-            orient="records",
-            indent=2)
+        filtro = generador_filtros(tipos_estancia, servicios)
+        urls = generador_urls(destinos, str(fecha_entrada), str(fecha_salida))
 
-        st.success("Datos guardados! Realizando búsqueda...")
+        st.subheader('Resultados en Booking.com')
+        for lugar, url in urls.items():
+            st.markdown(f'**{lugar}:** [Ver en Booking.com]({url + filtro})')
 
 
 if __name__ == '__main__':
