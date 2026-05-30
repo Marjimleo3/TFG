@@ -26,7 +26,6 @@ import math
 #Librerías de terceros (es necesario instalarlas):
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
 
 #Módulos propios del proyecto
 from TFG_Chollos.utils import configurar_logger, conseguir_ruta_general_TFG
@@ -279,52 +278,6 @@ def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
     return db_final
 
 
-def transformar_post_analisis(db_final:pd.DataFrame) -> pd.DataFrame:
-
-    # Eliminación de outliers de precio por criterio de Tukey (Q3 + 1.5*IQR)
-    Q1 = db_final['precio'].quantile(0.25)
-    Q3 = db_final['precio'].quantile(0.75)
-    bigote_sup = Q3 + 1.5 * (Q3 - Q1)
-    antes = len(db_final)
-    db_final = db_final[db_final['precio'] <= bigote_sup]
-    logger.info(f'Outliers de precio eliminados: {antes - len(db_final)} registros (umbral Tukey: {bigote_sup:.2f}€)')
-
-    # Eliminación de villas/fincas por umbral de negocio en tamaño_habitacion
-    antes = len(db_final)
-    db_final = db_final[db_final['tamaño_habitacion'] <= 500]
-    logger.info(f'Registros eliminados por tamaño_habitacion > 500m²: {antes - len(db_final)} registros')
-
-    return db_final
-
-
-def encoding(db_final:pd.DataFrame, incluir_provincia:bool) -> pd.DataFrame:
-    '''
-    Para variables catergóricas:
-    One-Hot Encoding → crea columnas binarias (0/1) por cada categoría. Label Encoding → asigna un número entero a cada categoría. Ordinal Encoding → como label encoding pero respetando un orden lógico. Target Encoding → reemplaza la categoría por la media del target.
-    Para variables de fecha/hora: Extraer componentes numéricos: día, mes, hora, día de la semana, etc.
-    '''
-
-    #Eliminamos las columnas que solo aportan info y tampoco sirven para graficar
-    db_final = db_final.drop(columns=['titulo', 'codigo_postal', 'url_estancia', 'fecha_extraccion'])
-
-    #Convertimos a variables binarias, One-Hot Encoding:
-    db_final = pd.get_dummies(db_final, columns=['tipo'], drop_first=True)
-
-    #Pasamos a variable numérica (asigna un número entero a cada categoría). Se optó por Label Encoding debido al elevado número de categorías en estas variables, lo que habría generado una dimensionalidad excesiva con One-Hot Encoding.
-    le = LabelEncoder()
-    db_final['localidad'] = le.fit_transform(db_final['localidad'])
-    if incluir_provincia:
-        db_final['provincia'] = le.fit_transform(db_final['provincia'])
-    else:
-        db_final = db_final.drop(columns=['provincia'])
-
-    #Extraemos día de la semana y mes de 'fecha_disponible' y la eliminamos
-    db_final['mes_disponible'] = db_final['fecha_disponible'].dt.month
-    db_final['dia_disponible'] = db_final['fecha_disponible'].dt.day
-    db_final = db_final.drop(columns=['fecha_disponible'])
-
-    return db_final
-
 
 # =============================================================================
 # PUNTO DE ENTRADA
@@ -374,14 +327,6 @@ def main():
     db_completa = pd.concat(dfs_finales, ignore_index=True)
     db_completa.to_parquet(BASE / "data" / "processed" / "final" / "db_final.parquet", index=False)
     logger.info('✅ Dataset completo guardado correctamente')
-
-    db_analisis = transformar_post_analisis(db_completa)
-    db_analisis.to_parquet(BASE / "data" / "processed" / "analisis" / "db_final_analisis.parquet", index=False)
-    logger.info('✅ Dataset analítico guardado correctamente')
-
-    db_completa_codificada = encoding(db_analisis, incluir_provincia=True)
-    db_completa_codificada.to_parquet(BASE / "data" / "processed" / "modelizacion" / "db_final_codificada.parquet", index=False)
-    logger.info('✅ Dataset completo codificado guardado correctamente')
 
     
 
