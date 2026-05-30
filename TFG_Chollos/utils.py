@@ -33,6 +33,17 @@ def configurar_logger(nombre: str = __name__) -> logging.Logger:
 
 
 
+def get_outliers(df, columna):
+    Q1 = df[columna].quantile(0.25)
+    Q3 = df[columna].quantile(0.75)
+    IQR = Q3 - Q1
+    big_inf = Q1 - 1.5 * IQR
+    big_sup = Q3 + 1.5 * IQR
+    outliers = df[(df[columna] < big_inf) | (df[columna] > big_sup)]
+    return outliers, big_inf, big_sup
+
+
+
 def denegar_cookies(driver, timeout=2):
     '''
     Deniega las cookies. Pulsa el botón 'Rechazar'

@@ -37,23 +37,20 @@ logger = configurar_logger(__name__)
 # =============================================================================
 # FUNCIONES
 # =============================================================================
-def encoding(db_final: pd.DataFrame, incluir_provincia: bool) -> pd.DataFrame:
+def encoding(db_final: pd.DataFrame) -> pd.DataFrame:
 
     #Eliminamos las columnas que solo aportan info y tampoco sirven para graficar
     db_final = db_final.drop(columns=['titulo', 'codigo_postal', 'url_estancia', 'fecha_extraccion'])
 
-    #Convertimos a variables binarias, One-Hot Encoding:
+    #Convertimos las variables binarias, One-Hot Encoding:
     db_final = pd.get_dummies(db_final, columns=['tipo'], drop_first=True)
 
     #Pasamos a variable numérica (asigna un número entero a cada categoría). Se optó por Label Encoding debido al elevado número de categorías en estas variables, lo que habría generado una dimensionalidad excesiva con One-Hot Encoding.
     le = LabelEncoder()
     db_final['localidad'] = le.fit_transform(db_final['localidad'])
-    if incluir_provincia:
-        db_final['provincia'] = le.fit_transform(db_final['provincia'])
-    else:
-        db_final = db_final.drop(columns=['provincia'])
+    db_final['provincia'] = le.fit_transform(db_final['provincia'])
 
-    #Extraemos día de la semana y mes de 'fecha_disponible' y la eliminamos
+    #Extraemos día de la semana, día y mes de 'fecha_disponible' y la eliminamos
     db_final['mes_disponible'] = db_final['fecha_disponible'].dt.month
     db_final['dia_disponible'] = db_final['fecha_disponible'].dt.day
     db_final = db_final.drop(columns=['fecha_disponible'])

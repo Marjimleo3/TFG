@@ -1,12 +1,12 @@
 """
-transformaciones.py
+post_analisis.py
 ====================
 Aplica las transformaciones decididas tras el análisis exploratorio:
-eliminación de outliers de precio y tamaño de habitación.
+eliminación de outliers de precio, tamaño de habitación y distancia al centro.
 Lee db_final.parquet y genera db_final_analisis.parquet.
 
 Uso:
-    python Cleaning/transformaciones.py
+    python Cleaning/post_analisis.py
 """
 
 # =============================================================================
@@ -43,6 +43,11 @@ def transformar_post_analisis(db_final: pd.DataFrame) -> pd.DataFrame:
     antes = len(db_final)
     db_final = db_final[db_final['tamaño_habitacion'] <= 500]
     logger.info(f'Registros eliminados por tamaño_habitacion > 500m²: {antes - len(db_final)} registros')
+
+    # Eliminación de errores de geocodificación y alojamientos fuera del núcleo urbano
+    antes = len(db_final)
+    db_final = db_final[db_final['distancia_centro_km'] <= 15]
+    logger.info(f'Registros eliminados por distancia_centro_km > 15km: {antes - len(db_final)} registros')
 
     return db_final
 
