@@ -1,116 +1,33 @@
-from dotenv import load_dotenv
-from pathlib import Path
-import os
-import pandas as pd
-from playwright.sync_api import sync_playwright
-from bs4 import BeautifulSoup
+"""
+Genera el mapa coroplético de alojamientos de Andalucía por provincias,
+con todos los puntos únicos de alojamiento de db_final.parquet.
+El HTML resultante se usa como mapa predeterminado en el Streamlit.
+
+Uso:
+    python Graficos/Grafico_Alojamientos_Andalucia.py
+"""
+
+# =============================================================================
+# IMPORTS
+# =============================================================================
 import re
+
+import pandas as pd
 import plotly.express as px
 import requests
+from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
 
-load_dotenv()  #Carga las rutas del archivo .env como variables de entorno del sistema
-BASE = Path(os.getenv("BASE"))   #Path se usa para poder concatenar más cómodamente la ruta (convierte un string en un objeto de ruta inteligente). getenv significa get environment variable 
+from TFG_Chollos.utils import conseguir_ruta_general_TFG
 
-df_urls_provincias = pd.read_csv(BASE / "data_Booking" / "urls" / "urls_busqueda_booking_provincias.csv", sep="|")
-urls_provincias = df_urls_provincias.set_index("localizacion")["url"].to_dict()       #Convertimos el DataFrame en un diccionario
-with open(BASE / "data_Booking" / "info_estatica" / "fecha_entrada_busqueda_booking.txt", "r") as f:
-    fecha_entrada = f.read()
-with open(BASE / "data_Booking" / "info_estatica" / "fecha_salida_busqueda_booking.txt", "r") as f:
-    fecha_salida = f.read()
-df = pd.read_csv(BASE / "data_Booking" / "resultados" / "resultados_booking_Punta_Umbría.csv", sep="|")   #Añadir cuando tenga todos los resultados limpios, una concatenación de todas las estancias
-df
+# =============================================================================
+# CONSTANTES
+# =============================================================================
+BASE = conseguir_ruta_general_TFG()
 
-# --- Extraemos el número de alojamientos en cada provincia de Andalucía ---
-with sync_playwright() as p:        # with, no async with
-    browser = p.chromium.launch(
-        # headless=True,
-        args=["--disable-blink-features=AutomationControlled"]  # Anti-detección
-        )
-    context = browser.new_context(
-        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        java_script_enabled=True,
-        locale="es-ES",
-        timezone_id="Europe/Madrid",
-    )
-    page = context.new_page()       # sin await
-    page.route("**/*.{png,jpg,jpeg,gif,webp,woff,woff2,ttf}", lambda route: route.abort())   #Bloqueo de recursos innecesarios
-    page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+NOMBRES_PROVINCIAS = ['Sevilla', 'Cádiz', 'Huelva', 'Jaén', 'Granada', 'Almería', 'Córdoba', 'Málaga']
 
-    provincias = ['Sevilla', 'Cádiz', 'Huelva', 'Jaén', 'Granada', 'Almería', 'Córdoba', 'Málaga']
-    Alojamientos_por_provincia = []
-
-    for (provincia,url),provincia_limpia in zip(urls_provincias.items(), provincias):
-        page.goto(url, wait_until="networkidle")
-        html = page.content()           # sin await
-        soup = BeautifulSoup(html, 'html.parser')
-        titulo = soup.find('h1')
-        texto = titulo.find('span').get_text(strip=True)
-        numero = int(re.search(r"[\d.]+", texto).group().replace(".", ""))   #Extrae la primera secuencia de dígitos, con o sin puntos, que encuentre. Group convierte el objeto re a string
-        Alojamientos_por_provincia.append(numero)
-        print(f"Para {provincia} hay {numero} alojamientos disponibles desde el {fecha_entrada} hasta el {fecha_salida}")
-    
-    browser.close()
-
-
-# --- Descargar GeoJSON de provincias de España ---
-url = "https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/spain-provinces.geojson"
-geojson = requests.get(url).json()
-
-# --- Filtrar solo las provincias de Andalucía ---
-andalucia_geojson = {
-    "type": "FeatureCollection",
-    "features": [
-        f for f in geojson["features"]
-        if f["properties"]["name"] in provincias
-    ]
-}
-
-# --- Mapa coroplético ---
-maximo = max(Alojamientos_por_provincia)    #Asignamos máximo del mapa de calor
-techo = round(maximo, -3)  # Redondea al millar superior
-if techo < maximo:
-    techo += 1000
-
-fig = px.choropleth(
-    locations=provincias,
-    geojson=andalucia_geojson,
-    featureidkey="properties.name",   # campo del GeoJSON que identifica cada área
-    color=Alojamientos_por_provincia,
-    range_color=[0, techo],
-    color_continuous_scale="Reds",
-    title="Mapa coroplético de alojamientos de Andalucía por provincias",
-    # labels={"color": "Valor"},
-    hover_name=provincias,
-)
-
-fig.update_traces(
-    hovertemplate="<b>%{hovertext}</b><br>Alojamientos: %{z:,.0f}<extra></extra>"
-)
-
-# --- Ajustar vista al mapa ---
-fig.update_geos(
-    fitbounds="locations",
-    visible=False               # oculta el fondo del mundo
-)
-
-fig.update_layout(
-    margin={"r": 20, "t": 40, "l": 20, "b": 10},
-    coloraxis_colorbar=dict(
-        title="Nº Alojamientos",
-        tickformat=",.0f"),  # Formato con separador de miles y sin decimales,
-    legend=dict(      # ← botón de la esquina inferior izquierda
-        x=0.01,                 
-        y=0.01,
-        xanchor="left",
-        yanchor="bottom",
-        bgcolor="rgba(255,255,255,0.7)",   # ← fondo semitransparente
-        bordercolor="gray",
-        borderwidth=1)
-)
-
-# --- Añadimos el nombre estático a las provincias ---
-# Centroides aproximados de cada provincia de Andalucía
-centroides = {
+CENTROIDES = {
     'Almería':  (37.15, -2.36),
     'Cádiz':    (36.60, -5.80),
     'Córdoba':  (37.90, -4.77),
@@ -121,33 +38,140 @@ centroides = {
     'Sevilla':  (37.50, -5.80)
 }
 
-fig.add_scattergeo(
-    lat=[v[0] for v in centroides.values()],
-    lon=[v[1] for v in centroides.values()],
-    mode="text",                          # ← solo texto, sin punto
-    text=list(centroides.keys()),         # ← nombre de la provincia
-    textfont=dict(size=11, color="black"),
-    hoverinfo="skip",                     # ← no muestra tooltip al pasar el ratón
-    showlegend=False
-)
+# =============================================================================
+# FUNCIONES
+# =============================================================================
+def scrape_n_alojamientos(urls_provincias: dict) -> list:
+    resultado = []
+    with sync_playwright() as p:
+        browser = p.chromium.launch(args=["--disable-blink-features=AutomationControlled"])
+        context = browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            java_script_enabled=True,
+            locale="es-ES",
+            timezone_id="Europe/Madrid",
+        )
+        page = context.new_page()
+        page.route("**/*.{png,jpg,jpeg,gif,webp,woff,woff2,ttf}", lambda route: route.abort())
+        page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
-# --- Añadimos los alojamientos ---
-fig.add_scattergeo(
-    lat=df['latitud'],
-    lon=df['longitud'],
-    mode="markers",
-    marker=dict(
-        size=5,
-        color="green",
-        line=dict(width=1, color="white")),  # borde blanco para que resalten
-    text=df['titulo'],
-    # customdata=df["precio"],  # dato extra en el tooltip (opcional)
-    # hovertemplate="<b>%{text}</b><br>Precio: %{customdata}€<extra></extra>",
-    hovertemplate="<b>%{text}</b><extra></extra>",   #Para que solo aparezca el nombre
-    name='Ocultar alojamientos'
-)
+        for provincia, url in urls_provincias.items():
+            page.goto(url, wait_until="networkidle")
+            soup = BeautifulSoup(page.content(), 'html.parser')
+            titulo = soup.find('h1')
+            texto = titulo.find('span').get_text(strip=True)
+            numero = int(re.search(r"[\d.]+", texto).group().replace(".", ""))
+            resultado.append(numero)
+            print(f"  {provincia}: {numero} alojamientos")
 
-# fig.show()
-input("Presiona Enter para guardar los el gráfico generado...")
-fig.write_html(BASE / "mapa_Andalucía_alojamientos.html")
+        browser.close()
+    return resultado
 
+
+def cargar_puntos_unicos() -> pd.DataFrame:
+    df = pd.read_parquet(
+        BASE / 'data' / 'processed' / 'final' / 'db_final.parquet',
+        columns=['titulo', 'latitud', 'longitud', 'url_estancia']
+    )
+    df = df.drop_duplicates(subset='url_estancia')[['titulo', 'latitud', 'longitud']]
+    # Filtrar coordenadas fuera de Andalucía (evita que el mapa se aleje)
+    df = df[(df['latitud'].between(35.8, 38.7)) & (df['longitud'].between(-7.6, -1.6))]
+    # Reducir densidad deduplicando por celda de ~1km (2 decimales ≈ 1.1km)
+    df['_lat_r'] = df['latitud'].round(2)
+    df['_lon_r'] = df['longitud'].round(2)
+    df = df.drop_duplicates(subset=['_lat_r', '_lon_r'])
+    return df[['titulo', 'latitud', 'longitud']]
+
+
+def generar_mapa(alojamientos_por_provincia: list, geojson: dict, df_puntos: pd.DataFrame,
+                 fecha_entrada: str, fecha_salida: str):
+    maximo = max(alojamientos_por_provincia)
+    techo = (maximo // 1000 + 1) * 1000
+
+    fig = px.choropleth(
+        locations=NOMBRES_PROVINCIAS,
+        geojson=geojson,
+        featureidkey="properties.name",
+        color=alojamientos_por_provincia,
+        range_color=[techo, 0],
+        color_continuous_scale="Reds_r",
+        title=f"Alojamientos en Andalucía ({fecha_entrada} → {fecha_salida})",
+        hover_name=NOMBRES_PROVINCIAS,
+    )
+    fig.update_traces(hovertemplate="<b>%{hovertext}</b><br>Alojamientos: %{z:,.0f}<extra></extra>")
+    fig.update_geos(
+        visible=False,
+        lataxis_range=[35.5, 39.0],
+        lonaxis_range=[  -8.0, -1.0],
+    )
+    fig.update_layout(
+        height=600,
+        paper_bgcolor="white",
+        margin={"r": 20, "t": 40, "l": 20, "b": 10},
+        coloraxis_colorbar=dict(title="Nº Alojamientos", tickformat=",.0f"),
+        legend=dict(
+            x=0.01,
+            y=0.01,
+            xanchor="left",
+            yanchor="bottom",
+            bgcolor="rgba(255,255,255,0.7)",
+            bordercolor="gray",
+            borderwidth=1),
+    )
+    fig.add_scattergeo(
+        lat=[v[0] for v in CENTROIDES.values()],
+        lon=[v[1] for v in CENTROIDES.values()],
+        mode="text",
+        text=list(CENTROIDES.keys()),
+        textfont=dict(size=11, color="black"),
+        hoverinfo="skip",
+        showlegend=False,
+    )
+    fig.add_scattergeo(
+        lat=df_puntos['latitud'],
+        lon=df_puntos['longitud'],
+        mode="markers",
+        marker=dict(size=5, color="green", line=dict(width=1, color="white")),
+        text=df_puntos['titulo'],
+        hovertemplate="<b>%{text}</b><extra></extra>",
+        name='Ocultar alojamientos',
+    )
+    return fig
+
+
+# =============================================================================
+# PUNTO DE ENTRADA
+# =============================================================================
+def main():
+    df_urls = pd.read_csv(BASE / "data" / "raw" / "inputs" / "urls_busqueda_booking_provincias.csv", sep="|")
+    urls_provincias = df_urls.set_index("localizacion")["url"].to_dict()
+
+    with open(BASE / "data" / "raw" / "inputs" / "fecha_entrada_busqueda_booking.txt") as f:
+        fecha_entrada = f.read().strip()
+    with open(BASE / "data" / "raw" / "inputs" / "fecha_salida_busqueda_booking.txt") as f:
+        fecha_salida = f.read().strip()
+
+    print(f"Scrapeando conteos ({fecha_entrada} → {fecha_salida})...")
+    alojamientos = scrape_n_alojamientos(urls_provincias)
+
+    print("Cargando GeoJSON...")
+    url_geojson = "https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/spain-provinces.geojson"
+    geojson_raw = requests.get(url_geojson).json()
+    geojson = {
+        "type": "FeatureCollection",
+        "features": [f for f in geojson_raw["features"] if f["properties"]["name"] in NOMBRES_PROVINCIAS]
+    }
+
+    print("Cargando puntos únicos de alojamientos...")
+    df_puntos = cargar_puntos_unicos()
+    print(f"  {len(df_puntos)} alojamientos únicos")
+
+    fig = generar_mapa(alojamientos, geojson, df_puntos, fecha_entrada, fecha_salida)
+
+    salida = BASE / "Graficos" / "mapa_predeterminado.html"
+    fig.write_html(salida)
+    print(f"✅ Mapa guardado en: {salida}")
+
+
+if __name__ == "__main__":
+    main()
