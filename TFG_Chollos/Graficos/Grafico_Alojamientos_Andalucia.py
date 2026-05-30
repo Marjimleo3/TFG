@@ -93,8 +93,8 @@ def generar_mapa(alojamientos_por_provincia: list, geojson: dict, df_puntos: pd.
         geojson=geojson,
         featureidkey="properties.name",
         color=alojamientos_por_provincia,
-        range_color=[techo, 0],
-        color_continuous_scale="Reds_r",
+        range_color=[0, techo],
+        color_continuous_scale="Reds",
         title=f"Alojamientos en Andalucía ({fecha_entrada} → {fecha_salida})",
         hover_name=NOMBRES_PROVINCIAS,
     )
