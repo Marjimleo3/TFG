@@ -22,6 +22,7 @@ from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 
 from TFG_Chollos.utils import conseguir_ruta_general_TFG
+from TFG_Chollos.Graficos.graficos_analisis import mostrar_graficos_analisis
 from TFG_Chollos.Scraping.Generador_urls_generales import (
     generador_urls, PROVINCIAS, N_ADULTOS, N_HABITACIONES, N_MENORES
 )
@@ -229,6 +230,8 @@ def main():
     mapa = MAPA_ACTUALIZADO if st.session_state.mapa_listo else MAPA_PREDETERMINADO
     html = mapa.read_text(encoding='utf-8')
     components.html(html, height=620, scrolling=False)
+
+    mostrar_graficos_analisis()
 
 
 if __name__ == '__main__':

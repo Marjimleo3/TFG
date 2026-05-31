@@ -108,7 +108,7 @@ def generar_mapa(alojamientos_por_provincia: list, geojson: dict, df_puntos: pd.
         height=600,
         paper_bgcolor="white",
         margin={"r": 20, "t": 40, "l": 20, "b": 10},
-        coloraxis_colorbar=dict(title="Nº Alojamientos", tickformat=",.0f"),
+        coloraxis_colorbar=dict(title="Nº Aloj. disp.", tickformat=",.0f"),
         legend=dict(
             x=0.01,
             y=0.01,
