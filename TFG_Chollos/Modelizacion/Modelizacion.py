@@ -52,7 +52,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn import linear_model
 from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier, plot_tree
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier, GradientBoostingRegressor, GradientBoostingClassifier
-from sklearn.neural_network import MLPRegressor, MLPClassifier
+# from sklearn.neural_network import MLPRegressor, MLPClassifier
 from sklearn.metrics import f1_score
 from sklearn.neighbors import KNeighborsRegressor, KNeighborsClassifier
 from sklearn.svm import SVR, SVC
@@ -691,7 +691,7 @@ def main():
     # -------------------------------------------------------------------------
     X_train_cen, X_val_cen, X_test_cen, y_train_cen, y_val_cen, y_test_cen, media_X_train, media_y_train = centrar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
     X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est, scaler_X, scaler_y = estandarizar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
-    X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm, norm_X, norm_y = normalizar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
+    # X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm, norm_X, norm_y = normalizar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
 
 
     # 3. MODELOS DE REGRESIÓN (predicción de precio)
@@ -701,7 +701,7 @@ def main():
     bosque      = crear_bosque_aleatorio(X_train, X_val, X_test, y_train, y_val, y_test)
     svm         = crear_maquinas_vectores_soporte(X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est)
     knn         = crear_k_vecinos_cercanos(X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est)
-    red         = crear_redes_neuronales(X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm)
+    # red         = crear_redes_neuronales(X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm)
     boosting    = crear_boosting(X_train, X_val, X_test, y_train, y_val, y_test)
 
 
@@ -713,7 +713,7 @@ def main():
         ('Bosque Aleatorio',  bosque,     X_train,      X_val,      X_test,      y_train,      y_val,      y_test),
         ('SVM',               svm,        X_train_est,  X_val_est,  X_test_est,  y_train_est,  y_val_est,  y_test_est),
         ('KNN',               knn,        X_train_est,  X_val_est,  X_test_est,  y_train_est,  y_val_est,  y_test_est),
-        ('Redes Neuronales',  red,        X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm),
+        # ('Redes Neuronales',  red,        X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm),
         ('Boosting',          boosting,   X_train,      X_val,      X_test,      y_train,      y_val,      y_test),
     ]
 
@@ -752,7 +752,7 @@ def main():
     bosque_clf  = crear_bosque_aleatorio_clasificacion(X_train, X_val, X_test, chollo_train, chollo_val, chollo_test)
     svm_clf     = crear_maquinas_vectores_soporte_clasificacion(X_train_est, X_val_est, X_test_est, chollo_train, chollo_val, chollo_test)
     knn_clf     = crear_k_vecinos_cercanos_clasificacion(X_train_est, X_val_est, X_test_est, chollo_train, chollo_val, chollo_test)
-    red_clf     = crear_redes_neuronales_clasificacion(X_train_norm, X_val_norm, X_test_norm, chollo_train, chollo_val, chollo_test)
+    # red_clf     = crear_redes_neuronales_clasificacion(X_train_norm, X_val_norm, X_test_norm, chollo_train, chollo_val, chollo_test)
     boost_clf   = crear_boosting_clasificacion(X_train, X_val, X_test, chollo_train, chollo_val, chollo_test)
 
 
@@ -764,7 +764,7 @@ def main():
         ('Bosque Clasificación', bosque_clf, X_train,      X_val,      X_test,      chollo_val),
         ('SVM Clasificación',    svm_clf,    X_train_est,  X_val_est,  X_test_est,  chollo_val),
         ('KNN Clasificación',    knn_clf,    X_train_est,  X_val_est,  X_test_est,  chollo_val),
-        ('Red Neuronal Clf',     red_clf,    X_train_norm, X_val_norm, X_test_norm, chollo_val),
+        # ('Red Neuronal Clf',     red_clf,    X_train_norm, X_val_norm, X_test_norm, chollo_val),
         ('Boosting Clf',         boost_clf,  X_train,      X_val,      X_test,      chollo_val),
     ]
 
