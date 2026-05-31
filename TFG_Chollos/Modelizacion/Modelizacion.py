@@ -36,9 +36,6 @@ Uso:
 # IMPORTS
 # =============================================================================
 #Librerías estándar (vienen incluidas con Python):
-import ast
-import json
-import math
 
 #Librerías de terceros (es necesario instalarlas):
 import numpy as np
@@ -217,6 +214,10 @@ def crear_regresion_lineal(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.Da
     plt.savefig(ruta, bbox_inches='tight', dpi=150)
     plt.close()
     logger.info(f'✅ Gráfico guardado: {ruta}')
+    ruta_modelo = BASE / 'data' / 'models' / 'regresion_lineal_reg.pkl'
+
+    joblib.dump(regresion, ruta_modelo)
+    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
 
     return regresion
 
@@ -241,7 +242,7 @@ def crear_arbol_decision(conjunto_ent:pd.DataFrame, target_ent:pd.Series):
     grid_search = GridSearchCV(
         estimator=arbol,
         param_grid=param_grid,
-        cv=5,                          # K-Fold con 5 folds, sobre X_train
+        cv=3,                          # K-Fold con 3 folds, sobre X_train
         scoring='neg_mean_squared_error',  # métrica a optimizar
         n_jobs=-1,                      # usa todos los núcleos del procesador
         verbose=2)                     
@@ -271,7 +272,11 @@ def crear_arbol_decision(conjunto_ent:pd.DataFrame, target_ent:pd.Series):
     # y_pred_val = mejor_arbol.predict(X_val)
     # print(r2_score(y_val, y_pred_val))
     # print(mean_squared_error(y_val, y_pred_val))
-    
+    ruta_modelo = BASE / 'data' / 'models' / 'arbol_decision_reg.pkl'
+
+    joblib.dump(mejor_arbol, ruta_modelo)
+    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
+
     return mejor_arbol
 
 
@@ -297,7 +302,7 @@ def crear_bosque_aleatorio(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame,
     grid_search = GridSearchCV(
         estimator=bosque,
         param_grid=param_grid,
-        cv=5,                          # K-Fold con 5 folds, sobre X_train
+        cv=3,                          # K-Fold con 3 folds, sobre X_train
         scoring='neg_mean_squared_error',  # métrica a optimizar
         n_jobs=-1,                      # usa todos los núcleos del procesador
         verbose=2)                    
@@ -315,6 +320,10 @@ def crear_bosque_aleatorio(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame,
 
     r2_val = mejor_bosque.score(conjunto_val, target_val)    #Devuelve el porcentaje de predicciones correctas en clasificación, y la precisión o R^2 en regresión
     logger.info(f'R² en validación: {r2_val:.4f}')
+    ruta_modelo = BASE / 'data' / 'models' / 'bosque_aleatorio_reg.pkl'
+
+    joblib.dump(mejor_bosque, ruta_modelo)
+    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
 
     return mejor_bosque
 
@@ -338,7 +347,7 @@ def crear_k_vecinos_cercanos(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.
     grid_search = GridSearchCV(
         estimator=knn,
         param_grid=param_grid,
-        cv=5,                          # K-Fold con 5 folds, sobre X_train
+        cv=3,                          # K-Fold con 3 folds, sobre X_train
         scoring='neg_mean_squared_error',  # métrica a optimizar
         n_jobs=-1,                      # usa todos los núcleos del procesador
         verbose=2)                      
@@ -350,6 +359,10 @@ def crear_k_vecinos_cercanos(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.
 
     r2_val = mejor_knn.score(conjunto_val_est, target_val_est)    #Devuelve el porcentaje de predicciones correctas en clasificación, y la precisión o R^2 en regresión
     logger.info(f'R² en validación: {r2_val:.4f}')
+    ruta_modelo = BASE / 'data' / 'models' / 'knn_reg.pkl'
+
+    joblib.dump(mejor_knn, ruta_modelo)
+    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
 
     return mejor_knn
 
@@ -375,7 +388,7 @@ def crear_maquinas_vectores_soporte(conjunto_ent_est:pd.DataFrame, conjunto_val_
     grid_search = GridSearchCV(
         estimator=svm,
         param_grid=param_grid,
-        cv=5,                          # K-Fold con 5 folds, sobre X_train
+        cv=3,                          # K-Fold con 3 folds, sobre X_train
         scoring='neg_mean_squared_error',  # métrica a optimizar
         n_jobs=-1,                      # usa todos los núcleos del procesador
         verbose=2)                      
@@ -387,6 +400,10 @@ def crear_maquinas_vectores_soporte(conjunto_ent_est:pd.DataFrame, conjunto_val_
 
     r2_val = mejor_svm.score(conjunto_val_est, target_val_est)    #Devuelve la precisión o R^2 en regresión
     logger.info(f'R² en validación: {r2_val:.4f}')
+    ruta_modelo = BASE / 'data' / 'models' / 'svm_reg.pkl'
+
+    joblib.dump(mejor_svm, ruta_modelo)
+    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
 
     return mejor_svm
 
@@ -415,7 +432,7 @@ def crear_redes_neuronales(conjunto_ent_norm:pd.DataFrame, conjunto_val_norm:pd.
     grid_search = GridSearchCV(
         estimator=red,
         param_grid=param_grid,
-        cv=5,
+        cv=3,
         scoring='neg_mean_squared_error',
         n_jobs=-1,
         verbose=2)
@@ -427,6 +444,10 @@ def crear_redes_neuronales(conjunto_ent_norm:pd.DataFrame, conjunto_val_norm:pd.
 
     r2_val = mejor_red.score(conjunto_val_norm, target_val_norm)
     logger.info(f'R² en validación: {r2_val:.4f}')
+    ruta_modelo = BASE / 'data' / 'models' / 'redes_neuronales_reg.pkl'
+
+    joblib.dump(mejor_red, ruta_modelo)
+    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
 
     return mejor_red
 
@@ -455,7 +476,7 @@ def crear_boosting(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunt
     grid_search = GridSearchCV(
         estimator=boosting,
         param_grid=param_grid,
-        cv=5,
+        cv=3,
         scoring='neg_mean_squared_error',
         n_jobs=-1,
         verbose=2)
@@ -467,6 +488,10 @@ def crear_boosting(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunt
 
     r2_val = mejor_boosting.score(conjunto_val, target_val)
     logger.info(f'R² en validación: {r2_val:.4f}')
+    ruta_modelo = BASE / 'data' / 'models' / 'boosting_reg.pkl'
+
+    joblib.dump(mejor_boosting, ruta_modelo)
+    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
 
     return mejor_boosting
 
@@ -513,7 +538,7 @@ def crear_regresion_logistica(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd
     grid_search = GridSearchCV(
         estimator=regresion,
         param_grid=param_grid,
-        cv=5,
+        cv=3,
         scoring='f1_weighted',
         n_jobs=-1,
         verbose=2)
@@ -525,6 +550,10 @@ def crear_regresion_logistica(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd
 
     f1_val = f1_score(objetivo_val, mejor_regresion.predict(conjunto_val_est), average='weighted')
     logger.info(f'F1 en validación: {f1_val:.4f}')
+    ruta_modelo = BASE / 'data' / 'models' / 'regresion_logistica_clf.pkl'
+
+    joblib.dump(mejor_regresion, ruta_modelo)
+    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
 
     return mejor_regresion
 
@@ -544,7 +573,7 @@ def crear_arbol_decision_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:p
     grid_search = GridSearchCV(
         estimator=arbol,
         param_grid=param_grid,
-        cv=5,
+        cv=3,
         scoring='f1_weighted',
         n_jobs=-1,
         verbose=2)
@@ -556,6 +585,10 @@ def crear_arbol_decision_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:p
 
     f1_val = f1_score(objetivo_val, mejor_arbol.predict(conjunto_val), average='weighted')
     logger.info(f'F1 en validación: {f1_val:.4f}')
+    ruta_modelo = BASE / 'data' / 'models' / 'arbol_decision_clf.pkl'
+
+    joblib.dump(mejor_arbol, ruta_modelo)
+    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
 
     return mejor_arbol
 
@@ -577,7 +610,7 @@ def crear_bosque_aleatorio_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val
     grid_search = GridSearchCV(
         estimator=bosque,
         param_grid=param_grid,
-        cv=5,
+        cv=3,
         scoring='f1_weighted',
         n_jobs=-1,
         verbose=2)
@@ -589,6 +622,10 @@ def crear_bosque_aleatorio_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val
 
     f1_val = f1_score(objetivo_val, mejor_bosque.predict(conjunto_val), average='weighted')
     logger.info(f'F1 en validación: {f1_val:.4f}')
+    ruta_modelo = BASE / 'data' / 'models' / 'bosque_aleatorio_clf.pkl'
+
+    joblib.dump(mejor_bosque, ruta_modelo)
+    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
 
     return mejor_bosque
 
@@ -610,7 +647,7 @@ def crear_maquinas_vectores_soporte_clasificacion(conjunto_ent_est:pd.DataFrame,
     grid_search = GridSearchCV(
         estimator=svm,
         param_grid=param_grid,
-        cv=5,
+        cv=3,
         scoring='f1_weighted',
         n_jobs=-1,
         verbose=2)
@@ -622,6 +659,10 @@ def crear_maquinas_vectores_soporte_clasificacion(conjunto_ent_est:pd.DataFrame,
 
     f1_val = f1_score(objetivo_val, mejor_svm.predict(conjunto_val_est), average='weighted')
     logger.info(f'F1 en validación: {f1_val:.4f}')
+    ruta_modelo = BASE / 'data' / 'models' / 'svm_clf.pkl'
+
+    joblib.dump(mejor_svm, ruta_modelo)
+    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
 
     return mejor_svm
 
@@ -641,7 +682,7 @@ def crear_k_vecinos_cercanos_clasificacion(conjunto_ent_est:pd.DataFrame, conjun
     grid_search = GridSearchCV(
         estimator=knn,
         param_grid=param_grid,
-        cv=5,
+        cv=3,
         scoring='f1_weighted',
         n_jobs=-1,
         verbose=2)
@@ -653,6 +694,10 @@ def crear_k_vecinos_cercanos_clasificacion(conjunto_ent_est:pd.DataFrame, conjun
 
     f1_val = f1_score(objetivo_val, mejor_knn.predict(conjunto_val_est), average='weighted')
     logger.info(f'F1 en validación: {f1_val:.4f}')
+    ruta_modelo = BASE / 'data' / 'models' / 'knn_clf.pkl'
+
+    joblib.dump(mejor_knn, ruta_modelo)
+    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
 
     return mejor_knn
 
@@ -678,7 +723,7 @@ def crear_redes_neuronales_clasificacion(conjunto_ent_norm:pd.DataFrame, conjunt
     grid_search = GridSearchCV(
         estimator=red,
         param_grid=param_grid,
-        cv=5,
+        cv=3,
         scoring='f1_weighted',
         n_jobs=-1,
         verbose=2)
@@ -690,6 +735,10 @@ def crear_redes_neuronales_clasificacion(conjunto_ent_norm:pd.DataFrame, conjunt
 
     f1_val = f1_score(objetivo_val, mejor_red.predict(conjunto_val_norm), average='weighted')
     logger.info(f'F1 en validación: {f1_val:.4f}')
+    ruta_modelo = BASE / 'data' / 'models' / 'redes_neuronales_clf.pkl'
+
+    joblib.dump(mejor_red, ruta_modelo)
+    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
 
     return mejor_red
 
@@ -714,7 +763,7 @@ def crear_boosting_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:pd.Data
     grid_search = GridSearchCV(
         estimator=boosting,
         param_grid=param_grid,
-        cv=5,
+        cv=3,
         scoring='f1_weighted',
         n_jobs=-1,
         verbose=2)
@@ -726,6 +775,10 @@ def crear_boosting_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:pd.Data
 
     f1_val = f1_score(objetivo_val, mejor_boosting.predict(conjunto_val), average='weighted')
     logger.info(f'F1 en validación: {f1_val:.4f}')
+    ruta_modelo = BASE / 'data' / 'models' / 'boosting_clf.pkl'
+
+    joblib.dump(mejor_boosting, ruta_modelo)
+    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
 
     return mejor_boosting
 
@@ -760,7 +813,7 @@ def main():
     regresion   = crear_regresion_lineal(X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est, 'tamaño_habitacion')
     arbol       = crear_arbol_decision(X_train, y_train)
     bosque      = crear_bosque_aleatorio(X_train, X_val, X_test, y_train, y_val, y_test)
-    svm         = crear_maquinas_vectores_soporte(X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est)
+    # svm         = crear_maquinas_vectores_soporte(X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est)
     knn         = crear_k_vecinos_cercanos(X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est)
     # red         = crear_redes_neuronales(X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm)
     boosting    = crear_boosting(X_train, X_val, X_test, y_train, y_val, y_test)
@@ -772,20 +825,18 @@ def main():
         ('Regresión Lineal',  regresion,  X_train_est,  X_val_est,  X_test_est,  y_train_est,  y_val_est,  y_test_est),
         ('Árbol de Decisión', arbol,      X_train,      X_val,      X_test,      y_train,      y_val,      y_test),
         ('Bosque Aleatorio',  bosque,     X_train,      X_val,      X_test,      y_train,      y_val,      y_test),
-        ('SVM',               svm,        X_train_est,  X_val_est,  X_test_est,  y_train_est,  y_val_est,  y_test_est),
+        # ('SVM',               svm,        X_train_est,  X_val_est,  X_test_est,  y_train_est,  y_val_est,  y_test_est),
         ('KNN',               knn,        X_train_est,  X_val_est,  X_test_est,  y_train_est,  y_val_est,  y_test_est),
         # ('Redes Neuronales',  red,        X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm),
         ('Boosting',          boosting,   X_train,      X_val,      X_test,      y_train,      y_val,      y_test),
     ]
 
-    data_score = []
     mejor_score = None
     mejor_nombre = mejor_modelo_reg = None
     mejor_X_train = mejor_X_val = mejor_X_test = None
     mejor_y_train = mejor_y_val = mejor_y_test = None
     for nombre, modelo, X_tr, X_va, X_te, y_tr, y_va, y_te in modelos_regresion:
         score = modelo.score(X_va, y_va)
-        data_score.append(score)
         if mejor_score is None or score > mejor_score:
             mejor_score = score
             mejor_nombre, mejor_modelo_reg = nombre, modelo
@@ -811,7 +862,7 @@ def main():
     reg_log     = crear_regresion_logistica(X_train_est, X_val_est, X_test_est, chollo_train, chollo_val, chollo_test)
     arbol_clf   = crear_arbol_decision_clasificacion(X_train, X_val, X_test, chollo_train, chollo_val, chollo_test)
     bosque_clf  = crear_bosque_aleatorio_clasificacion(X_train, X_val, X_test, chollo_train, chollo_val, chollo_test)
-    svm_clf     = crear_maquinas_vectores_soporte_clasificacion(X_train_est, X_val_est, X_test_est, chollo_train, chollo_val, chollo_test)
+    # svm_clf     = crear_maquinas_vectores_soporte_clasificacion(X_train_est, X_val_est, X_test_est, chollo_train, chollo_val, chollo_test)
     knn_clf     = crear_k_vecinos_cercanos_clasificacion(X_train_est, X_val_est, X_test_est, chollo_train, chollo_val, chollo_test)
     # red_clf     = crear_redes_neuronales_clasificacion(X_train_norm, X_val_norm, X_test_norm, chollo_train, chollo_val, chollo_test)
     boost_clf   = crear_boosting_clasificacion(X_train, X_val, X_test, chollo_train, chollo_val, chollo_test)
@@ -823,7 +874,7 @@ def main():
         ('Regresión Logística',  reg_log,    X_train_est,  X_val_est,  X_test_est,  chollo_val),
         ('Árbol Clasificación',  arbol_clf,  X_train,      X_val,      X_test,      chollo_val),
         ('Bosque Clasificación', bosque_clf, X_train,      X_val,      X_test,      chollo_val),
-        ('SVM Clasificación',    svm_clf,    X_train_est,  X_val_est,  X_test_est,  chollo_val),
+        # ('SVM Clasificación',    svm_clf,    X_train_est,  X_val_est,  X_test_est,  chollo_val),
         ('KNN Clasificación',    knn_clf,    X_train_est,  X_val_est,  X_test_est,  chollo_val),
         # ('Red Neuronal Clf',     red_clf,    X_train_norm, X_val_norm, X_test_norm, chollo_val),
         ('Boosting Clf',         boost_clf,  X_train,      X_val,      X_test,      chollo_val),
@@ -853,7 +904,7 @@ def main():
     # Clasificación: precision, recall y F1 por clase sobre el conjunto de test
     nombres_clases = ['inflado (-1)', 'normal (0)', 'chollo (1)', 'super_chollo (2)', 'hiper_chollo (3)']
     y_pred_test_clf = mejor_modelo_clf.predict(mejor_X_test_clf)
-    reporte = classification_report(chollo_test, y_pred_test_clf, target_names=nombres_clases)
+    reporte = classification_report(chollo_test, y_pred_test_clf, labels=[-1, 0, 1, 2, 3], target_names=nombres_clases, zero_division=0)
     logger.info(f'[TEST Clasificación - {mejor_nombre_clf}]\n{reporte}')
 
 
