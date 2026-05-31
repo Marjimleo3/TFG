@@ -676,7 +676,7 @@ def crear_boosting_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:pd.Data
 # =============================================================================
 def main():
 
-    db = pd.read_parquet(BASE / 'data' / 'processed' / 'modelizacion' / 'db_final_codificada_Almería.parquet')
+    db = pd.read_parquet(BASE / 'data' / 'processed' / 'modelizacion' / 'db_final_codificada.parquet')
 
     # crear_grafico_correlacion_lineal(db)
 
