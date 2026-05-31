@@ -64,7 +64,7 @@ def encoding(db_final: pd.DataFrame) -> pd.DataFrame:
 def main():
     db_analisis = pd.read_parquet(BASE / "data" / "processed" / "analisis" / "db_final_analisis.parquet")
 
-    db_codificada = encoding(db_analisis, incluir_provincia=True)
+    db_codificada = encoding(db_analisis)
     db_codificada.to_parquet(BASE / "data" / "processed" / "modelizacion" / "db_final_codificada.parquet", index=False)
     logger.info('✅ Dataset completo codificado guardado correctamente')
 
