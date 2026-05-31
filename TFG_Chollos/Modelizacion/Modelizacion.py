@@ -53,7 +53,8 @@ from sklearn import linear_model
 from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier, plot_tree
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier, GradientBoostingRegressor, GradientBoostingClassifier
 from sklearn.neural_network import MLPRegressor, MLPClassifier
-from sklearn.metrics import f1_score
+import joblib
+from sklearn.metrics import f1_score, classification_report, mean_absolute_error, mean_squared_error, r2_score
 from sklearn.neighbors import KNeighborsRegressor, KNeighborsClassifier
 from sklearn.svm import SVR, SVC
 
@@ -181,10 +182,14 @@ def crear_grafico_correlacion_lineal(db_codificada:pd.DataFrame):
         db_codificada_modificada = db_codificada
     matriz_correlacion = db_codificada_modificada.corr(numeric_only=True).round(2)
     sns.heatmap(matriz_correlacion, annot=True, cmap="vlag", vmin=-1, vmax=1)
-    plt.xticks([i + 0.5 for i in range(len(matriz_correlacion.index))], matriz_correlacion.index, rotation=45, ha='right')    #Se añade esto para que los yticks estén en medio de los recuadros y aparezcan todas las variables 
-    plt.yticks([i + 0.5 for i in range(len(matriz_correlacion.index))], matriz_correlacion.index)   #Se añade esto para que los yticks estén en medio de los recuadros y aparezcan todas las variables 
+    plt.xticks([i + 0.5 for i in range(len(matriz_correlacion.index))], matriz_correlacion.index, rotation=45, ha='right')    #Se añade esto para que los yticks estén en medio de los recuadros y aparezcan todas las variables
+    plt.yticks([i + 0.5 for i in range(len(matriz_correlacion.index))], matriz_correlacion.index)   #Se añade esto para que los yticks estén en medio de los recuadros y aparezcan todas las variables
     plt.title('Matriz de correlación lineal de las variables')
-    plt.show()
+    ruta = BASE / 'data' / 'graficos_modelizacion' / 'correlacion_lineal.png'
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(ruta, bbox_inches='tight', dpi=150)
+    plt.close()
+    logger.info(f'✅ Gráfico guardado: {ruta}')
 
 
 
@@ -193,6 +198,7 @@ def crear_regresion_lineal(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.Da
     Crea y entrena un modelo de regresión lineal Múltiple.
     Estandarizamos los datos
     '''
+    logger.info('⏳ Creando "Regresión Lineal Múltiple"')
 
     regresion = linear_model.LinearRegression()   #Creamos el modelo
     regresion.fit(conjunto_ent_est, target_ent_est)   #Le pasamos al modelo nuestros datos estandarizados(Entrenamos con nuestros datos)
@@ -206,7 +212,11 @@ def crear_regresion_lineal(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.Da
         y=regresion.predict(conjunto_ent_est))   #Dibujamos la recta de regresión junto a nuestros datos
 
     plt.title(f'Regresión Lineal: {variable_representar} vs {target_ent_est.name}')
-    plt.show()
+    ruta = BASE / 'data' / 'graficos_modelizacion' / f'regresion_lineal_{variable_representar}.png'
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(ruta, bbox_inches='tight', dpi=150)
+    plt.close()
+    logger.info(f'✅ Gráfico guardado: {ruta}')
 
     return regresion
 
@@ -214,12 +224,14 @@ def crear_regresion_lineal(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.Da
 
 def crear_arbol_decision(conjunto_ent:pd.DataFrame, target_ent:pd.Series):
     '''
-    No es necesario escalar los datos porque solo pregunta "¿es X mayor que umbral?", la magnitud no importa.
+    Funcionamiento: Divide el espacio mediante reglas lógicas tipo if-else
+    ¿Transformar datos?:No es necesario escalar los datos porque solo pregunta "¿es X mayor que umbral?", la magnitud no importa.
     Hay que decidir entre estos hiperparámetros:
         # max_depth : Profundidad máxima del árbol. Sin límite → overfitting. Valor bajo → underfitting
         min_samples_split : Mínimo de muestras que debe tener un nodo para poder dividirse. Se dejaron los valores por defecto por ser suficientemente robustos
         min_samples_leaf :  Mínimo de muestras que debe tener una hoja (nodo final). Evita hojas con 1 sola muestra. Se dejaron los valores por defecto por ser suficientemente robustos
     '''
+    logger.info('⏳ Creando "Árbol de Decisión"')
 
     arbol = DecisionTreeRegressor(random_state=42)   #Creamos el modelo
     param_grid = {
@@ -231,7 +243,8 @@ def crear_arbol_decision(conjunto_ent:pd.DataFrame, target_ent:pd.Series):
         param_grid=param_grid,
         cv=5,                          # K-Fold con 5 folds, sobre X_train
         scoring='neg_mean_squared_error',  # métrica a optimizar
-        n_jobs=-1)                      # usa todos los núcleos del procesador
+        n_jobs=-1,                      # usa todos los núcleos del procesador
+        verbose=2)                     
     
     grid_search.fit(conjunto_ent, target_ent)   #Entrenamos el modelo con nuestros datos
     logger.info('✅ Creado y entrenado el modelo "Árbol de Decisión" correctamente')
@@ -247,7 +260,11 @@ def crear_arbol_decision(conjunto_ent:pd.DataFrame, target_ent:pd.Series):
         max_depth=3,    #Con max_depth=3 vemos las primeras decisiones más importantes (las que más reducen el error)
         fontsize=9,    #Se ven muy pequeñas las letras
         feature_names=conjunto_ent.columns.to_list())   #Añadimos los nombres de las variables predictoras
-    plt.show()
+    ruta = BASE / 'data' / 'graficos_modelizacion' / 'arbol_decision.png'
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(ruta, bbox_inches='tight', dpi=150)
+    plt.close()
+    logger.info(f'✅ Gráfico guardado: {ruta}')
     logger.info('✅ Representado el "Árbol de Decisión" correctamente')
 
     #  Después, usas X_val para comparar modelos:
@@ -261,16 +278,20 @@ def crear_arbol_decision(conjunto_ent:pd.DataFrame, target_ent:pd.Series):
 
 def crear_bosque_aleatorio(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunto_test:pd.DataFrame, target_ent:pd.Series, target_val:pd.Series, target_test:pd.Series):
     '''
-    No es necesario escalar los datos porque solo pregunta "¿es X mayor que umbral?", la magnitud no importa.
+    Funcionamiento: "Sabiduría de las Masas", combina múltiples árboles
+    Técnica: Bagging (Bootstrap Aggregating)
+    ¿Transformar datos?: No es necesario escalar los datos porque solo pregunta "¿es X mayor que umbral?", la magnitud no importa.
     Hay que decidir entre estos hiperparámetros:
         # n_estimators : Número de árboles del bosque. Más árboles → más estable, más lento
         # max_depth :  Igual que en el árbol individual
         max_features : Cuántas features considera en cada división. Introduce aleatoriedad para que los árboles sean distintos entre sí. Se dejaron los valores por defecto por ser suficientemente robustos
     '''
+    logger.info('⏳ Creando "Bosque Aleatorio"')
+
     bosque = RandomForestRegressor(random_state=42)
     param_grid = {
-      'n_estimators': [50, 100, 200],
-      'max_depth':    [5, 10, 20, None],
+      'n_estimators': [50, 100],
+      'max_depth':    [10, 20],
     }
 
     grid_search = GridSearchCV(
@@ -278,7 +299,8 @@ def crear_bosque_aleatorio(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame,
         param_grid=param_grid,
         cv=5,                          # K-Fold con 5 folds, sobre X_train
         scoring='neg_mean_squared_error',  # métrica a optimizar
-        n_jobs=-1)                    # usa todos los núcleos del procesador
+        n_jobs=-1,                      # usa todos los núcleos del procesador
+        verbose=2)                    
     
     grid_search.fit(conjunto_ent, target_ent)
 
@@ -300,12 +322,15 @@ def crear_bosque_aleatorio(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame,
 
 def crear_k_vecinos_cercanos(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, conjunto_test_est:pd.DataFrame, target_ent_est:pd.Series, target_val_est:pd.Series, target_test_est:pd.Series):
     '''
-    Estandarizamos los datos porque KNN mide distancia entre puntos → una variable en miles de euros dominaría sobre una en m².
+    Funcionamiento: Calcula la distancia entre el nuevo punto y todos los puntos de entrenamiento, selecciona los k puntos más cercanos y asigna la clase mayoritaria entre esos vecinos
+    ¿Transformar datos?: Estandarizamos los datos porque KNN mide distancia entre puntos → una variable en miles de euros dominaría sobre una en m².
     Hay que decidir entre estos hiperparámetros: 
         # k (número de vecinos) : Número de vecinos que consulta para predecir. k=1 → muy sensible al ruido. k grande → predicciones más suavizadas 
         weights : Si todos los vecinos pesan igual (uniform) o los más cercanos pesan más (distance) 
         metric : Cómo mide la distancia entre puntos (euclidean, manhattan...)
     '''
+    logger.info('⏳ Creando "KNN"')
+
     param_grid = {
       'n_neighbors': [3, 5, 7, 10, 15],
     }
@@ -315,7 +340,8 @@ def crear_k_vecinos_cercanos(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.
         param_grid=param_grid,
         cv=5,                          # K-Fold con 5 folds, sobre X_train
         scoring='neg_mean_squared_error',  # métrica a optimizar
-        n_jobs=-1)                      # usa todos los núcleos del procesador
+        n_jobs=-1,                      # usa todos los núcleos del procesador
+        verbose=2)                      
     grid_search.fit(conjunto_ent_est, target_ent_est)    
 
     mejor_knn = grid_search.best_estimator_
@@ -331,24 +357,28 @@ def crear_k_vecinos_cercanos(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.
 
 def crear_maquinas_vectores_soporte(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, conjunto_test_est:pd.DataFrame, target_ent_est:pd.Series, target_val_est:pd.Series, target_test_est:pd.Series):
     '''
-    Estandarizamos los datos porque SVM maximiza márgenes → sensible a la magnitud.
+    Funcionamiento: Encuentra el hiperplano que mejor separa las clases, de forma que maximiza el margen (distancia entre el hiperplano y puntos cercanos)
+    ¿Transformar datos?: Estandarizamos los datos porque SVM maximiza márgenes → sensible a la magnitud.
     Hay que decidir entre estos hiperparámetros: 
         # C : Penalización por errores. C alto → intenta no fallar ningún punto (riesgo de overfitting). C bajo → acepta más errores a cambio de un margen más amplio
         # kernel : Función que transforma los datos (linear, rbf, poly). Permite separar datos no lineales 
         gamma : Controla el radio de influencia de cada punto. Solo aplica a kernels rbf y poly. Mencionar si solo si uso kernel rbf, si no, ni lo menciono
     '''
-    param_grid = {
-      'C':      [0.1, 1, 10, 100],
-      'kernel': ['linear', 'rbf'],
-      'gamma': ['auto', 'scale']
-    }
+    logger.info('⏳ Creando "SVM"')
+
+    param_grid = [
+        {'C': [0.1, 1, 10], 'kernel': ['linear']},
+        {'C': [0.1, 1, 10], 'kernel': ['rbf'], 'gamma': ['scale']},
+    ]
+
     svm = SVR()
     grid_search = GridSearchCV(
         estimator=svm,
         param_grid=param_grid,
         cv=5,                          # K-Fold con 5 folds, sobre X_train
         scoring='neg_mean_squared_error',  # métrica a optimizar
-        n_jobs=-1)                      # usa todos los núcleos del procesador
+        n_jobs=-1,                      # usa todos los núcleos del procesador
+        verbose=2)                      
     grid_search.fit(conjunto_ent_est, target_ent_est)    
 
     mejor_svm = grid_search.best_estimator_
@@ -363,12 +393,15 @@ def crear_maquinas_vectores_soporte(conjunto_ent_est:pd.DataFrame, conjunto_val_
 
 def crear_redes_neuronales(conjunto_ent_norm:pd.DataFrame, conjunto_val_norm:pd.DataFrame, conjunto_test_norm:pd.DataFrame, target_ent_norm:pd.Series, target_val_norm:pd.Series, target_test_norm:pd.Series):
     '''
-    Normalizamos los datos porque las Redes Neuronales aprenden con gradientes → convergen mejor con datos en [0,1].
+    Funcionamiento: Divide el espacio mediante reglas lógicas tipo if-else
+    ¿Transformar datos?: Normalizamos los datos porque las Redes Neuronales aprenden con gradientes → convergen mejor con datos en [0,1].
     Hay que decidir el 'early stopping' y entre estos hiperparámetros: 
         # hidden_layer_sizes : Número de capas ocultas y neuronas por capa  
         # learning_rate : Cuánto ajusta los pesos en cada paso. Alto → aprende rápido pero puede no converger. Bajo → aprende despacio pero más estable
         # epochs / max_iter : Número de veces que recorre todo el dataset entrenando. Se pone un valor alto y se delega en early stopping 
     '''
+    logger.info('⏳ Creando "Redes Neuronales"')
+
     red = MLPRegressor(
         max_iter=1000,           # valor alto, se delega el paro en early_stopping
         early_stopping=True,     # para cuando la validación interna no mejora
@@ -384,7 +417,8 @@ def crear_redes_neuronales(conjunto_ent_norm:pd.DataFrame, conjunto_val_norm:pd.
         param_grid=param_grid,
         cv=5,
         scoring='neg_mean_squared_error',
-        n_jobs=-1)
+        n_jobs=-1,
+        verbose=2)
     grid_search.fit(conjunto_ent_norm, target_ent_norm)
 
     mejor_red = grid_search.best_estimator_
@@ -400,19 +434,22 @@ def crear_redes_neuronales(conjunto_ent_norm:pd.DataFrame, conjunto_val_norm:pd.
 
 def crear_boosting(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunto_test:pd.DataFrame, target_ent:pd.Series, target_val:pd.Series, target_test:pd.Series):
     '''
-    No es necesario escalar los datos porque solo pregunta "¿es X mayor que umbral?", la magnitud no importa.
+    Funcionamiento: Divide el espacio mediante reglas lógicas tipo if-else
+    ¿Transformar datos?: No es necesario escalar los datos porque solo pregunta "¿es X mayor que umbral?", la magnitud no importa.
     Hay que decidir el 'early stopping' y entre estos hiperparámetros:
         # learning_rate : Número de árboles encadenados. Más árboles → más preciso, pero más riesgo de overfitting
         # n_estimators : Cuánto contribuye cada árbol nuevo. Valores bajos necesitan más árboles
         # max_depth : Profundidad de cada árbol individual. Suelen ser árboles poco profundos (3-5)
     '''
+    logger.info('⏳ Creando "Boosting"')
+
     boosting = GradientBoostingRegressor(random_state=42)
 
     # Boosting (GradientBoostingRegressor de sklearn)
     param_grid = {
-      'n_estimators':  [50, 100, 200],
-      'learning_rate': [0.01, 0.05, 0.1],
-      'max_depth':     [3, 5, 7],
+      'n_estimators':  [50, 100],
+      'learning_rate': [0.05, 0.1],
+      'max_depth':     [3, 5],
     }
 
     grid_search = GridSearchCV(
@@ -420,7 +457,8 @@ def crear_boosting(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunt
         param_grid=param_grid,
         cv=5,
         scoring='neg_mean_squared_error',
-        n_jobs=-1)
+        n_jobs=-1,
+        verbose=2)
     grid_search.fit(conjunto_ent, target_ent)
 
     mejor_boosting = grid_search.best_estimator_
@@ -434,7 +472,7 @@ def crear_boosting(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunt
 
 
 # =============================================================================
-# MODELOS DE CLASIFICACIÓN (inflado / chollo / super_chollo / hiper-chollo)
+# MODELOS DE CLASIFICACIÓN (inflado / normal / chollo / super_chollo / hiper-chollo)
 # =============================================================================
 
 def crear_etiqueta_chollo(y_real:pd.Series, y_predicho:pd.Series) -> pd.Series:
@@ -466,6 +504,8 @@ def crear_regresion_logistica(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd
         # C : Inverso de la regularización. C alto → menos regularización (riesgo de overfitting)
         # solver : Algoritmo de optimización (lbfgs, liblinear...)
     '''
+    logger.info('⏳ Creando "Regresión Logística"')
+
     regresion = linear_model.LogisticRegression(max_iter=1000, random_state=42)
     param_grid = {
         'C': [0.01, 0.1, 1, 10, 100],
@@ -475,7 +515,8 @@ def crear_regresion_logistica(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd
         param_grid=param_grid,
         cv=5,
         scoring='f1_weighted',
-        n_jobs=-1)
+        n_jobs=-1,
+        verbose=2)
     grid_search.fit(conjunto_ent_est, objetivo_ent)
 
     mejor_regresion = grid_search.best_estimator_
@@ -494,6 +535,8 @@ def crear_arbol_decision_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:p
     Hay que decidir entre estos hiperparámetros:
         # max_depth : Profundidad máxima del árbol. Sin límite → overfitting. Valor bajo → underfitting
     '''
+    logger.info('⏳ Creando "Árbol de Decisión Clasificación"')
+
     arbol = DecisionTreeClassifier(random_state=42)
     param_grid = {
         'max_depth': [3, 5, 10, 15, None],
@@ -503,7 +546,8 @@ def crear_arbol_decision_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:p
         param_grid=param_grid,
         cv=5,
         scoring='f1_weighted',
-        n_jobs=-1)
+        n_jobs=-1,
+        verbose=2)
     grid_search.fit(conjunto_ent, objetivo_ent)
 
     mejor_arbol = grid_search.best_estimator_
@@ -523,17 +567,20 @@ def crear_bosque_aleatorio_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val
         # n_estimators : Número de árboles del bosque. Más árboles → más estable, más lento
         # max_depth : Igual que en el árbol individual
     '''
+    logger.info('⏳ Creando "Bosque Aleatorio Clasificación"')
+
     bosque = RandomForestClassifier(random_state=42)
     param_grid = {
-        'n_estimators': [50, 100, 200],
-        'max_depth':    [5, 10, 20, None],
+        'n_estimators': [50, 100],
+        'max_depth':    [10, 20],
     }
     grid_search = GridSearchCV(
         estimator=bosque,
         param_grid=param_grid,
         cv=5,
         scoring='f1_weighted',
-        n_jobs=-1)
+        n_jobs=-1,
+        verbose=2)
     grid_search.fit(conjunto_ent, objetivo_ent)
 
     mejor_bosque = grid_search.best_estimator_
@@ -553,17 +600,20 @@ def crear_maquinas_vectores_soporte_clasificacion(conjunto_ent_est:pd.DataFrame,
         # C : Penalización por errores. C alto → intenta no fallar ningún punto (riesgo de overfitting)
         # kernel : Función que transforma los datos (linear, rbf, poly)
     '''
+    logger.info('⏳ Creando "SVM Clasificación"')
+
     svm = SVC(random_state=42)
-    param_grid = {
-        'C':      [0.1, 1, 10, 100],
-        'kernel': ['linear', 'rbf'],
-    }
+    param_grid = [
+        {'C': [0.1, 1, 10], 'kernel': ['linear']},
+        {'C': [0.1, 1, 10], 'kernel': ['rbf'], 'gamma': ['scale']},
+    ]
     grid_search = GridSearchCV(
         estimator=svm,
         param_grid=param_grid,
         cv=5,
         scoring='f1_weighted',
-        n_jobs=-1)
+        n_jobs=-1,
+        verbose=2)
     grid_search.fit(conjunto_ent_est, objetivo_ent)
 
     mejor_svm = grid_search.best_estimator_
@@ -582,6 +632,8 @@ def crear_k_vecinos_cercanos_clasificacion(conjunto_ent_est:pd.DataFrame, conjun
     Hay que decidir entre estos hiperparámetros:
         # n_neighbors : Número de vecinos que consulta para predecir
     '''
+    logger.info('⏳ Creando "KNN Clasificación"')
+
     knn = KNeighborsClassifier()
     param_grid = {
         'n_neighbors': [3, 5, 7, 10, 15],
@@ -591,7 +643,8 @@ def crear_k_vecinos_cercanos_clasificacion(conjunto_ent_est:pd.DataFrame, conjun
         param_grid=param_grid,
         cv=5,
         scoring='f1_weighted',
-        n_jobs=-1)
+        n_jobs=-1,
+        verbose=2)
     grid_search.fit(conjunto_ent_est, objetivo_ent)
 
     mejor_knn = grid_search.best_estimator_
@@ -612,6 +665,8 @@ def crear_redes_neuronales_clasificacion(conjunto_ent_norm:pd.DataFrame, conjunt
         # hidden_layer_sizes : Número de capas ocultas y neuronas por capa
         # learning_rate_init : Cuánto ajusta los pesos en cada paso
     '''
+    logger.info('⏳ Creando "Redes Neuronales Clasificación"')
+
     red = MLPClassifier(
         max_iter=1000,
         early_stopping=True,
@@ -625,7 +680,8 @@ def crear_redes_neuronales_clasificacion(conjunto_ent_norm:pd.DataFrame, conjunt
         param_grid=param_grid,
         cv=5,
         scoring='f1_weighted',
-        n_jobs=-1)
+        n_jobs=-1,
+        verbose=2)
     grid_search.fit(conjunto_ent_norm, objetivo_ent)
 
     mejor_red = grid_search.best_estimator_
@@ -647,18 +703,21 @@ def crear_boosting_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:pd.Data
         # learning_rate : Cuánto contribuye cada árbol nuevo
         # max_depth : Profundidad de cada árbol individual
     '''
+    logger.info('⏳ Creando "Boosting Clasificación"')
+    
     boosting = GradientBoostingClassifier(random_state=42)
     param_grid = {
-        'n_estimators':  [50, 100, 200],
-        'learning_rate': [0.01, 0.05, 0.1],
-        'max_depth':     [3, 5, 7],
+        'n_estimators':  [50, 100],
+        'learning_rate': [0.05, 0.1],
+        'max_depth':     [3, 5],
     }
     grid_search = GridSearchCV(
         estimator=boosting,
         param_grid=param_grid,
         cv=5,
         scoring='f1_weighted',
-        n_jobs=-1)
+        n_jobs=-1,
+        verbose=2)
     grid_search.fit(conjunto_ent, objetivo_ent)
 
     mejor_boosting = grid_search.best_estimator_
@@ -780,6 +839,50 @@ def main():
             mejor_X_train_clf, mejor_X_val_clf, mejor_X_test_clf = X_tr, X_va, X_te
 
     logger.info(f'✅ Mejor modelo de clasificación: {mejor_nombre_clf} (F1={mejor_f1:.4f})')
+
+
+    # 8. EVALUACIÓN FINAL EN TEST
+    # -------------------------------------------------------------------------
+    # Regresión: R², MAE y RMSE sobre el conjunto de test
+    y_pred_test_reg = mejor_modelo_reg.predict(mejor_X_test)
+    r2_test   = r2_score(mejor_y_test, y_pred_test_reg)
+    mae_test  = mean_absolute_error(mejor_y_test, y_pred_test_reg)
+    rmse_test = np.sqrt(mean_squared_error(mejor_y_test, y_pred_test_reg))
+    logger.info(f'[TEST Regresión - {mejor_nombre}] R²={r2_test:.4f} | MAE={mae_test:.2f} | RMSE={rmse_test:.2f}')
+
+    # Clasificación: precision, recall y F1 por clase sobre el conjunto de test
+    nombres_clases = ['inflado (-1)', 'normal (0)', 'chollo (1)', 'super_chollo (2)', 'hiper_chollo (3)']
+    y_pred_test_clf = mejor_modelo_clf.predict(mejor_X_test_clf)
+    reporte = classification_report(chollo_test, y_pred_test_clf, target_names=nombres_clases)
+    logger.info(f'[TEST Clasificación - {mejor_nombre_clf}]\n{reporte}')
+
+
+    # 9. GUARDAR MODELOS
+    # -------------------------------------------------------------------------
+    MODELOS_EST  = {'Regresión Lineal', 'SVM', 'KNN'}
+    MODELOS_NORM = {'Redes Neuronales'}
+    MODELOS_EST_CLF  = {'Regresión Logística', 'SVM Clasificación', 'KNN Clasificación'}
+    MODELOS_NORM_CLF = {'Red Neuronal Clf'}
+
+    modelos_dir = BASE / 'data' / 'models'
+    modelos_dir.mkdir(parents=True, exist_ok=True)
+
+    joblib.dump(mejor_modelo_reg, modelos_dir / 'modelo_regresion.pkl')
+    joblib.dump(mejor_modelo_clf, modelos_dir / 'modelo_clasificacion.pkl')
+
+    if mejor_nombre in MODELOS_EST:
+        joblib.dump(scaler_X, modelos_dir / 'scaler_X_regresion.pkl')
+        joblib.dump(scaler_y, modelos_dir / 'scaler_y_regresion.pkl')
+    elif mejor_nombre in MODELOS_NORM:
+        joblib.dump(norm_X, modelos_dir / 'scaler_X_regresion.pkl')
+        joblib.dump(norm_y, modelos_dir / 'scaler_y_regresion.pkl')
+
+    if mejor_nombre_clf in MODELOS_EST_CLF:
+        joblib.dump(scaler_X, modelos_dir / 'scaler_X_clasificacion.pkl')
+    elif mejor_nombre_clf in MODELOS_NORM_CLF:
+        joblib.dump(norm_X, modelos_dir / 'scaler_X_clasificacion.pkl')
+
+    logger.info(f'✅ Modelos guardados en {modelos_dir}')
 
 
 if __name__ == '__main__':

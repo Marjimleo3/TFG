@@ -12,11 +12,13 @@ import logging
 def conseguir_ruta_general_TFG():
     '''
     Cargamos las constantes del archivo .env como variables de entorno del sistema y extraemos todas las variables de entorno.
-    *Nota. 'Path' se usa para poder concatenar más cómodamente la ruta (convierte un string en un objeto de ruta inteligente) y 'getenv' significa get environment variable 
+    *Nota. 'Path' se usa para poder concatenar más cómodamente la ruta (convierte un string en un objeto de ruta inteligente) y 'getenv' significa get environment variable
     '''
     load_dotenv()  #Carga las rutas del archivo .env como variables de entorno del sistema
-    BASE = Path(os.getenv("BASE"))
-    return BASE
+    base_env = os.getenv("BASE")    
+    if base_env:
+        return Path(base_env)
+    return Path(__file__).parent  # Fallback para Streamlit Cloud: ruta relativa al propio utils.py
 
 
 
