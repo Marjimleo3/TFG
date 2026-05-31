@@ -52,7 +52,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn import linear_model
 from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier, plot_tree
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier, GradientBoostingRegressor, GradientBoostingClassifier
-# from sklearn.neural_network import MLPRegressor, MLPClassifier
+from sklearn.neural_network import MLPRegressor, MLPClassifier
 from sklearn.metrics import f1_score
 from sklearn.neighbors import KNeighborsRegressor, KNeighborsClassifier
 from sklearn.svm import SVR, SVC
@@ -604,6 +604,7 @@ def crear_k_vecinos_cercanos_clasificacion(conjunto_ent_est:pd.DataFrame, conjun
     return mejor_knn
 
 
+
 def crear_redes_neuronales_clasificacion(conjunto_ent_norm:pd.DataFrame, conjunto_val_norm:pd.DataFrame, conjunto_test_norm:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series, objetivo_test:pd.Series):
     '''
     Normalizamos los datos porque las Redes Neuronales aprenden con gradientes → convergen mejor con datos en [0,1].
@@ -635,6 +636,7 @@ def crear_redes_neuronales_clasificacion(conjunto_ent_norm:pd.DataFrame, conjunt
     logger.info(f'F1 en validación: {f1_val:.4f}')
 
     return mejor_red
+
 
 
 def crear_boosting_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunto_test:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series, objetivo_test:pd.Series):
@@ -691,7 +693,7 @@ def main():
     # -------------------------------------------------------------------------
     X_train_cen, X_val_cen, X_test_cen, y_train_cen, y_val_cen, y_test_cen, media_X_train, media_y_train = centrar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
     X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est, scaler_X, scaler_y = estandarizar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
-    # X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm, norm_X, norm_y = normalizar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
+    X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm, norm_X, norm_y = normalizar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
 
 
     # 3. MODELOS DE REGRESIÓN (predicción de precio)
