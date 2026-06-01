@@ -190,7 +190,7 @@ def crear_grafico_correlacion_lineal(db_codificada:pd.DataFrame):
 
 
 
-def crear_regresion_lineal(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, conjunto_test_est:pd.DataFrame, target_ent_est:pd.Series, target_val_est:pd.Series, target_test_est:pd.Series, variable_representar:str):
+def crear_regresion_lineal(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, target_ent_est:pd.Series, target_val_est:pd.Series, variable_representar:str):
     '''
     Crea y entrena un modelo de regresión lineal Múltiple.
     Estandarizamos los datos
@@ -214,8 +214,11 @@ def crear_regresion_lineal(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.Da
     plt.savefig(ruta, bbox_inches='tight', dpi=150)
     plt.close()
     logger.info(f'✅ Gráfico guardado: {ruta}')
-    ruta_modelo = BASE / 'data' / 'models' / 'regresion_lineal_reg.pkl'
 
+    r2_val = regresion.score(conjunto_val_est, target_val_est)
+    logger.info(f'R² en validación: {r2_val:.4f}')
+
+    ruta_modelo = BASE / 'data' / 'models' / 'regresion_lineal_reg.pkl'
     joblib.dump(regresion, ruta_modelo)
     logger.info(f'✅ Modelo guardado: {ruta_modelo}')
 
@@ -223,7 +226,7 @@ def crear_regresion_lineal(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.Da
 
 
 
-def crear_arbol_decision(conjunto_ent:pd.DataFrame, target_ent:pd.Series):
+def crear_arbol_decision(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, target_ent:pd.Series, target_val:pd.Series):
     '''
     Funcionamiento: Divide el espacio mediante reglas lógicas tipo if-else
     ¿Transformar datos?:No es necesario escalar los datos porque solo pregunta "¿es X mayor que umbral?", la magnitud no importa.
@@ -268,10 +271,9 @@ def crear_arbol_decision(conjunto_ent:pd.DataFrame, target_ent:pd.Series):
     logger.info(f'✅ Gráfico guardado: {ruta}')
     logger.info('✅ Representado el "Árbol de Decisión" correctamente')
 
-    #  Después, usas X_val para comparar modelos:
-    # y_pred_val = mejor_arbol.predict(X_val)
-    # print(r2_score(y_val, y_pred_val))
-    # print(mean_squared_error(y_val, y_pred_val))
+    r2_val = mejor_arbol.score(conjunto_val, target_val)
+    logger.info(f'R² en validación: {r2_val:.4f}')
+
     ruta_modelo = BASE / 'data' / 'models' / 'arbol_decision_reg.pkl'
 
     joblib.dump(mejor_arbol, ruta_modelo)
@@ -281,7 +283,7 @@ def crear_arbol_decision(conjunto_ent:pd.DataFrame, target_ent:pd.Series):
 
 
 
-def crear_bosque_aleatorio(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunto_test:pd.DataFrame, target_ent:pd.Series, target_val:pd.Series, target_test:pd.Series):
+def crear_bosque_aleatorio(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, target_ent:pd.Series, target_val:pd.Series):
     '''
     Funcionamiento: "Sabiduría de las Masas", combina múltiples árboles
     Técnica: Bagging (Bootstrap Aggregating)
@@ -329,7 +331,7 @@ def crear_bosque_aleatorio(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame,
 
 
 
-def crear_k_vecinos_cercanos(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, conjunto_test_est:pd.DataFrame, target_ent_est:pd.Series, target_val_est:pd.Series, target_test_est:pd.Series):
+def crear_k_vecinos_cercanos(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, target_ent_est:pd.Series, target_val_est:pd.Series):
     '''
     Funcionamiento: Calcula la distancia entre el nuevo punto y todos los puntos de entrenamiento, selecciona los k puntos más cercanos y asigna la clase mayoritaria entre esos vecinos
     ¿Transformar datos?: Estandarizamos los datos porque KNN mide distancia entre puntos → una variable en miles de euros dominaría sobre una en m².
@@ -368,7 +370,7 @@ def crear_k_vecinos_cercanos(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.
 
 
 
-def crear_maquinas_vectores_soporte(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, conjunto_test_est:pd.DataFrame, target_ent_est:pd.Series, target_val_est:pd.Series, target_test_est:pd.Series):
+def crear_maquinas_vectores_soporte(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, target_ent_est:pd.Series, target_val_est:pd.Series):
     '''
     Funcionamiento: Encuentra el hiperplano que mejor separa las clases, de forma que maximiza el margen (distancia entre el hiperplano y puntos cercanos)
     ¿Transformar datos?: Estandarizamos los datos porque SVM maximiza márgenes → sensible a la magnitud.
@@ -408,7 +410,7 @@ def crear_maquinas_vectores_soporte(conjunto_ent_est:pd.DataFrame, conjunto_val_
     return mejor_svm
 
 
-def crear_redes_neuronales(conjunto_ent_norm:pd.DataFrame, conjunto_val_norm:pd.DataFrame, conjunto_test_norm:pd.DataFrame, target_ent_norm:pd.Series, target_val_norm:pd.Series, target_test_norm:pd.Series):
+def crear_redes_neuronales(conjunto_ent_norm:pd.DataFrame, conjunto_val_norm:pd.DataFrame, target_ent_norm:pd.Series, target_val_norm:pd.Series):
     '''
     Funcionamiento: Divide el espacio mediante reglas lógicas tipo if-else
     ¿Transformar datos?: Normalizamos los datos porque las Redes Neuronales aprenden con gradientes → convergen mejor con datos en [0,1].
@@ -453,7 +455,7 @@ def crear_redes_neuronales(conjunto_ent_norm:pd.DataFrame, conjunto_val_norm:pd.
 
 
 
-def crear_boosting(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunto_test:pd.DataFrame, target_ent:pd.Series, target_val:pd.Series, target_test:pd.Series):
+def crear_boosting(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, target_ent:pd.Series, target_val:pd.Series):
     '''
     Funcionamiento: Divide el espacio mediante reglas lógicas tipo if-else
     ¿Transformar datos?: No es necesario escalar los datos porque solo pregunta "¿es X mayor que umbral?", la magnitud no importa.
@@ -522,7 +524,7 @@ def crear_etiqueta_chollo(y_real:pd.Series, y_predicho:pd.Series) -> pd.Series:
     return pd.Series(np.select(condiciones, etiquetas), index=y_real.index, name='categoria')   #Condición: lista booleanos, etiquetas: lista de valores a asignar cuando condición sea True
 
 
-def crear_regresion_logistica(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, conjunto_test_est:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series, objetivo_test:pd.Series):
+def crear_regresion_logistica(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series):
     '''
     Estandarizamos los datos. Versión clasificatoria de la regresión lineal.
     Hay que decidir entre estos hiperparámetros:
@@ -558,7 +560,7 @@ def crear_regresion_logistica(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd
     return mejor_regresion
 
 
-def crear_arbol_decision_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunto_test:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series, objetivo_test:pd.Series):
+def crear_arbol_decision_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series):
     '''
     No es necesario escalar los datos.
     Hay que decidir entre estos hiperparámetros:
@@ -593,7 +595,7 @@ def crear_arbol_decision_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:p
     return mejor_arbol
 
 
-def crear_bosque_aleatorio_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunto_test:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series, objetivo_test:pd.Series):
+def crear_bosque_aleatorio_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series):
     '''
     No es necesario escalar los datos.
     Hay que decidir entre estos hiperparámetros:
@@ -630,7 +632,7 @@ def crear_bosque_aleatorio_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val
     return mejor_bosque
 
 
-def crear_maquinas_vectores_soporte_clasificacion(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, conjunto_test_est:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series, objetivo_test:pd.Series):
+def crear_maquinas_vectores_soporte_clasificacion(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series):
     '''
     Estandarizamos los datos porque SVM maximiza márgenes → sensible a la magnitud.
     Hay que decidir entre estos hiperparámetros:
@@ -667,7 +669,7 @@ def crear_maquinas_vectores_soporte_clasificacion(conjunto_ent_est:pd.DataFrame,
     return mejor_svm
 
 
-def crear_k_vecinos_cercanos_clasificacion(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, conjunto_test_est:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series, objetivo_test:pd.Series):
+def crear_k_vecinos_cercanos_clasificacion(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series):
     '''
     Estandarizamos los datos porque KNN mide distancia entre puntos.
     Hay que decidir entre estos hiperparámetros:
@@ -703,7 +705,7 @@ def crear_k_vecinos_cercanos_clasificacion(conjunto_ent_est:pd.DataFrame, conjun
 
 
 
-def crear_redes_neuronales_clasificacion(conjunto_ent_norm:pd.DataFrame, conjunto_val_norm:pd.DataFrame, conjunto_test_norm:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series, objetivo_test:pd.Series):
+def crear_redes_neuronales_clasificacion(conjunto_ent_norm:pd.DataFrame, conjunto_val_norm:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series):
     '''
     Normalizamos los datos porque las Redes Neuronales aprenden con gradientes → convergen mejor con datos en [0,1].
     Hay que decidir el 'early stopping' y entre estos hiperparámetros:
@@ -744,7 +746,7 @@ def crear_redes_neuronales_clasificacion(conjunto_ent_norm:pd.DataFrame, conjunt
 
 
 
-def crear_boosting_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunto_test:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series, objetivo_test:pd.Series):
+def crear_boosting_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series):
     '''
     No es necesario escalar los datos.
     Hay que decidir el 'early stopping' y entre estos hiperparámetros:
@@ -810,13 +812,13 @@ def main():
 
     # 3. MODELOS DE REGRESIÓN (predicción de precio)
     # -------------------------------------------------------------------------
-    regresion   = crear_regresion_lineal(X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est, 'tamaño_habitacion')
-    arbol       = crear_arbol_decision(X_train, y_train)
-    bosque      = crear_bosque_aleatorio(X_train, X_val, X_test, y_train, y_val, y_test)
-    # svm         = crear_maquinas_vectores_soporte(X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est)
-    knn         = crear_k_vecinos_cercanos(X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est)
-    # red         = crear_redes_neuronales(X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm)
-    boosting    = crear_boosting(X_train, X_val, X_test, y_train, y_val, y_test)
+    regresion   = crear_regresion_lineal(X_train_est, X_val_est, y_train_est, y_val_est, 'tamaño_habitacion')
+    arbol       = crear_arbol_decision(X_train, X_val, y_train, y_val)
+    # bosque      = crear_bosque_aleatorio(X_train, X_val, y_train, y_val)
+    # svm         = crear_maquinas_vectores_soporte(X_train_est, X_val_est, y_train_est, y_val_est)
+    # knn         = crear_k_vecinos_cercanos(X_train_est, X_val_est, y_train_est, y_val_est)
+    # red         = crear_redes_neuronales(X_train_norm, X_val_norm, y_train_norm, y_val_norm)
+    boosting    = crear_boosting(X_train, X_val, y_train, y_val)
 
 
     # 4. SELECCIÓN DEL MEJOR MODELO DE REGRESIÓN (por R² en validación)
@@ -824,9 +826,9 @@ def main():
     modelos_regresion = [
         ('Regresión Lineal',  regresion,  X_train_est,  X_val_est,  X_test_est,  y_train_est,  y_val_est,  y_test_est),
         ('Árbol de Decisión', arbol,      X_train,      X_val,      X_test,      y_train,      y_val,      y_test),
-        ('Bosque Aleatorio',  bosque,     X_train,      X_val,      X_test,      y_train,      y_val,      y_test),
+        # ('Bosque Aleatorio',  bosque,     X_train,      X_val,      X_test,      y_train,      y_val,      y_test),
         # ('SVM',               svm,        X_train_est,  X_val_est,  X_test_est,  y_train_est,  y_val_est,  y_test_est),
-        ('KNN',               knn,        X_train_est,  X_val_est,  X_test_est,  y_train_est,  y_val_est,  y_test_est),
+        # ('KNN',               knn,        X_train_est,  X_val_est,  X_test_est,  y_train_est,  y_val_est,  y_test_est),
         # ('Redes Neuronales',  red,        X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm),
         ('Boosting',          boosting,   X_train,      X_val,      X_test,      y_train,      y_val,      y_test),
     ]
@@ -859,13 +861,13 @@ def main():
 
     # 6. MODELOS DE CLASIFICACIÓN (chollo / no chollo)
     # -------------------------------------------------------------------------
-    reg_log     = crear_regresion_logistica(X_train_est, X_val_est, X_test_est, chollo_train, chollo_val, chollo_test)
-    arbol_clf   = crear_arbol_decision_clasificacion(X_train, X_val, X_test, chollo_train, chollo_val, chollo_test)
-    bosque_clf  = crear_bosque_aleatorio_clasificacion(X_train, X_val, X_test, chollo_train, chollo_val, chollo_test)
-    # svm_clf     = crear_maquinas_vectores_soporte_clasificacion(X_train_est, X_val_est, X_test_est, chollo_train, chollo_val, chollo_test)
-    knn_clf     = crear_k_vecinos_cercanos_clasificacion(X_train_est, X_val_est, X_test_est, chollo_train, chollo_val, chollo_test)
-    # red_clf     = crear_redes_neuronales_clasificacion(X_train_norm, X_val_norm, X_test_norm, chollo_train, chollo_val, chollo_test)
-    boost_clf   = crear_boosting_clasificacion(X_train, X_val, X_test, chollo_train, chollo_val, chollo_test)
+    reg_log     = crear_regresion_logistica(X_train_est, X_val_est, chollo_train, chollo_val)
+    arbol_clf   = crear_arbol_decision_clasificacion(X_train, X_val, chollo_train, chollo_val)
+    # bosque_clf  = crear_bosque_aleatorio_clasificacion(X_train, X_val, chollo_train, chollo_val)
+    # svm_clf     = crear_maquinas_vectores_soporte_clasificacion(X_train_est, X_val_est, chollo_train, chollo_val)
+    # knn_clf     = crear_k_vecinos_cercanos_clasificacion(X_train_est, X_val_est, chollo_train, chollo_val)
+    # red_clf     = crear_redes_neuronales_clasificacion(X_train_norm, X_val_norm, chollo_train, chollo_val)
+    boost_clf   = crear_boosting_clasificacion(X_train, X_val, chollo_train, chollo_val)
 
 
     # 7. SELECCIÓN DEL MEJOR MODELO DE CLASIFICACIÓN (por F1 en validación)
@@ -873,9 +875,9 @@ def main():
     modelos_clasificacion = [
         ('Regresión Logística',  reg_log,    X_train_est,  X_val_est,  X_test_est,  chollo_val),
         ('Árbol Clasificación',  arbol_clf,  X_train,      X_val,      X_test,      chollo_val),
-        ('Bosque Clasificación', bosque_clf, X_train,      X_val,      X_test,      chollo_val),
+        # ('Bosque Clasificación', bosque_clf, X_train,      X_val,      X_test,      chollo_val),
         # ('SVM Clasificación',    svm_clf,    X_train_est,  X_val_est,  X_test_est,  chollo_val),
-        ('KNN Clasificación',    knn_clf,    X_train_est,  X_val_est,  X_test_est,  chollo_val),
+        # ('KNN Clasificación',    knn_clf,    X_train_est,  X_val_est,  X_test_est,  chollo_val),
         # ('Red Neuronal Clf',     red_clf,    X_train_norm, X_val_norm, X_test_norm, chollo_val),
         ('Boosting Clf',         boost_clf,  X_train,      X_val,      X_test,      chollo_val),
     ]
@@ -907,19 +909,18 @@ def main():
     reporte = classification_report(chollo_test, y_pred_test_clf, labels=[-1, 0, 1, 2, 3], target_names=nombres_clases, zero_division=0)
     logger.info(f'[TEST Clasificación - {mejor_nombre_clf}]\n{reporte}')
 
+    f1_macro = f1_score(chollo_test, y_pred_test_clf, average='macro', zero_division=0)
+    logger.info(f'[TEST Clasificación - {mejor_nombre_clf}] F1-macro={f1_macro:.4f}')
 
-    # 9. GUARDAR MODELOS
+
+    # 9. GUARDAR SCALERS del modelo ganador (los modelos ya se guardan en cada función)
     # -------------------------------------------------------------------------
-    MODELOS_EST  = {'Regresión Lineal', 'SVM', 'KNN'}
-    MODELOS_NORM = {'Redes Neuronales'}
+    MODELOS_EST      = {'Regresión Lineal', 'SVM', 'KNN'}
+    MODELOS_NORM     = {'Redes Neuronales'}
     MODELOS_EST_CLF  = {'Regresión Logística', 'SVM Clasificación', 'KNN Clasificación'}
     MODELOS_NORM_CLF = {'Red Neuronal Clf'}
 
     modelos_dir = BASE / 'data' / 'models'
-    modelos_dir.mkdir(parents=True, exist_ok=True)
-
-    joblib.dump(mejor_modelo_reg, modelos_dir / 'modelo_regresion.pkl')
-    joblib.dump(mejor_modelo_clf, modelos_dir / 'modelo_clasificacion.pkl')
 
     if mejor_nombre in MODELOS_EST:
         joblib.dump(scaler_X, modelos_dir / 'scaler_X_regresion.pkl')
@@ -933,7 +934,7 @@ def main():
     elif mejor_nombre_clf in MODELOS_NORM_CLF:
         joblib.dump(norm_X, modelos_dir / 'scaler_X_clasificacion.pkl')
 
-    logger.info(f'✅ Modelos guardados en {modelos_dir}')
+    logger.info(f'✅ Scalers guardados en {modelos_dir}')
 
 
 if __name__ == '__main__':
