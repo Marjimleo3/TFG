@@ -3,5 +3,5 @@ import subprocess
 
 BASE = conseguir_ruta_general_TFG()
 
-app = BASE / "Formulario_Usuario" / "Formulario_Web.py"
+app = BASE / "App" / "main.py"
 subprocess.run(["streamlit", "run", app])

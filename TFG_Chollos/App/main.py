@@ -2,30 +2,34 @@
 Home - Mapa de Alojamientos de Andalucía
 =========================================
 Para ejecutar:
-    streamlit run C:/Users/usuario/OneDrive/UNI_Mario5/TFG/TFG_Chollos/Formulario_Usuario/Formulario_Web.py
+    streamlit run C:/Users/usuario/OneDrive/UNI_Mario5/TFG/TFG_Chollos/App/main.py
 '''
 
 # =============================================================================
 # IMPORTS
 # =============================================================================
 import re
+import sys
 import threading
 import time
 from datetime import date, timedelta
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
 
 import pandas as pd
 import plotly.express as px
 import requests
 import streamlit as st
-import streamlit.components.v1 as components
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 
 from TFG_Chollos.utils import conseguir_ruta_general_TFG
-from TFG_Chollos.Graficos.graficos_analisis import mostrar_graficos_analisis
+from graficos_analisis import mostrar_graficos_analisis
 from TFG_Chollos.Scraping.Generador_urls_generales import (
     generador_urls, PROVINCIAS, N_ADULTOS, N_HABITACIONES, N_MENORES
 )
+
 
 # =============================================================================
 # CONSTANTES
@@ -229,7 +233,7 @@ def main():
 
     mapa = MAPA_ACTUALIZADO if st.session_state.mapa_listo else MAPA_PREDETERMINADO
     html = mapa.read_text(encoding='utf-8')
-    components.html(html, height=620, scrolling=False)
+    st.iframe(html, height=620)
 
     mostrar_graficos_analisis()
 

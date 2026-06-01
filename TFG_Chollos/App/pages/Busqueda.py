@@ -9,11 +9,18 @@ Listado Booking → Detalle por alojamiento → Preprocessing → Encoding → P
 # =============================================================================
 # IMPORTS
 # =============================================================================
+import sys
 from datetime import date, timedelta
+from pathlib import Path
 from urllib.parse import quote
 
 import pandas as pd
 import streamlit as st
+
+# Helpers en App/
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from _scraper_app import scrape_busqueda
+from _predictor import preprocesar_nuevos, codificar_nuevos, predecir_nuevos, mostrar_resultados, ETIQUETAS
 
 from TFG_Chollos.utils import conseguir_ruta_general_TFG, configurar_logger
 
@@ -131,17 +138,59 @@ def main():
          'Desayuno Incluido', 'Valoración >= 8', '3 o más estrellas', 'Admite Mascotas']
     )
 
-    if st.button('Mostrar Chollos'):
+    # Filtros sidebar (solo visibles si hay resultados previos)
+    if 'df_resultado' in st.session_state and not st.session_state.df_resultado.empty:
+        df_prev = st.session_state.df_resultado
+        st.sidebar.markdown('---')
+        st.sidebar.subheader('Filtrar resultados')
+        prov_opts = ['Todas'] + sorted(df_prev['provincia'].unique().tolist())
+        prov_sel  = st.sidebar.selectbox('Provincia', prov_opts)
+        tipo_opts = ['Todos'] + sorted(df_prev['tipo'].unique().tolist())
+        tipo_sel  = st.sidebar.selectbox('Tipo de alojamiento', tipo_opts)
+        cat_opts  = ['Todas'] + list(ETIQUETAS.values())
+        cat_sel   = st.sidebar.selectbox('Categoría', cat_opts)
+    else:
+        prov_sel = 'Todas'
+        tipo_sel = 'Todos'
+        cat_sel  = 'Todas'
+
+    if st.button('Detectar Chollos'):
         if not destinos:
             st.warning('Por favor, selecciona al menos un destino.')
             return
 
         filtro = generador_filtros(tipos_estancia, servicios)
-        urls = generador_urls(destinos, str(fecha_entrada), str(fecha_salida))
+        urls   = generador_urls(destinos, str(fecha_entrada), str(fecha_salida))
+        urls_con_filtro = {lugar: url + filtro for lugar, url in urls.items()}
+        print(urls_con_filtro)
 
-        st.subheader('Resultados en Booking.com')
-        for lugar, url in urls.items():
-            st.markdown(f'**{lugar}:** [Ver en Booking.com]({url + filtro})')
+        barra = st.progress(0, text='Iniciando...')
+
+        raw_list = scrape_busqueda(urls_con_filtro, str(fecha_entrada), str(fecha_salida), barra)
+
+        if not raw_list:
+            st.warning('No se encontraron alojamientos para los criterios seleccionados.')
+            return
+
+        with st.spinner('Procesando datos...'):
+            df_features, df_info = preprocesar_nuevos(raw_list, fecha_entrada)
+            df_codificado        = codificar_nuevos(df_features)
+            df_resultado         = predecir_nuevos(df_codificado, df_info)
+
+        st.session_state.df_resultado = df_resultado
+        st.rerun()
+
+    # Mostrar resultados filtrados si existen
+    if 'df_resultado' in st.session_state and not st.session_state.df_resultado.empty:
+        df = st.session_state.df_resultado
+        mask = pd.Series(True, index=df.index)
+        if prov_sel != 'Todas':
+            mask &= df['provincia'] == prov_sel
+        if tipo_sel != 'Todos':
+            mask &= df['tipo'] == tipo_sel
+        if cat_sel != 'Todas':
+            mask &= df['prediccion_chollo'] == cat_sel
+        mostrar_resultados(df[mask])
 
 
 if __name__ == '__main__':

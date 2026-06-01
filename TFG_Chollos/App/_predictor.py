@@ -38,6 +38,7 @@ from datetime import date
 import joblib
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
 
 from TFG_Chollos.Cleaning.preprocessing import (
@@ -83,11 +84,15 @@ def cargar_encoders():
 def cargar_stats_entrenamiento():
     db = pd.read_parquet(
         BASE / 'data' / 'processed' / 'analisis' / 'db_final_analisis.parquet',
-        columns=['tamaño_habitacion', 'valoracion_clientes']
+        columns=['tamaño_habitacion', 'valoracion_clientes',
+                 'distancia_centro_km', 'latitud_centro', 'longitud_centro']
     )
     return {
-        'tamaño_habitacion_median': int(db['tamaño_habitacion'].median()),
-        'valoracion_clientes_mean': round(float(db['valoracion_clientes'].astype(float).mean()), 1),
+        'tamaño_habitacion_median':  int(db['tamaño_habitacion'].median()),
+        'valoracion_clientes_mean':  round(float(db['valoracion_clientes'].astype(float).mean()), 1),
+        'distancia_centro_km_median': round(float(db['distancia_centro_km'].median()), 3),
+        'latitud_centro_median':      round(float(db['latitud_centro'].median()), 6),
+        'longitud_centro_median':     round(float(db['longitud_centro'].median()), 6),
     }
 
 
@@ -301,6 +306,10 @@ def codificar_nuevos(df: pd.DataFrame) -> pd.DataFrame:
     # Reindexar para que coincida exactamente con las columnas del modelo
     df = df.reindex(columns=columnas_modelo, fill_value=0)
 
+    # Rellenar NaN de localidades sin coordenadas en coordenadas_centros.csv
+    stats = cargar_stats_entrenamiento()
+    df['distancia_centro_km'] = df['distancia_centro_km'].fillna(stats['distancia_centro_km_median'])
+
     return df
 
 
@@ -353,8 +362,27 @@ def mostrar_resultados(df: pd.DataFrame):
             'url_estancia':      st.column_config.LinkColumn('Ver en Booking'),
         },
         hide_index=True,
-        use_container_width=True,
+        width='stretch',
     )
+
+    conteo = df_mostrar['prediccion_chollo'].value_counts()
+    orden  = [ETIQUETAS[k] for k in sorted(ETIQUETAS) if ETIQUETAS[k] in conteo.index]
+    colores = {
+        'Inflado':      '#e74c3c',
+        'Normal':       '#f39c12',
+        'Chollo':       '#2ecc71',
+        'Super Chollo': '#27ae60',
+        'Hiper Chollo': '#1a7a45',
+    }
+
+    fig = go.Figure(go.Pie(
+        labels=[o for o in orden],
+        values=[conteo[o] for o in orden],
+        marker_colors=[colores[o] for o in orden],
+        hole=0.3,
+    ))
+    fig.update_layout(title='Distribución de categorías', margin=dict(t=40, b=10))
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def mostrar_predicciones_bd():
@@ -366,16 +394,14 @@ def mostrar_predicciones_bd():
     with st.spinner('Cargando datos y calculando predicciones...'):
         df = _predecir_bd(bosque_reg, bosque_clf)
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        provincias = ['Todas'] + sorted(df['provincia'].unique().tolist())
-        provincia_sel = st.selectbox('Provincia', provincias)
-    with col2:
-        tipos = ['Todos'] + sorted(df['tipo'].unique().tolist())
-        tipo_sel = st.selectbox('Tipo de alojamiento', tipos)
-    with col3:
-        categorias = ['Todas'] + list(ETIQUETAS.values())
-        categoria_sel = st.selectbox('Categoría', categorias)
+    st.sidebar.markdown('---')
+    st.sidebar.subheader('Detector de Chollos')
+    provincias = ['Todas'] + sorted(df['provincia'].unique().tolist())
+    provincia_sel = st.sidebar.selectbox('Provincia', provincias)
+    tipos = ['Todos'] + sorted(df['tipo'].unique().tolist())
+    tipo_sel = st.sidebar.selectbox('Tipo de alojamiento', tipos)
+    categorias = ['Todas'] + list(ETIQUETAS.values())
+    categoria_sel = st.sidebar.selectbox('Categoría', categorias)
 
     mask = pd.Series(True, index=df.index)
     if provincia_sel != 'Todas':
