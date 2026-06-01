@@ -48,7 +48,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn import linear_model
 from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier, plot_tree
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier, GradientBoostingRegressor, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from xgboost import XGBRegressor, XGBClassifier
 from sklearn.neural_network import MLPRegressor, MLPClassifier
 import joblib
 from sklearn.metrics import f1_score, classification_report, mean_absolute_error, mean_squared_error, r2_score
@@ -457,18 +458,20 @@ def crear_redes_neuronales(conjunto_ent_norm:pd.DataFrame, conjunto_val_norm:pd.
 
 def crear_boosting(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, target_ent:pd.Series, target_val:pd.Series):
     '''
-    Funcionamiento: Divide el espacio mediante reglas lógicas tipo if-else
+    Funcionamiento: Gradient Boosting optimizado con regularización L1/L2. Construye árboles secuencialmente corrigiendo los errores del anterior.
     ¿Transformar datos?: No es necesario escalar los datos porque solo pregunta "¿es X mayor que umbral?", la magnitud no importa.
-    Hay que decidir el 'early stopping' y entre estos hiperparámetros:
-        # learning_rate : Número de árboles encadenados. Más árboles → más preciso, pero más riesgo de overfitting
-        # n_estimators : Cuánto contribuye cada árbol nuevo. Valores bajos necesitan más árboles
+    Implementación: XGBoost (más eficiente que sklearn GB al paralelizar con n_jobs).
+    Hay que decidir entre estos hiperparámetros:
+        # n_estimators : Número de árboles encadenados. Más árboles → más preciso, pero más riesgo de overfitting
+        # learning_rate : Cuánto contribuye cada árbol nuevo. Valores bajos necesitan más árboles
         # max_depth : Profundidad de cada árbol individual. Suelen ser árboles poco profundos (3-5)
     '''
-    logger.info('⏳ Creando "Boosting"')
+    logger.info('⏳ Creando "XGBoost"')
 
-    boosting = GradientBoostingRegressor(random_state=42)
+    boosting = XGBRegressor(random_state=42,
+                            n_jobs=-1,     #Paraleliza el entrenamiento internamente, no solo los folds
+                            verbosity=0)   #Suprime la salida propia de XGBoost para no mezclarla con el verbose del GridSearchCV
 
-    # Boosting (GradientBoostingRegressor de sklearn)
     param_grid = {
       'n_estimators':  [50, 100],
       'learning_rate': [0.05, 0.1],
@@ -485,7 +488,7 @@ def crear_boosting(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, target_
     grid_search.fit(conjunto_ent, target_ent)
 
     mejor_boosting = grid_search.best_estimator_
-    logger.info('✅ Creado y entrenado el modelo de "Boosting" correctamente')
+    logger.info('✅ Creado y entrenado el modelo de "XGBoost" correctamente')
     logger.info(f'Mejores hiperparámetros: {grid_search.best_params_}')
 
     r2_val = mejor_boosting.score(conjunto_val, target_val)
@@ -749,14 +752,18 @@ def crear_redes_neuronales_clasificacion(conjunto_ent_norm:pd.DataFrame, conjunt
 def crear_boosting_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series):
     '''
     No es necesario escalar los datos.
-    Hay que decidir el 'early stopping' y entre estos hiperparámetros:
+    Implementación: XGBoost (más eficiente que sklearn GB al paralelizar con n_jobs).
+    Hay que decidir entre estos hiperparámetros:
         # n_estimators : Número de árboles encadenados
         # learning_rate : Cuánto contribuye cada árbol nuevo
         # max_depth : Profundidad de cada árbol individual
     '''
-    logger.info('⏳ Creando "Boosting Clasificación"')
-    
-    boosting = GradientBoostingClassifier(random_state=42)
+    logger.info('⏳ Creando "XGBoost Clasificación"')
+
+    boosting = XGBClassifier(random_state=42, 
+                            n_jobs=-1, 
+                            verbosity=0, 
+                            eval_metric='mlogloss')    #evita un warning de XGBoost en problemas multiclase
     param_grid = {
         'n_estimators':  [50, 100],
         'learning_rate': [0.05, 0.1],
@@ -772,7 +779,7 @@ def crear_boosting_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:pd.Data
     grid_search.fit(conjunto_ent, objetivo_ent)
 
     mejor_boosting = grid_search.best_estimator_
-    logger.info('✅ Creado y entrenado el modelo de "Boosting Clasificación" correctamente')
+    logger.info('✅ Creado y entrenado el modelo de "XGBoost Clasificación" correctamente')
     logger.info(f'Mejores hiperparámetros: {grid_search.best_params_}')
 
     f1_val = f1_score(objetivo_val, mejor_boosting.predict(conjunto_val), average='weighted')
