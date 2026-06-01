@@ -68,4 +68,44 @@ En mi proyecto usamos 2 tipos de librerías, los paquetes externos, y los paquet
 
 <br>
 
-### 1. Estructura Base de datos
+Distribución categorías train: {2: 648098, 0: 636665, 1: 356590, 3: 169798, 4: 125214}
+
+Los resultados son buenos. Análisis:
+
+  Regresión: Excelente
+
+  R²=0.8779 | MAE=19.45€ | RMSE=33.18€
+
+  R²=0.88 es un resultado muy sólido académicamente — el modelo explica el 88% de la varianza del precio. MAE de ~20€ es
+  razonable en un dominio donde los precios van de decenas a cientos de euros.
+
+  ---
+  Clasificación: Patrón muy revelador
+
+  inflado (0)       precision=0.60  recall=0.84  ← muchos falsos positivos
+  normal  (1)       precision=0.87  recall=0.74  ← bien equilibrado
+  chollo  (2)       precision=0.66  recall=0.71  ← razonable
+  super_chollo (3)  precision=0.87  recall=0.15  ← problema
+  hiper_chollo (4)  precision=0.93  recall=0.26  ← problema
+
+  El patrón en super_chollo e hiper_chollo es alta precisión, recall bajísimo. El modelo casi nunca predice esas clases,
+  pero cuando lo hace acierta el 87-93% de las veces. Es comportamiento típico de clases minoritarias con árbol
+  conservador.
+
+  La causa: el clasificador ve las mismas features que el regresor. Si el regresor ya predice correctamente que el
+  alojamiento debería costar €100 y cuesta €70, el clasificador tiene esas mismas features — no tiene información
+  adicional para saber por qué es tan barato. Tiende a clasificarlo como "chollo" en lugar de "hiper_chollo".
+
+  ---
+  Para el TFG esto es defendible y hasta positivo
+
+  Desde el punto de vista de la aplicación, la precisión importa más que el recall en las clases extremas. Si la app le
+  dice al usuario "este es un hiper_chollo", quieres que acierte el 93% de las veces. Que se pierda muchos hiper_chollos
+  reales es menos grave que generar falsas alarmas.
+
+  **El modelo es conservador para declarar chollos extremos, priorizando precisión sobre
+  cobertura en las categorías de mayor valor para el usuario**.
+
+  Lo que sí deberías mencionar en el TFG como limitación: el recall bajo en super_chollo/hiper_chollo (0.15 y 0.26) se
+  podría mejorar con class_weight='balanced' en RandomForestClassifier, pero a costa de más falsos positivos en esas
+  clases.

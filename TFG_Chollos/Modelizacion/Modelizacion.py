@@ -26,7 +26,7 @@ Dependencias:
 
 Requisitos:
     uv
-    uv add seaborn, scikit-learn --active --link-mode=copy
+    uv add xgboost, scikit-learn --active --link-mode=copy
 
 Uso:
     python preprocessing.py --input data_Booking/resultados/resultados_booking_{provincia}.csv  --output data_Booking/final/db_final_{provincia}.parquet
@@ -240,7 +240,7 @@ def crear_arbol_decision(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, t
 
     arbol = DecisionTreeRegressor(random_state=42)   #Creamos el modelo
     param_grid = {
-      'max_depth': [3, 5, 10, 15, None],
+      'max_depth': [3, 5, 10, 15],  #None provoca overfitting
     }
 
     grid_search = GridSearchCV(
@@ -473,8 +473,8 @@ def crear_boosting(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, target_
                             verbosity=0)   #Suprime la salida propia de XGBoost para no mezclarla con el verbose del GridSearchCV
 
     param_grid = {
-      'n_estimators':  [50, 100],
-      'learning_rate': [0.05, 0.1],
+      'n_estimators':  [100, 300, 500],
+      'learning_rate': [0.01, 0.05, 0.1],
       'max_depth':     [3, 5],
     }
 
@@ -508,22 +508,22 @@ def crear_boosting(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, target_
 def crear_etiqueta_chollo(y_real:pd.Series, y_predicho:pd.Series) -> pd.Series:
     '''
     Clasifica cada alojamiento según la diferencia entre precio real y predicho:
-        hiper_chollo : 3  -->  y_real/y_predicho <= 0.75  (>25% más barato)
-        super_chollo : 2  -->  0.75 < y_real/y_predicho < 0.85  (15-25% más barato)
-        chollo       : 1  -->  0.85 <= y_real/y_predicho < 0.95  (5-15% más barato)
-        normal       : 0  -->  0.95 <= y_real/y_predicho < 1.05  (5%-5% más barato y más caro respectivamente)
-        inflado      : -1 -->  y_real/y_predicho > 1.05   (>5% más caro)
+        hiper_chollo : 4  -->  y_real/y_predicho <= 0.75  (>25% más barato)
+        super_chollo : 3  -->  0.75 < y_real/y_predicho < 0.85  (15-25% más barato)
+        chollo       : 2  -->  0.85 <= y_real/y_predicho < 0.99  (1-15% más barato)
+        normal       : 1  -->  0.99 <= y_real/y_predicho < 1.01  (±1%)
+        inflado      : 0  -->  y_real/y_predicho > 1.05   (>5% más caro)
     '''
     real_predicho = y_real / y_predicho
 
     condiciones = [
         real_predicho <= 0.75,
         (real_predicho > 0.75) & (real_predicho < 0.85),
-        (real_predicho >= 0.85) & (real_predicho < 0.95),
-        (real_predicho >= 0.95) & (real_predicho <= 1.05),
+        (real_predicho >= 0.85) & (real_predicho < 0.99),
+        (real_predicho >= 0.99) & (real_predicho <= 1.01),
         real_predicho > 1.05
     ]
-    etiquetas = [3, 2, 1, 0, -1]
+    etiquetas = [4, 3, 2, 1, 0]
     return pd.Series(np.select(condiciones, etiquetas), index=y_real.index, name='categoria')   #Condición: lista booleanos, etiquetas: lista de valores a asignar cuando condición sea True
 
 
@@ -573,7 +573,7 @@ def crear_arbol_decision_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:p
 
     arbol = DecisionTreeClassifier(random_state=42)
     param_grid = {
-        'max_depth': [3, 5, 10, 15, None],
+        'max_depth': [3, 5, 10, 15],
     }
     grid_search = GridSearchCV(
         estimator=arbol,
@@ -765,8 +765,8 @@ def crear_boosting_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:pd.Data
                             verbosity=0, 
                             eval_metric='mlogloss')    #evita un warning de XGBoost en problemas multiclase
     param_grid = {
-        'n_estimators':  [50, 100],
-        'learning_rate': [0.05, 0.1],
+        'n_estimators':  [100, 300, 500],
+        'learning_rate': [0.01, 0.05, 0.1],
         'max_depth':     [3, 5],
     }
     grid_search = GridSearchCV(
@@ -822,6 +822,7 @@ def main():
     regresion   = crear_regresion_lineal(X_train_est, X_val_est, y_train_est, y_val_est, 'tamaño_habitacion')
     arbol       = crear_arbol_decision(X_train, X_val, y_train, y_val)
     # bosque      = crear_bosque_aleatorio(X_train, X_val, y_train, y_val)
+    bosque      = joblib.load(BASE / 'data' / 'models' / 'bosque_aleatorio_reg.pkl')
     # svm         = crear_maquinas_vectores_soporte(X_train_est, X_val_est, y_train_est, y_val_est)
     # knn         = crear_k_vecinos_cercanos(X_train_est, X_val_est, y_train_est, y_val_est)
     # red         = crear_redes_neuronales(X_train_norm, X_val_norm, y_train_norm, y_val_norm)
@@ -833,7 +834,7 @@ def main():
     modelos_regresion = [
         ('Regresión Lineal',  regresion,  X_train_est,  X_val_est,  X_test_est,  y_train_est,  y_val_est,  y_test_est),
         ('Árbol de Decisión', arbol,      X_train,      X_val,      X_test,      y_train,      y_val,      y_test),
-        # ('Bosque Aleatorio',  bosque,     X_train,      X_val,      X_test,      y_train,      y_val,      y_test),
+        ('Bosque Aleatorio',  bosque,     X_train,      X_val,      X_test,      y_train,      y_val,      y_test),
         # ('SVM',               svm,        X_train_est,  X_val_est,  X_test_est,  y_train_est,  y_val_est,  y_test_est),
         # ('KNN',               knn,        X_train_est,  X_val_est,  X_test_est,  y_train_est,  y_val_est,  y_test_est),
         # ('Redes Neuronales',  red,        X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm),
@@ -870,7 +871,7 @@ def main():
     # -------------------------------------------------------------------------
     reg_log     = crear_regresion_logistica(X_train_est, X_val_est, chollo_train, chollo_val)
     arbol_clf   = crear_arbol_decision_clasificacion(X_train, X_val, chollo_train, chollo_val)
-    # bosque_clf  = crear_bosque_aleatorio_clasificacion(X_train, X_val, chollo_train, chollo_val)
+    bosque_clf  = crear_bosque_aleatorio_clasificacion(X_train, X_val, chollo_train, chollo_val)
     # svm_clf     = crear_maquinas_vectores_soporte_clasificacion(X_train_est, X_val_est, chollo_train, chollo_val)
     # knn_clf     = crear_k_vecinos_cercanos_clasificacion(X_train_est, X_val_est, chollo_train, chollo_val)
     # red_clf     = crear_redes_neuronales_clasificacion(X_train_norm, X_val_norm, chollo_train, chollo_val)
@@ -882,7 +883,7 @@ def main():
     modelos_clasificacion = [
         ('Regresión Logística',  reg_log,    X_train_est,  X_val_est,  X_test_est,  chollo_val),
         ('Árbol Clasificación',  arbol_clf,  X_train,      X_val,      X_test,      chollo_val),
-        # ('Bosque Clasificación', bosque_clf, X_train,      X_val,      X_test,      chollo_val),
+        ('Bosque Clasificación', bosque_clf, X_train,      X_val,      X_test,      chollo_val),
         # ('SVM Clasificación',    svm_clf,    X_train_est,  X_val_est,  X_test_est,  chollo_val),
         # ('KNN Clasificación',    knn_clf,    X_train_est,  X_val_est,  X_test_est,  chollo_val),
         # ('Red Neuronal Clf',     red_clf,    X_train_norm, X_val_norm, X_test_norm, chollo_val),
@@ -911,9 +912,9 @@ def main():
     logger.info(f'[TEST Regresión - {mejor_nombre}] R²={r2_test:.4f} | MAE={mae_test:.2f} | RMSE={rmse_test:.2f}')
 
     # Clasificación: precision, recall y F1 por clase sobre el conjunto de test
-    nombres_clases = ['inflado (-1)', 'normal (0)', 'chollo (1)', 'super_chollo (2)', 'hiper_chollo (3)']
+    nombres_clases = ['inflado (0)', 'normal (1)', 'chollo (2)', 'super_chollo (3)', 'hiper_chollo (4)']
     y_pred_test_clf = mejor_modelo_clf.predict(mejor_X_test_clf)
-    reporte = classification_report(chollo_test, y_pred_test_clf, labels=[-1, 0, 1, 2, 3], target_names=nombres_clases, zero_division=0)
+    reporte = classification_report(chollo_test, y_pred_test_clf, labels=[0, 1, 2, 3, 4], target_names=nombres_clases, zero_division=0)
     logger.info(f'[TEST Clasificación - {mejor_nombre_clf}]\n{reporte}')
 
     f1_macro = f1_score(chollo_test, y_pred_test_clf, average='macro', zero_division=0)
@@ -942,6 +943,48 @@ def main():
         joblib.dump(norm_X, modelos_dir / 'scaler_X_clasificacion.pkl')
 
     logger.info(f'✅ Scalers guardados en {modelos_dir}')
+
+
+    # 10. GUARDAR RESULTADOS TEST
+    # -------------------------------------------------------------------------
+    resultados_test = pd.DataFrame({
+        'precio_real':    mejor_y_test.values,
+        'precio_predicho': y_pred_test_reg,
+        'clase_real':     chollo_test.values,
+        'clase_predicha': y_pred_test_clf,
+    }, index=mejor_y_test.index)
+
+    ruta_resultados = BASE / 'data' / 'resultados' / 'resultados_test.parquet'
+    resultados_test.to_parquet(ruta_resultados)
+    logger.info(f'✅ Resultados test guardados: {ruta_resultados}')
+
+
+def generar_resultados_test():
+    db = pd.read_parquet(BASE / 'data' / 'processed' / 'modelizacion' / 'db_final_codificada.parquet')
+
+    X = db.drop(columns=['precio'])
+    y = db['precio']
+
+    _, X_val, X_test, _, y_val, y_test = train_test_validation_particion(X, y)
+
+    bosque_reg = joblib.load(BASE / 'data' / 'models' / 'bosque_aleatorio_reg.pkl')
+    bosque_clf = joblib.load(BASE / 'data' / 'models' / 'bosque_aleatorio_clf.pkl')
+
+    y_pred_reg  = bosque_reg.predict(X_test)
+    chollo_test = crear_etiqueta_chollo(y_test, pd.Series(y_pred_reg, index=y_test.index))
+    y_pred_clf  = bosque_clf.predict(X_test)
+
+    resultados = pd.DataFrame({
+        'precio_real':     y_test.values,
+        'precio_predicho': y_pred_reg,
+        'clase_real':      chollo_test.values,
+        'clase_predicha':  y_pred_clf,
+    }, index=y_test.index)
+
+    ruta = BASE / 'data' / 'resultados' / 'resultados_test.parquet'
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    resultados.to_parquet(ruta)
+    logger.info(f'✅ Resultados test guardados: {ruta}')
 
 
 if __name__ == '__main__':
