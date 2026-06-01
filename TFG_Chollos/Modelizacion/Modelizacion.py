@@ -959,33 +959,5 @@ def main():
     logger.info(f'✅ Resultados test guardados: {ruta_resultados}')
 
 
-def generar_resultados_test():
-    db = pd.read_parquet(BASE / 'data' / 'processed' / 'modelizacion' / 'db_final_codificada.parquet')
-
-    X = db.drop(columns=['precio'])
-    y = db['precio']
-
-    _, X_val, X_test, _, y_val, y_test = train_test_validation_particion(X, y)
-
-    bosque_reg = joblib.load(BASE / 'data' / 'models' / 'bosque_aleatorio_reg.pkl')
-    bosque_clf = joblib.load(BASE / 'data' / 'models' / 'bosque_aleatorio_clf.pkl')
-
-    y_pred_reg  = bosque_reg.predict(X_test)
-    chollo_test = crear_etiqueta_chollo(y_test, pd.Series(y_pred_reg, index=y_test.index))
-    y_pred_clf  = bosque_clf.predict(X_test)
-
-    resultados = pd.DataFrame({
-        'precio_real':     y_test.values,
-        'precio_predicho': y_pred_reg,
-        'clase_real':      chollo_test.values,
-        'clase_predicha':  y_pred_clf,
-    }, index=y_test.index)
-
-    ruta = BASE / 'data' / 'resultados' / 'resultados_test.parquet'
-    ruta.parent.mkdir(parents=True, exist_ok=True)
-    resultados.to_parquet(ruta)
-    logger.info(f'✅ Resultados test guardados: {ruta}')
-
-
 if __name__ == '__main__':
     main()
