@@ -1,5 +1,8 @@
 '''
-Búsqueda de Chollos
+El flujo de trabajo del formulario es:
+
+Listado Booking → Detalle por alojamiento → Preprocessing → Encoding → Predicción
+    (Playwright)     (BookingExtractor)    (preprocessing.py)(encoding.py)(2 bosques)
 ===================
 '''
 

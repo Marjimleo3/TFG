@@ -19,6 +19,7 @@ Uso:
 # =============================================================================
 # IMPORTS
 # =============================================================================
+import joblib
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 
@@ -46,14 +47,22 @@ def encoding(db_final: pd.DataFrame) -> pd.DataFrame:
     db_final = pd.get_dummies(db_final, columns=['tipo'], drop_first=True)
 
     #Pasamos a variable numérica (asigna un número entero a cada categoría). Se optó por Label Encoding debido al elevado número de categorías en estas variables, lo que habría generado una dimensionalidad excesiva con One-Hot Encoding.
-    le = LabelEncoder()
-    db_final['localidad'] = le.fit_transform(db_final['localidad'])
-    db_final['provincia'] = le.fit_transform(db_final['provincia'])
+    le_localidad = LabelEncoder()
+    le_provincia = LabelEncoder()
+    db_final['localidad'] = le_localidad.fit_transform(db_final['localidad'])
+    db_final['provincia'] = le_provincia.fit_transform(db_final['provincia'])
 
     #Extraemos día de la semana, día y mes de 'fecha_disponible' y la eliminamos
     db_final['mes_disponible'] = db_final['fecha_disponible'].dt.month
     db_final['dia_disponible'] = db_final['fecha_disponible'].dt.day
     db_final = db_final.drop(columns=['fecha_disponible'])
+
+    models_dir = BASE / 'data' / 'models'
+    joblib.dump(le_localidad, models_dir / 'le_localidad.pkl')
+    joblib.dump(le_provincia, models_dir / 'le_provincia.pkl')
+
+    columnas_modelo = db_final.drop(columns=['precio']).columns.tolist()
+    joblib.dump(columnas_modelo, models_dir / 'columnas_modelo.pkl')
 
     return db_final
 
@@ -67,6 +76,7 @@ def main():
     db_codificada = encoding(db_analisis)
     db_codificada.to_parquet(BASE / "data" / "processed" / "modelizacion" / "db_final_codificada.parquet", index=False)
     logger.info('✅ Dataset completo codificado guardado correctamente')
+    logger.info('✅ LabelEncoders y columnas del modelo guardados en data/models/')
 
 
 if __name__ == "__main__":
