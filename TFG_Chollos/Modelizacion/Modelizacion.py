@@ -183,7 +183,7 @@ def crear_grafico_correlacion_lineal(db_codificada:pd.DataFrame):
     plt.xticks([i + 0.5 for i in range(len(matriz_correlacion.index))], matriz_correlacion.index, rotation=45, ha='right')    #Se añade esto para que los yticks estén en medio de los recuadros y aparezcan todas las variables
     plt.yticks([i + 0.5 for i in range(len(matriz_correlacion.index))], matriz_correlacion.index)   #Se añade esto para que los yticks estén en medio de los recuadros y aparezcan todas las variables
     plt.title('Matriz de correlación lineal de las variables')
-    ruta = BASE / 'data' / 'graficos_modelizacion' / 'correlacion_lineal.png'
+    ruta = BASE / 'images' / 'correlacion_lineal.png'
     ruta.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(ruta, bbox_inches='tight', dpi=150)
     plt.close()
@@ -210,7 +210,7 @@ def crear_regresion_lineal(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.Da
         y=regresion.predict(conjunto_ent_est))   #Dibujamos la recta de regresión junto a nuestros datos
 
     plt.title(f'Regresión Lineal: {variable_representar} vs {target_ent_est.name}')
-    ruta = BASE / 'data' / 'graficos_modelizacion' / f'regresion_lineal_{variable_representar}.png'
+    ruta = BASE / 'images' / f'regresion_lineal_{variable_representar}.png'
     ruta.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(ruta, bbox_inches='tight', dpi=150)
     plt.close()
@@ -265,7 +265,7 @@ def crear_arbol_decision(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, t
         max_depth=3,    #Con max_depth=3 vemos las primeras decisiones más importantes (las que más reducen el error)
         fontsize=9,    #Se ven muy pequeñas las letras
         feature_names=conjunto_ent.columns.to_list())   #Añadimos los nombres de las variables predictoras
-    ruta = BASE / 'data' / 'graficos_modelizacion' / 'arbol_decision.png'
+    ruta = BASE / 'images' / 'arbol_decision.png'
     ruta.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(ruta, bbox_inches='tight', dpi=150)
     plt.close()
