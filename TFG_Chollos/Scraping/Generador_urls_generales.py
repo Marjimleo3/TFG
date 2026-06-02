@@ -85,12 +85,14 @@ def generador_urls(FECHA_ENTRADA:str, FECHA_SALIDA:str, N_ADULTOS:int, N_HABITAC
     urls_lugares = {}
     urls_provincias = {}
 
+    # URLs de lugares concretos (ciudades o landmarks): dest_type varía según el tipo de lugar
     for clave,valor in LUGARES.items():
-        tipo_destino = 'landmark' if 'malagueta' in clave.lower() else 'city'   #Añadimos esta línea para generar escalabilidad (permite añadir '+provincia' en la url, al realizar búsqueda por provincias)
+        tipo_destino = 'landmark' if 'malagueta' in clave.lower() else 'city'
         url = f'https://www.booking.com/searchresults.es.html?ss={valor[0]}%2C+España&dest_id={valor[1]}&dest_type={tipo_destino}&checkin={FECHA_ENTRADA}&checkout={FECHA_SALIDA}&group_adults={N_ADULTOS}&no_rooms={N_HABITACIONES}&group_children={N_MENORES}'
         urls_lugares[clave] = url
     logger.info(f'Urls de lugares generadas: {len(urls_lugares)}')
 
+    # URLs de provincias completas: dest_type=region abarca todos los municipios de la provincia
     for clave,valor in PROVINCIAS.items():
         url = f'https://www.booking.com/searchresults.es.html?ss={valor[0]}+provincia%2C+España&dest_id={valor[1]}&dest_type=region&checkin={FECHA_ENTRADA}&checkout={FECHA_SALIDA}&group_adults={N_ADULTOS}&no_rooms={N_HABITACIONES}&group_children={N_MENORES}'
         urls_provincias[valor[0]] = url
@@ -103,12 +105,15 @@ def generador_urls(FECHA_ENTRADA:str, FECHA_SALIDA:str, N_ADULTOS:int, N_HABITAC
 # =============================================================================
 def main():
 
+    # Generamos las URLs de búsqueda para todos los lugares y provincias configurados
     urls_lugares, urls_provincias = generador_urls(FECHA_ENTRADA, FECHA_SALIDA, N_ADULTOS, N_HABITACIONES, N_MENORES, LUGARES, PROVINCIAS)
     BASE = conseguir_ruta_general_TFG()
 
+    # Convertimos los dicts de URLs a DataFrames para guardarlos como CSV
     df_lugares = pd.DataFrame(urls_lugares.items(), columns=['localizacion','url'])
     df_provincias = pd.DataFrame(urls_provincias.items(), columns=['localizacion','url'])
 
+    # Guardamos las URLs y las fechas en data/raw/inputs/ para que los scrapers las lean
     df_lugares.to_csv(BASE / "data" / "raw" / "inputs" / "urls_busqueda_booking_lugares.csv", index=False, sep='|')
     df_provincias.to_csv(BASE / "data" / "raw" / "inputs" / "urls_busqueda_booking_provincias.csv", index=False, sep='|')
     with open(BASE / "data" / "raw" / "inputs" / "fecha_entrada_busqueda_booking.txt", "w") as f:

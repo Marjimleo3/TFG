@@ -53,6 +53,7 @@ def _bar(x, y, title, xlabel, ylabel):
 def mostrar_graficos_analisis():
     st.header('Analisis de Precios')
 
+    # Filtro de provincia en la barra lateral (vacío = todas las provincias)
     provincias_sel = st.sidebar.multiselect(
         'Filtrar por provincia:',
         options=PROVINCIAS,
@@ -62,7 +63,7 @@ def mostrar_graficos_analisis():
     if provincias_sel:
         df = df[df['provincia'].isin(provincias_sel)]
 
-    # 1. Precio promedio por mes
+    # 1. Precio promedio por mes — línea temporal para ver estacionalidad
     df_mes = df.copy()
     df_mes['mes_num'] = df_mes['fecha_disponible'].dt.month.astype(int)
     precio_mes = df_mes.groupby('mes_num')['precio'].mean().sort_index()
@@ -75,7 +76,7 @@ def mostrar_graficos_analisis():
 
     col1, col2 = st.columns(2)
 
-    # 2. Precio promedio por tamaño de habitacion
+    # 2. Precio promedio por tamaño de habitación — agrupado en rangos de m²
     df_tam = df.copy()
     df_tam['bin'] = pd.cut(df_tam['tamaño_habitacion'].astype(float), bins=BINS_TAM, labels=False, include_lowest=True).astype('Int64')
     precio_tam = df_tam.groupby('bin')['precio'].mean().sort_index()
@@ -84,7 +85,7 @@ def mostrar_graficos_analisis():
 
     col1.plotly_chart(_bar(x_tam, y_tam, 'Precio promedio por tamaño de habitacion', 'Tamaño', 'Precio promedio (EUR)'), width='stretch')
 
-    # 3. Precio promedio por distancia al centro
+    # 3. Precio promedio por distancia al centro — agrupado en rangos de km
     df_dist = df.copy()
     df_dist['bin'] = pd.cut(df_dist['distancia_centro_km'].astype(float), bins=BINS_DIST, labels=False, include_lowest=True).astype('Int64')
     precio_dist = df_dist.groupby('bin')['precio'].mean().sort_index()
@@ -95,7 +96,7 @@ def mostrar_graficos_analisis():
 
     col3, col4 = st.columns(2)
 
-    # 4. Precio promedio por tipo y periodo (barras agrupadas)
+    # 4. Precio promedio por tipo y periodo — barras agrupadas entre semana vs fin de semana
     df_tipo = df.copy()
     df_tipo['es_finde_int'] = df_tipo['es_finde'].astype(int)
     precio_tipo = df_tipo.groupby(['tipo', 'es_finde_int'])['precio'].mean()
@@ -116,7 +117,7 @@ def mostrar_graficos_analisis():
     )
     col3.plotly_chart(fig4, width='stretch')
 
-    # 5. Precio promedio por estrellas
+    # 5. Precio promedio por estrellas — relación calidad-precio por categoría hotelera
     precio_est = df.groupby('estrellas')['precio'].mean().sort_index()
     x_est = [str(int(e)) + ' estrellas' for e in precio_est.index.tolist()]
     y_est = [round(float(v), 2) for v in precio_est.values.tolist()]

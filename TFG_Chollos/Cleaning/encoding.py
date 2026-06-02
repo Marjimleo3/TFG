@@ -40,27 +40,29 @@ logger = configurar_logger(__name__)
 # =============================================================================
 def encoding(db_final: pd.DataFrame) -> pd.DataFrame:
 
-    #Eliminamos las columnas que solo aportan info y tampoco sirven para graficar
+    # Eliminamos columnas identificativas que no aportan valor predictivo al modelo
     db_final = db_final.drop(columns=['titulo', 'codigo_postal', 'url_estancia', 'fecha_extraccion'])
 
-    #Convertimos las variables binarias, One-Hot Encoding:
+    # One-Hot Encoding de 'tipo': crea columna binaria tipo_Otro (drop_first elimina tipo_Hotel por redundancia)
     db_final = pd.get_dummies(db_final, columns=['tipo'], drop_first=True)
 
-    #Pasamos a variable numérica (asigna un número entero a cada categoría). Se optó por Label Encoding debido al elevado número de categorías en estas variables, lo que habría generado una dimensionalidad excesiva con One-Hot Encoding.
+    # Label Encoding de localidad y provincia: asigna un entero a cada categoría.
+    # Se eligió Label Encoding (en lugar de OHE) porque el alto número de categorías
+    # habría generado una dimensionalidad excesiva con One-Hot Encoding.
     le_localidad = LabelEncoder()
     le_provincia = LabelEncoder()
     db_final['localidad'] = le_localidad.fit_transform(db_final['localidad'])
     db_final['provincia'] = le_provincia.fit_transform(db_final['provincia'])
 
-    #Extraemos día de la semana, día y mes de 'fecha_disponible' y la eliminamos
+    # Descomposición de 'fecha_disponible' en mes y día como variables numéricas, luego la eliminamos
     db_final['mes_disponible'] = db_final['fecha_disponible'].dt.month
     db_final['dia_disponible'] = db_final['fecha_disponible'].dt.day
     db_final = db_final.drop(columns=['fecha_disponible'])
 
+    # Guardamos los encoders y la lista de columnas para poder replicar el encoding en producción
     models_dir = BASE / 'data' / 'models'
     joblib.dump(le_localidad, models_dir / 'le_localidad.pkl')
     joblib.dump(le_provincia, models_dir / 'le_provincia.pkl')
-
     columnas_modelo = db_final.drop(columns=['precio']).columns.tolist()
     joblib.dump(columnas_modelo, models_dir / 'columnas_modelo.pkl')
 

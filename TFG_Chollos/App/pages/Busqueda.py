@@ -20,7 +20,8 @@ import streamlit as st
 # Helpers en App/
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from _scraper_app import scrape_busqueda
-from _predictor import preprocesar_nuevos, codificar_nuevos, predecir_nuevos, mostrar_resultados, ETIQUETAS
+from _feature_engineering import preprocesar_nuevos, codificar_nuevos
+from _predictor import predecir_nuevos, mostrar_resultados, ETIQUETAS
 
 from TFG_Chollos.utils import conseguir_ruta_general_TFG, configurar_logger
 

@@ -44,11 +44,16 @@ logger = configurar_logger(__name__)
 # FUNCIONES
 # =============================================================================
 def extraer_servicios_influyentes(ficha:pd.DataFrame) -> pd.DataFrame:
-
+    """
+    Convierte las listas de servicios del scraper en variables binarias (True/False).
+    Recorre los servicios generales del alojamiento y los de la habitación
+    buscando palabras clave para cada amenity relevante para el modelo.
+    """
     lista = []
 
     for _, fila in ficha.iterrows():
-        servicios = [serv.lower().strip('"') for serv in ast.literal_eval(fila['servicios'])]   #La lista de servicios es un 'str' porque esta entre "", la función ast.literal_eval convierte un string que parece una estructura de Python (lista) en la estructura real.
+        # ast.literal_eval convierte el string con formato de lista Python en una lista real
+        servicios = [serv.lower().strip('"') for serv in ast.literal_eval(fila['servicios'])]
         servicios_habitacion = [serv.lower().strip('"') for serv in ast.literal_eval(fila['servicios_habitacion'])]
         
         parking = parking_gratis = gimnasio = restaurante = piscina = piscina_interior = piscina_infinita = aire = calefaccion = vistas = terraza = baño_privado = False
@@ -106,10 +111,14 @@ def extraer_servicios_influyentes(ficha:pd.DataFrame) -> pd.DataFrame:
 
 
 def extraer_fecha_precios_disponibles(ficha:pd.DataFrame) -> pd.DataFrame:
-    
+    """
+    Expande el calendario JSON de cada alojamiento en una fila por día disponible.
+    Solo incluye días con disponible=True, generando el par (fecha, precio) por alojamiento.
+    """
     lista_precios = []
     for _, fila in ficha.iterrows():
-        calendario_limpio = json.loads(fila['calendario'])    #Para que pase bien el json de calendario a python, usamos json.loads
+        # json.loads convierte el string JSON del calendario en una lista de dicts Python
+        calendario_limpio = json.loads(fila['calendario'])
 
         for registro in calendario_limpio:
             if registro['disponible'] == True:
@@ -118,7 +127,7 @@ def extraer_fecha_precios_disponibles(ficha:pd.DataFrame) -> pd.DataFrame:
                     'precio' : registro['precio'],
                     'url_estancia' : fila['url_estancia']
                 })
-        
+
     return pd.DataFrame(lista_precios)
 
 
@@ -130,7 +139,10 @@ def limpiar_room_size(room_size:pd.DataFrame) -> pd.DataFrame:
 
 
 def añadir_columnas_fechas(db_semifinal:pd.DataFrame) -> pd.DataFrame:
-    
+    """
+    Añade la columna 'fecha_extraccion' según la provincia y calcula 'dias_restantes'
+    como la diferencia en días entre la fecha de disponibilidad y la de extracción.
+    """
     mapa_fechas = {
         'Sevilla':  '2026-05-13',
         'Cádiz':    '2026-05-14',
