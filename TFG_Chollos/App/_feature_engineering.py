@@ -163,12 +163,11 @@ def preprocesar_nuevos(raw_list: list, fecha_checkin: date,
     info      = []
 
     for _, fila in raw_df.iterrows():
-        # Solo procesamos alojamientos con precio disponible para las fechas pedidas
-        precio, fecha_disp = _extraer_precio_estancia(
-            fila.get('calendario', '[]'), fecha_checkin, fecha_checkout
-        )
-        if precio is None:
+        # Usamos el precio de la tarjeta del listado (total estancia con impuestos)
+        precio = fila.get('precio_listado')
+        if not precio:
             continue
+        fecha_disp = str(fecha_checkin)
 
         # Tamaño de habitación: extraemos del texto o usamos la mediana del dataset
         tamaño = _extraer_tamaño_habitacion(

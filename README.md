@@ -26,21 +26,27 @@ TFG/
 ├── TFG_Chollos/
 │   ├── Scraping/
 │   │   ├── Generador_urls_generales.py
-│   │   ├── Scrp_estancias_provincias.py       # Scraping de listados (Selenium)
-│   │   ├── Scrp_caracteristicas_estancias.py  # Scraping de fichas (Playwright)
+│   │   ├── Scrp_estancias_provincias.py         # Scraping de listados (Selenium)
+│   │   ├── Scrp_caracteristicas_estancias.py    # Scraping de fichas (Playwright)
+│   │   ├── obtener_coordenadas_centros.py        # Geocodificación de localidades (Nominatim)
 │   │   └── patch_room_size.py
 │   ├── Cleaning/
 │   │   ├── preprocessing.py   # Limpieza y estructuración del dataset
 │   │   ├── post_analisis.py   # Eliminación de outliers
 │   │   └── encoding.py        # Codificación para ML
 │   ├── Modelizacion/
-│   │   └── Modelizacion.py    # Entrenamiento y evaluación de modelos ML
+│   │   ├── Modelizacion.py      # Entrenamiento y evaluación de modelos ML
+│   │   └── transformaciones.py  # Partición y escalado del dataset
+│   ├── Graficos/
+│   │   ├── Grafico_Alojamientos_Andalucia.py  # Mapa coroplético de alojamientos
+│   │   └── correlacion.R                      # Matriz de correlación (Pearson)
 │   ├── App/                   # Aplicación Streamlit
-│   │   ├── main.py            # Página principal (mapa + gráficos)
-│   │   ├── run.py             # Lanzador de la app
+│   │   ├── main.py                # Página principal (mapa + gráficos)
+│   │   ├── run.py                 # Lanzador de la app
 │   │   ├── graficos_analisis.py
-│   │   ├── _predictor.py      # Lógica de predicción
-│   │   ├── _scraper_app.py    # Scraping en tiempo real
+│   │   ├── _predictor.py          # Lógica de predicción
+│   │   ├── _scraper_app.py        # Scraping en tiempo real
+│   │   ├── _feature_engineering.py  # Preprocesado de datos para predicción
 │   │   └── pages/
 │   │       └── Busqueda.py    # Página de búsqueda de chollos
 │   └── utils.py
@@ -56,7 +62,7 @@ TFG/
 
 ## Análisis de correlación (R)
 
-El script `correlacion.R` genera la matriz de correlación lineal (Pearson) sobre el dataset codificado y guarda el resultado en `images/correlacion_lineal.png`.
+El script `TFG_Chollos/Graficos/correlacion.R` genera la matriz de correlación lineal (Pearson) sobre el dataset codificado y guarda el resultado en `images/correlacion_lineal.png`.
 
 ### Prerrequisitos R
 
@@ -68,9 +74,9 @@ El script `correlacion.R` genera la matriz de correlación lineal (Pearson) sobr
 ### Ejecución
 
 ```r
-# Desde RStudio: abrir correlacion.R y pulsar Source
+# Desde RStudio: abrir TFG_Chollos/Graficos/correlacion.R y pulsar Source
 # O desde terminal:
-Rscript correlacion.R
+Rscript TFG_Chollos/Graficos/correlacion.R
 ```
 
 ---
@@ -148,16 +154,19 @@ uv run python TFG_Chollos/Scraping/Scrp_estancias_provincias.py
 # 2. Scraping de fichas individuales (Playwright)
 uv run python TFG_Chollos/Scraping/Scrp_caracteristicas_estancias.py
 
-# 3. Limpieza y estructuración
+# 3. Geocodificación de localidades (ejecutar una vez antes de preprocessing)
+uv run python TFG_Chollos/Scraping/obtener_coordenadas_centros.py
+
+# 4. Limpieza y estructuración
 uv run python TFG_Chollos/Cleaning/preprocessing.py
 
-# 4. Eliminación de outliers
+# 5. Eliminación de outliers
 uv run python TFG_Chollos/Cleaning/post_analisis.py
 
-# 5. Codificación para ML (genera encoders en data/models/)
+# 6. Codificación para ML (genera encoders en data/models/)
 uv run python TFG_Chollos/Cleaning/encoding.py
 
-# 6. Entrenamiento de modelos
+# 7. Entrenamiento de modelos
 uv run python TFG_Chollos/Modelizacion/Modelizacion.py
 ```
 

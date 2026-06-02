@@ -105,6 +105,14 @@ async def _async_scrape_listado(lugar: str, url: str, fecha_entrada: str,
                 nombre = estancia.find('div', {'data-testid': 'title'})
                 titulo = nombre.get_text(strip=True)
 
+                # Precio total de la estancia (con impuestos) tal como lo muestra la tarjeta
+                precio_elem = estancia.find('span', {'data-testid': 'price-and-discounted-price'})
+                if precio_elem:
+                    precio_num = re.sub(r'[^\d]', '', precio_elem.get_text(strip=True))
+                    precio_listado = int(precio_num) if precio_num else None
+                else:
+                    precio_listado = None
+
                 reviews = estancia.find('div', {'data-testid': 'review-score'})
                 if reviews:
                     valoracion = re.search(r'\d+(?:[.,]\d)?', reviews.get_text()).group()
@@ -130,6 +138,7 @@ async def _async_scrape_listado(lugar: str, url: str, fecha_entrada: str,
                     'lugar':                    lugar,
                     'titulo':                   titulo,
                     'url_estancia':             url_estancia,
+                    'precio_listado':           precio_listado,
                     'valoracion_clientes':      valoracion,
                     'n_valoraciones':           n_val,
                     'tipo':                     tipo,

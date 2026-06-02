@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "TFG"
 version = "0.1.0"
-description = "Add your description here"
+description = "Sistema de detección de chollos en alojamientos de Andalucía mediante scraping, preprocesamiento y modelos ML, con interfaz web en Streamlit"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
