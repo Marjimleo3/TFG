@@ -151,14 +151,6 @@ def _extraer_precio_estancia(calendario_str: str, fecha_checkin: date, fecha_che
         calendario = json.loads(calendario_str)
         checkin_str = str(fecha_checkin)
 
-        # DEBUG: mostrar qué devuelve el calendario para las noches de la estancia
-        noche = fecha_checkin
-        while noche < fecha_checkout:
-            fecha_str = str(noche)
-            entrada = next((d for d in calendario if d.get('fecha') == fecha_str), None)
-            print(f'    [DEBUG] {fecha_str}: {entrada}')
-            noche += timedelta(days=1)
-
         precio_por_dia = {
             d['fecha']: float(d['precio'])
             for d in calendario

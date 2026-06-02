@@ -42,7 +42,6 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
@@ -50,11 +49,8 @@ from sklearn import linear_model
 from sklearn.tree import DecisionTreeRegressor, plot_tree
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
-from sklearn.neural_network import MLPRegressor
 import joblib
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.svm import SVR
 
 
 #Módulos propios del proyecto
@@ -94,28 +90,6 @@ def train_test_validation_particion(features:pd.DataFrame, target:pd.Series) -> 
 
 
 
-def centrar_datos(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunto_test:pd.DataFrame, target_ent:pd.Series, target_val:pd.Series, target_test:pd.Series):
-    '''
-    Centrar transforma los datos para que cada columna tenga media 0
-    Restamos la media en cada columna.
-    Se suele utilizar en Análisis de Componentes Principales.
-    Sensible a outliers
-    '''
-    media_X_train = np.mean(conjunto_ent, axis=0)
-    media_y_train = np.mean(target_ent, axis=0)
-
-    X_train = conjunto_ent - media_X_train
-    y_train = target_ent - media_y_train
-
-    X_val = conjunto_val - media_X_train     #Porque validación y test sólo comprueba, no actúa sobre la centralización de datos
-    X_test = conjunto_test - media_X_train      #Porque validación y test sólo comprueba, no actúa sobre la centralización de datos
-    y_val = target_val - media_y_train       #Porque validación y test sólo comprueba, no actúa sobre la centralización de datos
-    y_test = target_test - media_y_train        #Porque validación y test sólo comprueba, no actúa sobre la centralización de datos
-
-    return X_train, X_val, X_test, y_train, y_val, y_test, media_X_train, media_y_train
-# Para hacer la transformación inversa: precio_real = pred_y + media_y_train
-
-
 def estandarizar_datos(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunto_test:pd.DataFrame, target_ent:pd.Series, target_val:pd.Series, target_test:pd.Series):
     '''
     Estandarizar (Z-score scaling) transforma los datos para que cada columna tenga media 0, y desviación típica 1
@@ -142,53 +116,6 @@ def estandarizar_datos(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, con
 
     return X_train, X_val, X_test, y_train, y_val, y_test, scaler_X, scaler_y
 # Para hacer la transformación inversa: precio_real = scaler_y.inverse_transform(y_pred.reshape(-1, 1))
-
-
-def normalizar_datos(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, conjunto_test:pd.DataFrame, target_ent:pd.Series, target_val:pd.Series, target_test:pd.Series):
-    '''
-    Normalizar (Min-Max Scaling, rescaling) transforma los datos para que todos ellos tengan valores entre 0 y 1.
-    La fórmula utilizada es $$y = \\frac{x - x_{\\min}}{x_{\\max} - x_{\\min}}$$. --> Restamos el mínimo, y dividimos entre la diferencia entre el máximo y el mínimo
-    Se suele utilizar para Redes Neuronales.
-    Muy sensible a outliers
-    '''
-
-    norm_X = MinMaxScaler(feature_range=(0,1))   #Construimos el modelo de normalización
-    norm_y = MinMaxScaler(feature_range=(0,1))
-
-    # TRAIN: aprende y transforma
-    X_train = norm_X.fit_transform(conjunto_ent)   #Nos devuelve un array de np sin columnas
-    y_train = norm_y.fit_transform(target_ent.values.reshape(-1, 1)).ravel()    #Nos devuelve un array de np sin columnas
-
-    # VALIDATION y TEST: transforma con los mismos parámetros (no aprende nada nuevo). Porque si llamas a estandarizar_datos(X_test) por separado, estás calculando la media y std del test, cuando deberías usar la media y std del train
-    X_val = norm_X.transform(conjunto_val)    #Nos devuelve un array de np sin columnas
-    X_test = norm_X.transform(conjunto_test)    #Nos devuelve un array de np sin columnas
-    y_val = norm_y.transform(target_val.values.reshape(-1, 1)).ravel()     #Nos devuelve un array de np sin columnas
-    y_test = norm_y.transform(target_test.values.reshape(-1, 1)).ravel()    #Nos devuelve un array de np sin columnas
-
-    X_train, X_val, X_test = [pd.DataFrame(a, columns=conjunto_ent.columns) for a in [X_train, X_val, X_test]]
-    y_train, y_val, y_test = [pd.Series(a, name=target_ent.name) for a in [y_train, y_val, y_test]]
-
-    return X_train, X_val, X_test, y_train, y_val, y_test, norm_X, norm_y
-# Para hacer la transformación inversa: precio_real = norm_y.inverse_transform(y_pred.reshape(-1, 1))
-
-
-
-def crear_grafico_correlacion_lineal(db_codificada:pd.DataFrame):
-    if db_codificada['Piscina_infinita'].sum() == 0:
-        db_codificada_modificada = db_codificada.drop(columns=['Piscina_infinita'])
-    else:
-        db_codificada_modificada = db_codificada
-    matriz_correlacion = db_codificada_modificada.corr(numeric_only=True).round(2)
-    sns.heatmap(matriz_correlacion, annot=True, cmap="vlag", vmin=-1, vmax=1)
-    plt.xticks([i + 0.5 for i in range(len(matriz_correlacion.index))], matriz_correlacion.index, rotation=45, ha='right')    #Se añade esto para que los yticks estén en medio de los recuadros y aparezcan todas las variables
-    plt.yticks([i + 0.5 for i in range(len(matriz_correlacion.index))], matriz_correlacion.index)   #Se añade esto para que los yticks estén en medio de los recuadros y aparezcan todas las variables
-    plt.title('Matriz de correlación lineal de las variables')
-    ruta = BASE / 'images' / 'correlacion_lineal.png'
-    ruta.parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(ruta, bbox_inches='tight', dpi=150)
-    plt.close()
-    logger.info(f'✅ Gráfico guardado: {ruta}')
-
 
 
 def crear_regresion_lineal(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, target_ent_est:pd.Series, target_val_est:pd.Series, variable_representar:str):
@@ -332,130 +259,6 @@ def crear_bosque_aleatorio(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame,
 
 
 
-def crear_k_vecinos_cercanos(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, target_ent_est:pd.Series, target_val_est:pd.Series):
-    '''
-    Funcionamiento: Calcula la distancia entre el nuevo punto y todos los puntos de entrenamiento, selecciona los k puntos más cercanos y asigna la clase mayoritaria entre esos vecinos
-    ¿Transformar datos?: Estandarizamos los datos porque KNN mide distancia entre puntos → una variable en miles de euros dominaría sobre una en m².
-    Hay que decidir entre estos hiperparámetros: 
-        # k (número de vecinos) : Número de vecinos que consulta para predecir. k=1 → muy sensible al ruido. k grande → predicciones más suavizadas 
-        weights : Si todos los vecinos pesan igual (uniform) o los más cercanos pesan más (distance) 
-        metric : Cómo mide la distancia entre puntos (euclidean, manhattan...)
-    '''
-    logger.info('⏳ Creando "KNN"')
-
-    param_grid = {
-      'n_neighbors': [3, 5, 7, 10, 15],
-    }
-    knn = KNeighborsRegressor()
-    grid_search = GridSearchCV(
-        estimator=knn,
-        param_grid=param_grid,
-        cv=3,                          # K-Fold con 3 folds, sobre X_train
-        scoring='neg_mean_squared_error',  # métrica a optimizar
-        n_jobs=-1,                      # usa todos los núcleos del procesador
-        verbose=2)                      
-    grid_search.fit(conjunto_ent_est, target_ent_est)    
-
-    mejor_knn = grid_search.best_estimator_
-    logger.info('✅ Creado y entrenado el modelo "KNN" correctamente')
-    logger.info(f'Mejores hiperparámetros: {grid_search.best_params_}')
-
-    r2_val = mejor_knn.score(conjunto_val_est, target_val_est)    #Devuelve el porcentaje de predicciones correctas en clasificación, y la precisión o R^2 en regresión
-    logger.info(f'R² en validación: {r2_val:.4f}')
-    ruta_modelo = BASE / 'data' / 'models' / 'knn_reg.pkl'
-
-    joblib.dump(mejor_knn, ruta_modelo)
-    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
-
-    return mejor_knn
-
-
-
-def crear_maquinas_vectores_soporte(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, target_ent_est:pd.Series, target_val_est:pd.Series):
-    '''
-    Funcionamiento: Encuentra el hiperplano que mejor separa las clases, de forma que maximiza el margen (distancia entre el hiperplano y puntos cercanos)
-    ¿Transformar datos?: Estandarizamos los datos porque SVM maximiza márgenes → sensible a la magnitud.
-    Hay que decidir entre estos hiperparámetros: 
-        # C : Penalización por errores. C alto → intenta no fallar ningún punto (riesgo de overfitting). C bajo → acepta más errores a cambio de un margen más amplio
-        # kernel : Función que transforma los datos (linear, rbf, poly). Permite separar datos no lineales 
-        gamma : Controla el radio de influencia de cada punto. Solo aplica a kernels rbf y poly. Mencionar si solo si uso kernel rbf, si no, ni lo menciono
-    '''
-    logger.info('⏳ Creando "SVM"')
-
-    param_grid = [
-        {'C': [0.1, 1, 10], 'kernel': ['linear']},
-        {'C': [0.1, 1, 10], 'kernel': ['rbf'], 'gamma': ['scale']},
-    ]
-
-    svm = SVR()
-    grid_search = GridSearchCV(
-        estimator=svm,
-        param_grid=param_grid,
-        cv=3,                          # K-Fold con 3 folds, sobre X_train
-        scoring='neg_mean_squared_error',  # métrica a optimizar
-        n_jobs=-1,                      # usa todos los núcleos del procesador
-        verbose=2)                      
-    grid_search.fit(conjunto_ent_est, target_ent_est)    
-
-    mejor_svm = grid_search.best_estimator_
-    logger.info('✅ Creado y entrenado el modelo "SVM" correctamente')
-    logger.info(f'Mejores hiperparámetros: {grid_search.best_params_}')
-
-    r2_val = mejor_svm.score(conjunto_val_est, target_val_est)    #Devuelve la precisión o R^2 en regresión
-    logger.info(f'R² en validación: {r2_val:.4f}')
-    ruta_modelo = BASE / 'data' / 'models' / 'svm_reg.pkl'
-
-    joblib.dump(mejor_svm, ruta_modelo)
-    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
-
-    return mejor_svm
-
-
-def crear_redes_neuronales(conjunto_ent_norm:pd.DataFrame, conjunto_val_norm:pd.DataFrame, target_ent_norm:pd.Series, target_val_norm:pd.Series):
-    '''
-    Funcionamiento: Divide el espacio mediante reglas lógicas tipo if-else
-    ¿Transformar datos?: Normalizamos los datos porque las Redes Neuronales aprenden con gradientes → convergen mejor con datos en [0,1].
-    Hay que decidir el 'early stopping' y entre estos hiperparámetros: 
-        # hidden_layer_sizes : Número de capas ocultas y neuronas por capa  
-        # learning_rate : Cuánto ajusta los pesos en cada paso. Alto → aprende rápido pero puede no converger. Bajo → aprende despacio pero más estable
-        # epochs / max_iter : Número de veces que recorre todo el dataset entrenando. Se pone un valor alto y se delega en early stopping 
-    '''
-    logger.info('⏳ Creando "Redes Neuronales"')
-
-    red = MLPRegressor(
-        max_iter=1000,           # valor alto, se delega el paro en early_stopping
-        early_stopping=True,     # para cuando la validación interna no mejora
-        random_state=42)
-
-    param_grid = {
-      'hidden_layer_sizes': [(64,), (128,), (64, 64), (128, 64)],   #(64,) → 1 capa oculta con 64 neuronas, (64, 64) → 2 capas ocultas con 64 neuronas cada una
-      'learning_rate_init': [0.001, 0.01, 0.1],
-    }
-
-    grid_search = GridSearchCV(
-        estimator=red,
-        param_grid=param_grid,
-        cv=3,
-        scoring='neg_mean_squared_error',
-        n_jobs=-1,
-        verbose=2)
-    grid_search.fit(conjunto_ent_norm, target_ent_norm)
-
-    mejor_red = grid_search.best_estimator_
-    logger.info('✅ Creado y entrenado el modelo de "Redes Neuronales" correctamente')
-    logger.info(f'Mejores hiperparámetros: {grid_search.best_params_}')
-
-    r2_val = mejor_red.score(conjunto_val_norm, target_val_norm)
-    logger.info(f'R² en validación: {r2_val:.4f}')
-    ruta_modelo = BASE / 'data' / 'models' / 'redes_neuronales_reg.pkl'
-
-    joblib.dump(mejor_red, ruta_modelo)
-    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
-
-    return mejor_red
-
-
-
 def crear_boosting(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, target_ent:pd.Series, target_val:pd.Series):
     '''
     Funcionamiento: Gradient Boosting optimizado con regularización L1/L2. Construye árboles secuencialmente corrigiendo los errores del anterior.
@@ -535,8 +338,6 @@ def main():
 
     db = pd.read_parquet(BASE / 'data' / 'processed' / 'modelizacion' / 'db_final_codificada.parquet')
 
-    # crear_grafico_correlacion_lineal(db)
-
     X = db.drop(columns=['precio'])
     y = db['precio']
 
@@ -548,9 +349,7 @@ def main():
 
     # 2. TRANSFORMACIONES
     # -------------------------------------------------------------------------
-    X_train_cen, X_val_cen, X_test_cen, y_train_cen, y_val_cen, y_test_cen, media_X_train, media_y_train = centrar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
     X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est, scaler_X, scaler_y = estandarizar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
-    X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm, norm_X, norm_y = normalizar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
 
 
     # 3. MODELOS DE REGRESIÓN (predicción de precio)
@@ -559,9 +358,6 @@ def main():
     arbol       = crear_arbol_decision(X_train, X_val, y_train, y_val)
     # bosque      = crear_bosque_aleatorio(X_train, X_val, y_train, y_val)
     bosque      = joblib.load(BASE / 'data' / 'models' / 'bosque_aleatorio_reg.pkl')
-    # svm         = crear_maquinas_vectores_soporte(X_train_est, X_val_est, y_train_est, y_val_est)
-    # knn         = crear_k_vecinos_cercanos(X_train_est, X_val_est, y_train_est, y_val_est)
-    # red         = crear_redes_neuronales(X_train_norm, X_val_norm, y_train_norm, y_val_norm)
     boosting    = crear_boosting(X_train, X_val, y_train, y_val)
 
 
@@ -571,9 +367,6 @@ def main():
         ('Regresión Lineal',  regresion,  X_train_est,  X_val_est,  X_test_est,  y_train_est,  y_val_est,  y_test_est),
         ('Árbol de Decisión', arbol,      X_train,      X_val,      X_test,      y_train,      y_val,      y_test),
         ('Bosque Aleatorio',  bosque,     X_train,      X_val,      X_test,      y_train,      y_val,      y_test),
-        # ('SVM',               svm,        X_train_est,  X_val_est,  X_test_est,  y_train_est,  y_val_est,  y_test_est),
-        # ('KNN',               knn,        X_train_est,  X_val_est,  X_test_est,  y_train_est,  y_val_est,  y_test_est),
-        # ('Redes Neuronales',  red,        X_train_norm, X_val_norm, X_test_norm, y_train_norm, y_val_norm, y_test_norm),
         ('Boosting',          boosting,   X_train,      X_val,      X_test,      y_train,      y_val,      y_test),
     ]
 
@@ -614,17 +407,11 @@ def main():
 
     # 7. GUARDAR SCALERS del modelo ganador (los modelos ya se guardan en cada función)
     # -------------------------------------------------------------------------
-    MODELOS_EST  = {'Regresión Lineal', 'SVM', 'KNN'}
-    MODELOS_NORM = {'Redes Neuronales'}
-
     modelos_dir = BASE / 'data' / 'models'
 
-    if mejor_nombre in MODELOS_EST:
+    if mejor_nombre == 'Regresión Lineal':
         joblib.dump(scaler_X, modelos_dir / 'scaler_X_regresion.pkl')
         joblib.dump(scaler_y, modelos_dir / 'scaler_y_regresion.pkl')
-    elif mejor_nombre in MODELOS_NORM:
-        joblib.dump(norm_X, modelos_dir / 'scaler_X_regresion.pkl')
-        joblib.dump(norm_y, modelos_dir / 'scaler_y_regresion.pkl')
 
     logger.info(f'✅ Scalers guardados en {modelos_dir}')
 

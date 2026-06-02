@@ -2,7 +2,7 @@
 Home - Mapa de Alojamientos de Andalucía
 =========================================
 Para ejecutar:
-    streamlit run C:/Users/usuario/OneDrive/UNI_Mario5/TFG/TFG_Chollos/App/main.py
+    python App/run.py
 '''
 
 # =============================================================================
@@ -29,6 +29,7 @@ from graficos_analisis import mostrar_graficos_analisis
 from TFG_Chollos.Scraping.Generador_urls_generales import (
     generador_urls, PROVINCIAS, N_ADULTOS, N_HABITACIONES, N_MENORES
 )
+from TFG_Chollos.Graficos.Grafico_Alojamientos_Andalucia import generar_mapa, NOMBRES_PROVINCIAS
 
 
 # =============================================================================
@@ -38,18 +39,6 @@ BASE = conseguir_ruta_general_TFG()
 MAPA_PREDETERMINADO = BASE / 'Graficos' / 'mapa_predeterminado.html'
 MAPA_ACTUALIZADO    = BASE / 'Graficos' / 'mapa_actualizado.html'
 
-NOMBRES_PROVINCIAS = ['Sevilla', 'Cádiz', 'Huelva', 'Jaén', 'Granada', 'Almería', 'Córdoba', 'Málaga']
-
-CENTROIDES = {
-    'Almería':  (37.15, -2.36),
-    'Cádiz':    (36.60, -5.80),
-    'Córdoba':  (37.90, -4.77),
-    'Granada':  (37.20, -3.40),
-    'Huelva':   (37.60, -6.94),
-    'Jaén':     (37.90, -3.50),
-    'Málaga':   (36.80, -4.70),
-    'Sevilla':  (37.50, -5.80)
-}
 
 # =============================================================================
 # FUNCIONES
@@ -144,58 +133,6 @@ def scrape_n_alojamientos(urls_provincias: dict, barra) -> list:
     barra.progress(1.0, text='¡Listo!')
     return resultado
 
-
-def generar_mapa(alojamientos_por_provincia: list, geojson: dict, df_puntos: pd.DataFrame,
-                 fecha_entrada: str, fecha_salida: str):
-    maximo = max(alojamientos_por_provincia)
-    techo = (maximo // 1000 + 1) * 1000
-
-    fig = px.choropleth(
-        locations=NOMBRES_PROVINCIAS,
-        geojson=geojson,
-        featureidkey="properties.name",
-        color=alojamientos_por_provincia,
-        range_color=[0, techo],
-        color_continuous_scale="Reds",
-        title=f"Alojamientos en Andalucía ({fecha_entrada} → {fecha_salida})",
-        hover_name=NOMBRES_PROVINCIAS,
-    )
-    fig.update_traces(hovertemplate="<b>%{hovertext}</b><br>Alojamientos: %{z:,.0f}<extra></extra>")
-    fig.update_geos(
-        visible=False,
-        lataxis_range=[35.5, 39.0],
-        lonaxis_range=[-8.0, -1.0],
-    )
-    fig.update_layout(
-        height=600,
-        paper_bgcolor="white",
-        margin={"r": 20, "t": 40, "l": 20, "b": 10},
-        coloraxis_colorbar=dict(title="Nº Alojamientos", tickformat=",.0f"),
-        legend=dict(
-            x=0.01, y=0.01,
-            xanchor="left", yanchor="bottom",
-            bgcolor="rgba(255,255,255,0.7)",
-            bordercolor="gray", borderwidth=1),
-    )
-    fig.add_scattergeo(
-        lat=[v[0] for v in CENTROIDES.values()],
-        lon=[v[1] for v in CENTROIDES.values()],
-        mode="text",
-        text=list(CENTROIDES.keys()),
-        textfont=dict(size=11, color="black"),
-        hoverinfo="skip",
-        showlegend=False,
-    )
-    fig.add_scattergeo(
-        lat=df_puntos['latitud'],
-        lon=df_puntos['longitud'],
-        mode="markers",
-        marker=dict(size=5, color="green", line=dict(width=1, color="white")),
-        text=df_puntos['titulo'],
-        hovertemplate="<b>%{text}</b><extra></extra>",
-        name='Ocultar alojamientos',
-    )
-    return fig
 
 
 # =============================================================================

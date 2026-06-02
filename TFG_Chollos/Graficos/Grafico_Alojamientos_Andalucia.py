@@ -18,25 +18,13 @@ import requests
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 
-from TFG_Chollos.utils import conseguir_ruta_general_TFG
+from TFG_Chollos.utils import conseguir_ruta_general_TFG, NOMBRES_PROVINCIAS, CENTROIDES_PROVINCIAS
 
 # =============================================================================
 # CONSTANTES
 # =============================================================================
 BASE = conseguir_ruta_general_TFG()
 
-NOMBRES_PROVINCIAS = ['Sevilla', 'Cádiz', 'Huelva', 'Jaén', 'Granada', 'Almería', 'Córdoba', 'Málaga']
-
-CENTROIDES = {
-    'Almería':  (37.15, -2.36),
-    'Cádiz':    (36.60, -5.80),
-    'Córdoba':  (37.90, -4.77),
-    'Granada':  (37.20, -3.40),
-    'Huelva':   (37.60, -6.94),
-    'Jaén':     (37.90, -3.50),
-    'Málaga':   (36.80, -4.70),
-    'Sevilla':  (37.50, -5.80)
-}
 
 # =============================================================================
 # FUNCIONES
@@ -119,10 +107,10 @@ def generar_mapa(alojamientos_por_provincia: list, geojson: dict, df_puntos: pd.
             borderwidth=1),
     )
     fig.add_scattergeo(
-        lat=[v[0] for v in CENTROIDES.values()],
-        lon=[v[1] for v in CENTROIDES.values()],
+        lat=[v[0] for v in CENTROIDES_PROVINCIAS.values()],
+        lon=[v[1] for v in CENTROIDES_PROVINCIAS.values()],
         mode="text",
-        text=list(CENTROIDES.keys()),
+        text=list(CENTROIDES_PROVINCIAS.keys()),
         textfont=dict(size=11, color="black"),
         hoverinfo="skip",
         showlegend=False,
