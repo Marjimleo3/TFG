@@ -15,6 +15,7 @@ Sistema de aprendizaje automático que detecta alojamientos con precios anómala
 | Visualización | seaborn, matplotlib, plotly |
 | Interfaz web | Streamlit |
 | Gestión de entorno | uv |
+| Análisis estadístico | R 4.x, corrplot, arrow |
 
 ---
 
@@ -49,6 +50,27 @@ TFG/
 │   ├── models/                # Modelos entrenados (.pkl)
 │   └── resultados/            # Resultados de evaluación
 └── pyproject.toml
+```
+
+---
+
+## Análisis de correlación (R)
+
+El script `correlacion.R` genera la matriz de correlación lineal (Pearson) sobre el dataset codificado y guarda el resultado en `images/correlacion_lineal.png`.
+
+### Prerrequisitos R
+
+- [R 4.x](https://cran.r-project.org/)
+- Paquetes (se instalan automáticamente la primera vez que se ejecuta el script):
+  - `arrow` — lectura de ficheros `.parquet`
+  - `corrplot` — visualización de matrices de correlación
+
+### Ejecución
+
+```r
+# Desde RStudio: abrir correlacion.R y pulsar Source
+# O desde terminal:
+Rscript correlacion.R
 ```
 
 ---
