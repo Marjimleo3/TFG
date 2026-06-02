@@ -284,10 +284,11 @@ def main():
 
     comienzo = datetime.now()
 
+    # Cargamos las URLs de búsqueda generadas por Generador_urls_generales.py
     BASE = conseguir_ruta_general_TFG()
     df_urls_provincias = pd.read_csv(BASE / "data" / "raw" / "inputs" / "urls_busqueda_booking_provincias.csv", sep="|")
-    urls_provincias = df_urls_provincias.set_index("localizacion")["url"].to_dict()       #Convertimos el DataFrame en un diccionario
-    
+    urls_provincias = df_urls_provincias.set_index("localizacion")["url"].to_dict()
+
     driver = crear_driver()
 
     try:
@@ -296,9 +297,10 @@ def main():
             print(f'📍 Scrapeando {clave}')
             print(f'{"="*50}')
 
+            # Scraping con subdivisión por precio para superar el límite de 750 resultados
             alojamientos_raw = scrape_con_subdivision(driver, clave, url)
 
-            # Deduplicar por URL
+            # Deduplicamos por URL base (sin parámetros) para eliminar alojamientos repetidos
             vistos = set()
             alojamientos = []
             for a in alojamientos_raw:
@@ -308,14 +310,14 @@ def main():
                     alojamientos.append(a)
 
             logger.info(f'✅ Total único tras deduplicar: {len(alojamientos)} alojamientos')
-            # input("Pulsa Enter para guardar los datos extraidos...")
 
-            #Guardamos base de datos
+            # Añadimos las fechas y parámetros de búsqueda al DataFrame y guardamos el CSV
             df = pd.DataFrame(alojamientos)
             df['fecha_entrada'], df['fecha_salida'], df['n_adultos'], df['n_habitaciones'], df['n_menores'] = FECHA_ENTRADA, FECHA_SALIDA, N_ADULTOS, N_HABITACIONES, N_MENORES
-
             df = df.to_csv(BASE / "data" / "raw" / "listados" / f"urls_booking_{clave}.csv", index=False, sep='|')
             logger.info('✅ Datos guardados correctamente')
+
+            # Pausa aleatoria entre provincias para no saturar el servidor
             time.sleep(random.uniform(8, 15))
 
     finally:

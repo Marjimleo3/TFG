@@ -160,29 +160,32 @@ def main():
             st.warning('Por favor, selecciona al menos un destino.')
             return
 
+        # Construimos las URLs de Booking con los filtros de tipo y servicios seleccionados
         filtro = generador_filtros(tipos_estancia, servicios)
         urls   = generador_urls(destinos, str(fecha_entrada), str(fecha_salida))
         urls_con_filtro = {lugar: url + filtro for lugar, url in urls.items()}
         print(urls_con_filtro)
 
-        barra = st.progress(0, text='Iniciando...')
-
+        # Fase de scraping: listado de alojamientos + detalle de cada uno
+        barra    = st.progress(0, text='Iniciando...')
         raw_list = scrape_busqueda(urls_con_filtro, str(fecha_entrada), str(fecha_salida), barra)
 
         if not raw_list:
             st.warning('No se encontraron alojamientos para los criterios seleccionados.')
             return
 
+        # Fase de predicción: preprocesado → encoding → modelo → etiquetado
         n_noches = (fecha_salida - fecha_entrada).days
         with st.spinner('Procesando datos...'):
             df_features, df_info = preprocesar_nuevos(raw_list, fecha_entrada, fecha_salida)
             df_codificado        = codificar_nuevos(df_features)
             df_resultado         = predecir_nuevos(df_codificado, df_info, n_noches)
 
+        # Guardamos en session_state y relanzamos para activar los filtros de la sidebar
         st.session_state.df_resultado = df_resultado
         st.rerun()
 
-    # Mostrar resultados filtrados si existen
+    # Mostramos los resultados aplicando los filtros de la barra lateral si existen
     if 'df_resultado' in st.session_state and st.session_state.df_resultado.empty:
         st.warning('El scraping completó pero ningún alojamiento tenía precio disponible para las fechas seleccionadas.')
     elif 'df_resultado' in st.session_state and not st.session_state.df_resultado.empty:

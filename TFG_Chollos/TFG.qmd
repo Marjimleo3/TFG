@@ -73,20 +73,6 @@ Distribución categorías train: {2: 648098, 0: 636665, 1: 356590, 3: 169798, 4:
 
 ✅ Mejor modelo de clasificación: Bosque Clasificación (F1=0.6509)
 2026-06-01 12:45:05,072 | INFO     | [TEST Regresión - Bosque Aleatorio] R²=0.8779 | MAE=19.45 | RMSE=33.18
-2026-06-01 12:45:17,056 | INFO     | [TEST Clasificación - Bosque Clasificación]
-                  precision    recall  f1-score   support
-
-     inflado (0)       0.60      0.84      0.70    137467
-      normal (1)       0.87      0.74      0.80     70463
-      chollo (2)       0.66      0.71      0.69    138794
-super_chollo (3)       0.87      0.15      0.26     38849
-hiper_chollo (4)       0.93      0.26      0.41     29363
-
-        accuracy                           0.67    414936
-       macro avg       0.79      0.54      0.57    414936
-    weighted avg       0.72      0.67      0.65    414936
-
-2026-06-01 12:45:17,121 | INFO     | [TEST Clasificación - Bosque Clasificación] F1-macro=0.5715
 
 Los resultados son buenos. Análisis:
 

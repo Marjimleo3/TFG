@@ -325,17 +325,6 @@ def main():
         joblib.dump(scaler_y, modelos_dir / 'scaler_y_regresion.pkl')
         logger.info(f'✅ Scalers guardados en {modelos_dir}')
 
-    # 8. GUARDAR RESULTADOS TEST
-    # -------------------------------------------------------------------------
-    resultados_test = pd.DataFrame({
-        'precio_real':     mejor_y_test.values,
-        'precio_predicho': y_pred_test_reg,
-        'etiqueta':        chollo_test.values,
-    }, index=mejor_y_test.index)
-
-    ruta_resultados = BASE / 'data' / 'resultados' / 'resultados_test.parquet'
-    resultados_test.to_parquet(ruta_resultados)
-    logger.info(f'✅ Resultados test guardados: {ruta_resultados}')
 
 
 if __name__ == '__main__':

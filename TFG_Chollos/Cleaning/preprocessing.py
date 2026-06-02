@@ -233,7 +233,10 @@ def añadir_distancia_centro(df: pd.DataFrame, coords_centros: dict) -> pd.DataF
 
 
 def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
-    
+    """
+    Aplica todas las transformaciones de limpieza al dataset ensamblado:
+    tipado, renombrado, tratamiento de nulos, nuevas variables y reordenación de columnas.
+    """
     #Transformaciones necesarias para el tipado:
     db_final['valoracion_clientes'] = db_final['valoracion_clientes'].str.replace(',','.')
     db_final['codigo_postal'] = db_final['codigo_postal'].astype(str).str.extract(r'(\d{5})')[0]  #Esto busca el primer grupo de 5 dígitos y descarta el resto. En pandas, para aplicar métodos de texto a una Serie tienes que usar el accesor .str primero
@@ -296,46 +299,42 @@ def limpiar_db_final(db_final:pd.DataFrame) -> pd.DataFrame:
 # =============================================================================
 def main():
 
+    # Cargamos la lista de provincias y los tamaños de habitación extraídos por patch_room_size.py
     provincias = pd.read_csv( BASE / "data" / "raw" / "inputs" / "urls_busqueda_booking_provincias.csv", sep="|" )
     tamaño_habitacion = pd.read_csv( BASE / "data" / "raw" / "fichas" / "room_sizes.csv", sep="|")
-
     tamaño_habitacion = limpiar_room_size(tamaño_habitacion)
     coords_centros = cargar_coords_centros(BASE)
 
     dfs_finales = []
 
     for provincia in provincias.iloc[:,0]:
+        # Cargamos el CSV raw del scraper y extraemos la localidad a partir de la dirección
         raw = pd.read_csv( BASE / "data" / "raw" / "fichas" / f"resultados_booking_{provincia}.csv", sep="|")
         raw['localidad'] = extraer_localidad(raw)
 
+        # Extraemos los servicios binarios y los precios por fecha disponible
         servicios_generales = extraer_servicios_influyentes(raw)
-        # print(f'Este es el número de servicios no encontrados en {provincia}:\n{(servicios_generales==False).sum()}')
         servicios_generales.to_csv(BASE / "data" / "processed" / "servicios_binarios" / f"servicios_generales_binarios_{provincia}.csv", index=False, sep="|")
 
         precios_disponibles = extraer_fecha_precios_disponibles(raw)
         precios_disponibles.to_csv(BASE / "data" / "processed" / "precios" / f"precios_disponibles_{provincia}.csv", index=False, sep="|")
 
-        raw_limpio = raw[['lugar','localidad','titulo','codigo_postal','latitud','longitud','tipo','estrellas','valoracion_clientes','n_valoraciones','url_estancia']]  #Extraemos filas necesarias
+        # Ensamblamos el dataset provincial uniendo raw, servicios, tamaño y precios
+        raw_limpio = raw[['lugar','localidad','titulo','codigo_postal','latitud','longitud','tipo','estrellas','valoracion_clientes','n_valoraciones','url_estancia']]
         df_1 = raw_limpio.merge(servicios_generales)
         df_2 = df_1.merge(tamaño_habitacion[['url_estancia','room_size_m2']])
         df_3 = df_2.merge(precios_disponibles)
 
+        # Aplicamos las transformaciones de fechas, reordenación, distancia y limpieza final
         df_4 = añadir_columnas_fechas(df_3)
         df_5 = reordenar_df(df_4)
         df_5 = añadir_distancia_centro(df_5, coords_centros)
         df_6 = limpiar_db_final(df_5)
 
-        # df_6.to_parquet(BASE / "data" / "processed" / "final" / f"db_final_{provincia}.parquet", index=False)
-        # logger.info(f'✅ Dataset de {provincia} guardado correctamente')
-
-        # codificada = encoding(df_6, incluir_provincia=False)
-        # codificada.to_parquet(BASE / "data" / "processed" / "modelizacion" / f"db_final_codificada_{provincia}.parquet", index=False)
-        # logger.info(f'✅ Dataset codificado de {provincia} guardado correctamente')
-
         logger.info(f'Ciclo de {provincia} completado')
-
         dfs_finales.append(df_6)
 
+    # Concatenamos todos los datasets provinciales y guardamos el parquet final
     db_completa = pd.concat(dfs_finales, ignore_index=True)
     db_completa.to_parquet(BASE / "data" / "processed" / "final" / "db_final.parquet", index=False)
     logger.info('✅ Dataset completo guardado correctamente')

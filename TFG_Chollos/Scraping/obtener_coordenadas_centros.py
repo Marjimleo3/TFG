@@ -72,6 +72,7 @@ def main():
     BASE = conseguir_ruta_general_TFG()
     ruta_csv = BASE / RUTA_SALIDA
 
+    # Si ya existe el CSV, cargamos las localidades ya consultadas para no repetirlas
     if ruta_csv.exists():
         existentes = pd.read_csv(ruta_csv).set_index('localidad')[['lat_centro', 'lon_centro']].to_dict('index')
         existentes = {k: (v['lat_centro'], v['lon_centro']) for k, v in existentes.items()}
@@ -79,11 +80,13 @@ def main():
     else:
         existentes = {}
 
-    todas = obtener_localidades_raw(BASE)
+    # Obtenemos todas las localidades únicas de los CSV raw y filtramos las que faltan
+    todas  = obtener_localidades_raw(BASE)
     nuevas = {loc: prov for loc, prov in todas.items() if loc not in existentes}
     logger.info(f'Localidades totales: {len(todas)} | Ya en CSV: {len(existentes)} | A consultar: {len(nuevas)}')
 
-    resultados = dict(existentes)
+    # Consultamos Nominatim para cada localidad nueva (respetando el límite de 1 req/seg)
+    resultados    = dict(existentes)
     sin_resultado = []
 
     for i, (localidad, provincia) in enumerate(nuevas.items(), 1):
@@ -95,6 +98,7 @@ def main():
             sin_resultado.append(localidad)
             logger.warning(f'  [{i}/{len(nuevas)}] Sin resultado para: {localidad} ({provincia})')
 
+    # Guardamos el CSV completo (existentes + nuevas) ordenado por localidad
     filas = [{'localidad': loc, 'lat_centro': coords[0], 'lon_centro': coords[1]}
              for loc, coords in resultados.items()]
     pd.DataFrame(filas).sort_values('localidad').to_csv(ruta_csv, index=False)

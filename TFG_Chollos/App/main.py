@@ -55,12 +55,19 @@ def cargar_geojson():
 
 @st.cache_data
 def cargar_puntos_unicos() -> pd.DataFrame:
+    """
+    Carga las coordenadas únicas de cada alojamiento para pintarlos en el mapa.
+    Deduplica por URL y luego por celda de ~1 km (2 decimales) para reducir densidad visual.
+    Filtra coordenadas fuera de Andalucía para que el mapa no se aleje.
+    """
     df = pd.read_parquet(
         BASE / 'data' / 'processed' / 'final' / 'db_final.parquet',
         columns=['titulo', 'latitud', 'longitud', 'url_estancia']
     )
+    # Eliminamos duplicados por URL y filtramos coordenadas fuera de Andalucía
     df = df.drop_duplicates(subset='url_estancia')[['titulo', 'latitud', 'longitud']]
     df = df[(df['latitud'].between(35.8, 38.7)) & (df['longitud'].between(-7.6, -1.6))]
+    # Reducimos densidad deduplicando por celda de ~1 km (2 decimales ≈ 1.1 km)
     df['_lat_r'] = df['latitud'].round(2)
     df['_lon_r'] = df['longitud'].round(2)
     df = df.drop_duplicates(subset=['_lat_r', '_lon_r'])
@@ -68,6 +75,11 @@ def cargar_puntos_unicos() -> pd.DataFrame:
 
 
 async def _async_scrape(urls_provincias: dict, resultado: list, progreso: list):
+    """
+    Navega con Playwright a la página de resultados de cada provincia y extrae
+    el número total de alojamientos disponibles del h1. Bloquea recursos estáticos
+    para acelerar la carga y oculta la huella de automatización.
+    """
     async with async_playwright() as p:
         browser = await p.chromium.launch(args=["--disable-blink-features=AutomationControlled"])
         context = await browser.new_context(
@@ -78,9 +90,9 @@ async def _async_scrape(urls_provincias: dict, resultado: list, progreso: list):
         )
         page = await context.new_page()
 
+        # Bloqueamos imágenes y fuentes para acelerar la carga de cada página
         async def _abort(route):
             await route.abort()
-
         await page.route("**/*.{png,jpg,jpeg,gif,webp,woff,woff2,ttf}", _abort)
         await page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
@@ -89,10 +101,11 @@ async def _async_scrape(urls_provincias: dict, resultado: list, progreso: list):
             await page.goto(url, wait_until="networkidle")
             await page.wait_for_selector('h1', state='visible', timeout=15000)
             content = await page.content()
-            soup = BeautifulSoup(content, 'html.parser')
-            titulo = soup.find('h1')
-            texto = titulo.find('span').get_text(strip=True)
-            numero = int(re.search(r"[\d.]+", texto).group().replace(".", ""))
+            soup    = BeautifulSoup(content, 'html.parser')
+            titulo  = soup.find('h1')
+            texto   = titulo.find('span').get_text(strip=True)
+            # Extraemos el número entero del texto "X alojamientos encontrados"
+            numero  = int(re.search(r"[\d.]+", texto).group().replace(".", ""))
             resultado.append(numero)
             progreso[0] = i + 1
 
@@ -100,6 +113,10 @@ async def _async_scrape(urls_provincias: dict, resultado: list, progreso: list):
 
 
 def _scrape_en_hilo(urls_provincias: dict, resultado: list, errores: list, progreso: list):
+    """
+    Lanza el scraping asíncrono en un hilo separado con su propio event loop.
+    Necesario porque Streamlit ya tiene su propio loop y no permite anidarlos.
+    """
     import asyncio
     loop = asyncio.ProactorEventLoop()
     asyncio.set_event_loop(loop)
@@ -112,13 +129,20 @@ def _scrape_en_hilo(urls_provincias: dict, resultado: list, errores: list, progr
 
 
 def scrape_n_alojamientos(urls_provincias: dict, barra) -> list:
+    """
+    Orquesta el scraping en un hilo daemon y actualiza la barra de progreso
+    de Streamlit mientras el hilo trabaja en segundo plano.
+    Devuelve la lista de conteos en el mismo orden que urls_provincias.
+    """
     resultado, errores, progreso = [], [], [0]
     provincias_lista = list(urls_provincias.items())
     total = len(provincias_lista)
 
+    # Lanzamos el scraping en un hilo separado para no bloquear Streamlit
     t = threading.Thread(target=_scrape_en_hilo, args=(urls_provincias, resultado, errores, progreso), daemon=True)
     t.start()
 
+    # Actualizamos la barra de progreso cada 0.5 s mientras el hilo sigue vivo
     while t.is_alive():
         completadas = progreso[0]
         nombre = provincias_lista[completadas][0] if completadas < total else provincias_lista[-1][0]
@@ -159,16 +183,20 @@ def main():
 
     if actualizar:
         fe_str, fs_str = str(fecha_entrada), str(fecha_salida)
+        # Generamos las URLs de Booking para las 8 provincias con las fechas elegidas
         _, urls_provincias = generador_urls(fe_str, fs_str, N_ADULTOS, N_HABITACIONES, N_MENORES, {}, PROVINCIAS)
-        barra = st.progress(0, text='Iniciando scraping...')
+        # Scrapeamos el número de alojamientos disponibles en cada provincia
+        barra        = st.progress(0, text='Iniciando scraping...')
         alojamientos = scrape_n_alojamientos(urls_provincias, barra)
         barra.empty()
-        geojson = cargar_geojson()
+        # Generamos el mapa coroplético con los conteos y lo guardamos como HTML
+        geojson   = cargar_geojson()
         df_puntos = cargar_puntos_unicos()
-        fig = generar_mapa(alojamientos, geojson, df_puntos, fe_str, fs_str)
+        fig       = generar_mapa(alojamientos, geojson, df_puntos, fe_str, fs_str)
         fig.write_html(str(MAPA_ACTUALIZADO))
         st.session_state.mapa_listo = True
 
+    # Mostramos el mapa actualizado si ya se generó, o el predeterminado en caso contrario
     mapa = MAPA_ACTUALIZADO if st.session_state.mapa_listo else MAPA_PREDETERMINADO
     html = mapa.read_text(encoding='utf-8')
     st.iframe(html, height=620)
