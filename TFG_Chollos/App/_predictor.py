@@ -10,7 +10,7 @@ Exporta:
   ┌───────────────────────────────────────┬────────────────────────────────────────────────────────────────────┐
   │                Función                │                             Propósito                              │
   ├───────────────────────────────────────┼────────────────────────────────────────────────────────────────────┤
-  │ cargar_modelos()                      │ Carga los dos bosques (cache_resource)                             │
+  │ cargar_modelos()                      │ Carga bosque_reg (cache_resource)                                  │
   ├───────────────────────────────────────┼────────────────────────────────────────────────────────────────────┤
   │ cargar_encoders()                     │ Carga le_localidad, le_provincia, columnas_modelo (cache_resource) │
   ├───────────────────────────────────────┼────────────────────────────────────────────────────────────────────┤
@@ -22,7 +22,7 @@ Exporta:
   ├───────────────────────────────────────┼────────────────────────────────────────────────────────────────────┤
   │ codificar_nuevos(df)                  │ Aplica LabelEncoder + get_dummies + reindex con columnas_modelo    │
   ├───────────────────────────────────────┼────────────────────────────────────────────────────────────────────┤
-  │ predecir_nuevos(df_features, df_info) │ Predice con los dos bosques                                        │
+  │ predecir_nuevos(df_features, df_info) │ Predice precio con bosque_reg y etiqueta por ratio precio          │
   ├───────────────────────────────────────┼────────────────────────────────────────────────────────────────────┤
   │ mostrar_resultados(df)                │ Tabla de resultados reutilizable (BD y datos frescos)              │
   └───────────────────────────────────────┴────────────────────────────────────────────────────────────────────┘
@@ -69,8 +69,7 @@ ETIQUETAS = {
 @st.cache_resource
 def cargar_modelos():
     bosque_reg = joblib.load(BASE / 'data' / 'models' / 'bosque_aleatorio_reg.pkl')
-    bosque_clf = joblib.load(BASE / 'data' / 'models' / 'bosque_aleatorio_clf.pkl')
-    return bosque_reg, bosque_clf
+    return bosque_reg
 
 
 @st.cache_resource
@@ -100,11 +99,8 @@ def cargar_stats_entrenamiento():
 # =============================================================================
 # PREDICCIÓN SOBRE LA BD EXISTENTE
 # =============================================================================
-# Usa bosque_clf porque no hay precio real de una búsqueda activa:
-# el modelo infiere la categoría únicamente desde los features del alojamiento
-# (localidad, tipo, amenities, fecha...), sin conocer el precio actual.
 @st.cache_data
-def _predecir_bd(_bosque_reg, _bosque_clf):
+def _predecir_bd(_bosque_reg):
     db_info = pd.read_parquet(
         BASE / 'data' / 'processed' / 'analisis' / 'db_final_analisis.parquet',
         columns=['titulo', 'url_estancia', 'precio', 'provincia', 'localidad', 'tipo']
@@ -114,14 +110,17 @@ def _predecir_bd(_bosque_reg, _bosque_clf):
     )
 
     X = db_cod.drop(columns=['precio'])
-
     y_pred_reg = _bosque_reg.predict(X)
-    clase_pred = _bosque_clf.predict(X)
 
     db_info = db_info.copy()
-    db_info['precio_predicho']   = y_pred_reg.round(2)
-    db_info['ahorro']            = (db_info['precio_predicho'] - db_info['precio']).round(2)
-    db_info['prediccion_chollo'] = pd.Series(clase_pred).map(ETIQUETAS).values
+    db_info['precio_predicho'] = y_pred_reg.round(2)
+    db_info['ahorro']          = (db_info['precio_predicho'] - db_info['precio']).round(2)
+
+    categoria = crear_etiqueta_chollo(
+        db_info['precio'].reset_index(drop=True),
+        pd.Series(y_pred_reg),
+    )
+    db_info['prediccion_chollo'] = categoria.map(ETIQUETAS).values
 
     return db_info
 
@@ -358,7 +357,7 @@ def predecir_nuevos(df_features: pd.DataFrame, df_info: pd.DataFrame, n_noches: 
     if df_features.empty:
         return pd.DataFrame()
 
-    bosque_reg, _ = cargar_modelos()
+    bosque_reg = cargar_modelos()
 
     y_pred_reg = bosque_reg.predict(df_features)
 
@@ -433,10 +432,10 @@ def mostrar_predicciones_bd():
     '''UI completa para explorar predicciones sobre la BD existente.'''
     st.header('Detector de Chollos')
 
-    bosque_reg, bosque_clf = cargar_modelos()
+    bosque_reg = cargar_modelos()
 
     with st.spinner('Cargando datos y calculando predicciones...'):
-        df = _predecir_bd(bosque_reg, bosque_clf)
+        df = _predecir_bd(bosque_reg)
 
     st.sidebar.markdown('---')
     st.sidebar.subheader('Detector de Chollos')

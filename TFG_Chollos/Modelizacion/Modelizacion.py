@@ -47,14 +47,14 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn import linear_model
-from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier, plot_tree
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-from xgboost import XGBRegressor, XGBClassifier
-from sklearn.neural_network import MLPRegressor, MLPClassifier
+from sklearn.tree import DecisionTreeRegressor, plot_tree
+from sklearn.ensemble import RandomForestRegressor
+from xgboost import XGBRegressor
+from sklearn.neural_network import MLPRegressor
 import joblib
-from sklearn.metrics import f1_score, classification_report, mean_absolute_error, mean_squared_error, r2_score
-from sklearn.neighbors import KNeighborsRegressor, KNeighborsClassifier
-from sklearn.svm import SVR, SVC
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.svm import SVR
 
 
 #Módulos propios del proyecto
@@ -502,7 +502,7 @@ def crear_boosting(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, target_
 
 
 # =============================================================================
-# MODELOS DE CLASIFICACIÓN (inflado / normal / chollo / super_chollo / hiper-chollo)
+# ETIQUETADO DE CHOLLOS (inflado / normal / chollo / super_chollo / hiper-chollo)
 # =============================================================================
 
 def crear_etiqueta_chollo(y_real:pd.Series, y_predicho:pd.Series) -> pd.Series:
@@ -526,270 +526,6 @@ def crear_etiqueta_chollo(y_real:pd.Series, y_predicho:pd.Series) -> pd.Series:
     etiquetas = [4, 3, 2, 1, 0]
     return pd.Series(np.select(condiciones, etiquetas), index=y_real.index, name='categoria')   #Condición: lista booleanos, etiquetas: lista de valores a asignar cuando condición sea True
 
-
-def crear_regresion_logistica(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series):
-    '''
-    Estandarizamos los datos. Versión clasificatoria de la regresión lineal.
-    Hay que decidir entre estos hiperparámetros:
-        # C : Inverso de la regularización. C alto → menos regularización (riesgo de overfitting)
-        # solver : Algoritmo de optimización (lbfgs, liblinear...)
-    '''
-    logger.info('⏳ Creando "Regresión Logística"')
-
-    regresion = linear_model.LogisticRegression(max_iter=1000, random_state=42)
-    param_grid = {
-        'C': [0.01, 0.1, 1, 10, 100],
-    }
-    grid_search = GridSearchCV(
-        estimator=regresion,
-        param_grid=param_grid,
-        cv=3,
-        scoring='f1_weighted',
-        n_jobs=-1,
-        verbose=2)
-    grid_search.fit(conjunto_ent_est, objetivo_ent)
-
-    mejor_regresion = grid_search.best_estimator_
-    logger.info('✅ Creado y entrenado el modelo de "Regresión Logística" correctamente')
-    logger.info(f'Mejores hiperparámetros: {grid_search.best_params_}')
-
-    f1_val = f1_score(objetivo_val, mejor_regresion.predict(conjunto_val_est), average='weighted')
-    logger.info(f'F1 en validación: {f1_val:.4f}')
-    ruta_modelo = BASE / 'data' / 'models' / 'regresion_logistica_clf.pkl'
-
-    joblib.dump(mejor_regresion, ruta_modelo)
-    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
-
-    return mejor_regresion
-
-
-def crear_arbol_decision_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series):
-    '''
-    No es necesario escalar los datos.
-    Hay que decidir entre estos hiperparámetros:
-        # max_depth : Profundidad máxima del árbol. Sin límite → overfitting. Valor bajo → underfitting
-    '''
-    logger.info('⏳ Creando "Árbol de Decisión Clasificación"')
-
-    arbol = DecisionTreeClassifier(random_state=42)
-    param_grid = {
-        'max_depth': [3, 5, 10, 15],
-    }
-    grid_search = GridSearchCV(
-        estimator=arbol,
-        param_grid=param_grid,
-        cv=3,
-        scoring='f1_weighted',
-        n_jobs=-1,
-        verbose=2)
-    grid_search.fit(conjunto_ent, objetivo_ent)
-
-    mejor_arbol = grid_search.best_estimator_
-    logger.info('✅ Creado y entrenado el modelo de "Árbol de Decisión Clasificación" correctamente')
-    logger.info(f'Mejores hiperparámetros: {grid_search.best_params_}')
-
-    f1_val = f1_score(objetivo_val, mejor_arbol.predict(conjunto_val), average='weighted')
-    logger.info(f'F1 en validación: {f1_val:.4f}')
-    ruta_modelo = BASE / 'data' / 'models' / 'arbol_decision_clf.pkl'
-
-    joblib.dump(mejor_arbol, ruta_modelo)
-    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
-
-    return mejor_arbol
-
-
-def crear_bosque_aleatorio_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series):
-    '''
-    No es necesario escalar los datos.
-    Hay que decidir entre estos hiperparámetros:
-        # n_estimators : Número de árboles del bosque. Más árboles → más estable, más lento
-        # max_depth : Igual que en el árbol individual
-    '''
-    logger.info('⏳ Creando "Bosque Aleatorio Clasificación"')
-
-    bosque = RandomForestClassifier(random_state=42)
-    param_grid = {
-        'n_estimators': [50, 100],
-        'max_depth':    [10, 20],
-    }
-    grid_search = GridSearchCV(
-        estimator=bosque,
-        param_grid=param_grid,
-        cv=3,
-        scoring='f1_weighted',
-        n_jobs=-1,
-        verbose=2)
-    grid_search.fit(conjunto_ent, objetivo_ent)
-
-    mejor_bosque = grid_search.best_estimator_
-    logger.info('✅ Creado y entrenado el modelo de "Bosque Aleatorio Clasificación" correctamente')
-    logger.info(f'Mejores hiperparámetros: {grid_search.best_params_}')
-
-    f1_val = f1_score(objetivo_val, mejor_bosque.predict(conjunto_val), average='weighted')
-    logger.info(f'F1 en validación: {f1_val:.4f}')
-    ruta_modelo = BASE / 'data' / 'models' / 'bosque_aleatorio_clf.pkl'
-
-    joblib.dump(mejor_bosque, ruta_modelo)
-    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
-
-    return mejor_bosque
-
-
-def crear_maquinas_vectores_soporte_clasificacion(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series):
-    '''
-    Estandarizamos los datos porque SVM maximiza márgenes → sensible a la magnitud.
-    Hay que decidir entre estos hiperparámetros:
-        # C : Penalización por errores. C alto → intenta no fallar ningún punto (riesgo de overfitting)
-        # kernel : Función que transforma los datos (linear, rbf, poly)
-    '''
-    logger.info('⏳ Creando "SVM Clasificación"')
-
-    svm = SVC(random_state=42)
-    param_grid = [
-        {'C': [0.1, 1, 10], 'kernel': ['linear']},
-        {'C': [0.1, 1, 10], 'kernel': ['rbf'], 'gamma': ['scale']},
-    ]
-    grid_search = GridSearchCV(
-        estimator=svm,
-        param_grid=param_grid,
-        cv=3,
-        scoring='f1_weighted',
-        n_jobs=-1,
-        verbose=2)
-    grid_search.fit(conjunto_ent_est, objetivo_ent)
-
-    mejor_svm = grid_search.best_estimator_
-    logger.info('✅ Creado y entrenado el modelo de "SVM Clasificación" correctamente')
-    logger.info(f'Mejores hiperparámetros: {grid_search.best_params_}')
-
-    f1_val = f1_score(objetivo_val, mejor_svm.predict(conjunto_val_est), average='weighted')
-    logger.info(f'F1 en validación: {f1_val:.4f}')
-    ruta_modelo = BASE / 'data' / 'models' / 'svm_clf.pkl'
-
-    joblib.dump(mejor_svm, ruta_modelo)
-    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
-
-    return mejor_svm
-
-
-def crear_k_vecinos_cercanos_clasificacion(conjunto_ent_est:pd.DataFrame, conjunto_val_est:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series):
-    '''
-    Estandarizamos los datos porque KNN mide distancia entre puntos.
-    Hay que decidir entre estos hiperparámetros:
-        # n_neighbors : Número de vecinos que consulta para predecir
-    '''
-    logger.info('⏳ Creando "KNN Clasificación"')
-
-    knn = KNeighborsClassifier()
-    param_grid = {
-        'n_neighbors': [3, 5, 7, 10, 15],
-    }
-    grid_search = GridSearchCV(
-        estimator=knn,
-        param_grid=param_grid,
-        cv=3,
-        scoring='f1_weighted',
-        n_jobs=-1,
-        verbose=2)
-    grid_search.fit(conjunto_ent_est, objetivo_ent)
-
-    mejor_knn = grid_search.best_estimator_
-    logger.info('✅ Creado y entrenado el modelo de "KNN Clasificación" correctamente')
-    logger.info(f'Mejores hiperparámetros: {grid_search.best_params_}')
-
-    f1_val = f1_score(objetivo_val, mejor_knn.predict(conjunto_val_est), average='weighted')
-    logger.info(f'F1 en validación: {f1_val:.4f}')
-    ruta_modelo = BASE / 'data' / 'models' / 'knn_clf.pkl'
-
-    joblib.dump(mejor_knn, ruta_modelo)
-    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
-
-    return mejor_knn
-
-
-
-def crear_redes_neuronales_clasificacion(conjunto_ent_norm:pd.DataFrame, conjunto_val_norm:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series):
-    '''
-    Normalizamos los datos porque las Redes Neuronales aprenden con gradientes → convergen mejor con datos en [0,1].
-    Hay que decidir el 'early stopping' y entre estos hiperparámetros:
-        # hidden_layer_sizes : Número de capas ocultas y neuronas por capa
-        # learning_rate_init : Cuánto ajusta los pesos en cada paso
-    '''
-    logger.info('⏳ Creando "Redes Neuronales Clasificación"')
-
-    red = MLPClassifier(
-        max_iter=1000,
-        early_stopping=True,
-        random_state=42)
-    param_grid = {
-        'hidden_layer_sizes': [(64,), (128,), (64, 64), (128, 64)],
-        'learning_rate_init': [0.001, 0.01, 0.1],
-    }
-    grid_search = GridSearchCV(
-        estimator=red,
-        param_grid=param_grid,
-        cv=3,
-        scoring='f1_weighted',
-        n_jobs=-1,
-        verbose=2)
-    grid_search.fit(conjunto_ent_norm, objetivo_ent)
-
-    mejor_red = grid_search.best_estimator_
-    logger.info('✅ Creado y entrenado el modelo de "Redes Neuronales Clasificación" correctamente')
-    logger.info(f'Mejores hiperparámetros: {grid_search.best_params_}')
-
-    f1_val = f1_score(objetivo_val, mejor_red.predict(conjunto_val_norm), average='weighted')
-    logger.info(f'F1 en validación: {f1_val:.4f}')
-    ruta_modelo = BASE / 'data' / 'models' / 'redes_neuronales_clf.pkl'
-
-    joblib.dump(mejor_red, ruta_modelo)
-    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
-
-    return mejor_red
-
-
-
-def crear_boosting_clasificacion(conjunto_ent:pd.DataFrame, conjunto_val:pd.DataFrame, objetivo_ent:pd.Series, objetivo_val:pd.Series):
-    '''
-    No es necesario escalar los datos.
-    Implementación: XGBoost (más eficiente que sklearn GB al paralelizar con n_jobs).
-    Hay que decidir entre estos hiperparámetros:
-        # n_estimators : Número de árboles encadenados
-        # learning_rate : Cuánto contribuye cada árbol nuevo
-        # max_depth : Profundidad de cada árbol individual
-    '''
-    logger.info('⏳ Creando "XGBoost Clasificación"')
-
-    boosting = XGBClassifier(random_state=42, 
-                            n_jobs=-1, 
-                            verbosity=0, 
-                            eval_metric='mlogloss')    #evita un warning de XGBoost en problemas multiclase
-    param_grid = {
-        'n_estimators':  [100, 300, 500],
-        'learning_rate': [0.01, 0.05, 0.1],
-        'max_depth':     [3, 5],
-    }
-    grid_search = GridSearchCV(
-        estimator=boosting,
-        param_grid=param_grid,
-        cv=3,
-        scoring='f1_weighted',
-        n_jobs=-1,
-        verbose=2)
-    grid_search.fit(conjunto_ent, objetivo_ent)
-
-    mejor_boosting = grid_search.best_estimator_
-    logger.info('✅ Creado y entrenado el modelo de "XGBoost Clasificación" correctamente')
-    logger.info(f'Mejores hiperparámetros: {grid_search.best_params_}')
-
-    f1_val = f1_score(objetivo_val, mejor_boosting.predict(conjunto_val), average='weighted')
-    logger.info(f'F1 en validación: {f1_val:.4f}')
-    ruta_modelo = BASE / 'data' / 'models' / 'boosting_clf.pkl'
-
-    joblib.dump(mejor_boosting, ruta_modelo)
-    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
-
-    return mejor_boosting
 
 
 # =============================================================================
@@ -867,42 +603,7 @@ def main():
     logger.info(f'Distribución categorías train: {chollo_train.value_counts().to_dict()}')
 
 
-    # 6. MODELOS DE CLASIFICACIÓN (chollo / no chollo)
-    # -------------------------------------------------------------------------
-    reg_log     = crear_regresion_logistica(X_train_est, X_val_est, chollo_train, chollo_val)
-    arbol_clf   = crear_arbol_decision_clasificacion(X_train, X_val, chollo_train, chollo_val)
-    bosque_clf  = crear_bosque_aleatorio_clasificacion(X_train, X_val, chollo_train, chollo_val)
-    # svm_clf     = crear_maquinas_vectores_soporte_clasificacion(X_train_est, X_val_est, chollo_train, chollo_val)
-    # knn_clf     = crear_k_vecinos_cercanos_clasificacion(X_train_est, X_val_est, chollo_train, chollo_val)
-    # red_clf     = crear_redes_neuronales_clasificacion(X_train_norm, X_val_norm, chollo_train, chollo_val)
-    boost_clf   = crear_boosting_clasificacion(X_train, X_val, chollo_train, chollo_val)
-
-
-    # 7. SELECCIÓN DEL MEJOR MODELO DE CLASIFICACIÓN (por F1 en validación)
-    # -------------------------------------------------------------------------
-    modelos_clasificacion = [
-        ('Regresión Logística',  reg_log,    X_train_est,  X_val_est,  X_test_est,  chollo_val),
-        ('Árbol Clasificación',  arbol_clf,  X_train,      X_val,      X_test,      chollo_val),
-        ('Bosque Clasificación', bosque_clf, X_train,      X_val,      X_test,      chollo_val),
-        # ('SVM Clasificación',    svm_clf,    X_train_est,  X_val_est,  X_test_est,  chollo_val),
-        # ('KNN Clasificación',    knn_clf,    X_train_est,  X_val_est,  X_test_est,  chollo_val),
-        # ('Red Neuronal Clf',     red_clf,    X_train_norm, X_val_norm, X_test_norm, chollo_val),
-        ('Boosting Clf',         boost_clf,  X_train,      X_val,      X_test,      chollo_val),
-    ]
-
-    mejor_f1 = None
-    mejor_nombre_clf = mejor_modelo_clf = mejor_X_train_clf = mejor_X_val_clf = mejor_X_test_clf = None
-    for nombre, modelo, X_tr, X_va, X_te, chollo_va in modelos_clasificacion:
-        f1 = f1_score(chollo_va, modelo.predict(X_va), average='weighted')
-        if mejor_f1 is None or f1 > mejor_f1:
-            mejor_f1 = f1
-            mejor_nombre_clf, mejor_modelo_clf = nombre, modelo
-            mejor_X_train_clf, mejor_X_val_clf, mejor_X_test_clf = X_tr, X_va, X_te
-
-    logger.info(f'✅ Mejor modelo de clasificación: {mejor_nombre_clf} (F1={mejor_f1:.4f})')
-
-
-    # 8. EVALUACIÓN FINAL EN TEST
+    # 6. EVALUACIÓN FINAL EN TEST
     # -------------------------------------------------------------------------
     # Regresión: R², MAE y RMSE sobre el conjunto de test
     y_pred_test_reg = mejor_modelo_reg.predict(mejor_X_test)
@@ -911,22 +612,10 @@ def main():
     rmse_test = np.sqrt(mean_squared_error(mejor_y_test, y_pred_test_reg))
     logger.info(f'[TEST Regresión - {mejor_nombre}] R²={r2_test:.4f} | MAE={mae_test:.2f} | RMSE={rmse_test:.2f}')
 
-    # Clasificación: precision, recall y F1 por clase sobre el conjunto de test
-    nombres_clases = ['inflado (0)', 'normal (1)', 'chollo (2)', 'super_chollo (3)', 'hiper_chollo (4)']
-    y_pred_test_clf = mejor_modelo_clf.predict(mejor_X_test_clf)
-    reporte = classification_report(chollo_test, y_pred_test_clf, labels=[0, 1, 2, 3, 4], target_names=nombres_clases, zero_division=0)
-    logger.info(f'[TEST Clasificación - {mejor_nombre_clf}]\n{reporte}')
-
-    f1_macro = f1_score(chollo_test, y_pred_test_clf, average='macro', zero_division=0)
-    logger.info(f'[TEST Clasificación - {mejor_nombre_clf}] F1-macro={f1_macro:.4f}')
-
-
-    # 9. GUARDAR SCALERS del modelo ganador (los modelos ya se guardan en cada función)
+    # 7. GUARDAR SCALERS del modelo ganador (los modelos ya se guardan en cada función)
     # -------------------------------------------------------------------------
-    MODELOS_EST      = {'Regresión Lineal', 'SVM', 'KNN'}
-    MODELOS_NORM     = {'Redes Neuronales'}
-    MODELOS_EST_CLF  = {'Regresión Logística', 'SVM Clasificación', 'KNN Clasificación'}
-    MODELOS_NORM_CLF = {'Red Neuronal Clf'}
+    MODELOS_EST  = {'Regresión Lineal', 'SVM', 'KNN'}
+    MODELOS_NORM = {'Redes Neuronales'}
 
     modelos_dir = BASE / 'data' / 'models'
 
@@ -937,21 +626,15 @@ def main():
         joblib.dump(norm_X, modelos_dir / 'scaler_X_regresion.pkl')
         joblib.dump(norm_y, modelos_dir / 'scaler_y_regresion.pkl')
 
-    if mejor_nombre_clf in MODELOS_EST_CLF:
-        joblib.dump(scaler_X, modelos_dir / 'scaler_X_clasificacion.pkl')
-    elif mejor_nombre_clf in MODELOS_NORM_CLF:
-        joblib.dump(norm_X, modelos_dir / 'scaler_X_clasificacion.pkl')
-
     logger.info(f'✅ Scalers guardados en {modelos_dir}')
 
 
     # 10. GUARDAR RESULTADOS TEST
     # -------------------------------------------------------------------------
     resultados_test = pd.DataFrame({
-        'precio_real':    mejor_y_test.values,
+        'precio_real':     mejor_y_test.values,
         'precio_predicho': y_pred_test_reg,
-        'clase_real':     chollo_test.values,
-        'clase_predicha': y_pred_test_clf,
+        'etiqueta':        chollo_test.values,
     }, index=mejor_y_test.index)
 
     ruta_resultados = BASE / 'data' / 'resultados' / 'resultados_test.parquet'
