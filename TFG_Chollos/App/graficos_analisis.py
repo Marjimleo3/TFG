@@ -71,7 +71,7 @@ def mostrar_graficos_analisis():
 
     fig_mes = go.Figure(go.Scatter(x=x_mes, y=y_mes, mode='lines+markers', marker=dict(color='steelblue'), line=dict(color='steelblue')))
     fig_mes.update_layout(title='Precio promedio por mes', xaxis_title='Mes', yaxis_title='Precio promedio (EUR)')
-    st.plotly_chart(fig_mes, use_container_width=True)
+    st.plotly_chart(fig_mes, width='stretch')
 
     col1, col2 = st.columns(2)
 
@@ -82,7 +82,7 @@ def mostrar_graficos_analisis():
     x_tam = [LABELS_TAM[int(i)] for i in precio_tam.index.tolist()]
     y_tam = [round(float(v), 2) for v in precio_tam.values.tolist()]
 
-    col1.plotly_chart(_bar(x_tam, y_tam, 'Precio promedio por tamaño de habitacion', 'Tamaño', 'Precio promedio (EUR)'), use_container_width=True)
+    col1.plotly_chart(_bar(x_tam, y_tam, 'Precio promedio por tamaño de habitacion', 'Tamaño', 'Precio promedio (EUR)'), width='stretch')
 
     # 3. Precio promedio por distancia al centro
     df_dist = df.copy()
@@ -91,7 +91,7 @@ def mostrar_graficos_analisis():
     x_dist = [LABELS_DIST[int(i)] for i in precio_dist.index.tolist()]
     y_dist = [round(float(v), 2) for v in precio_dist.values.tolist()]
 
-    col2.plotly_chart(_bar(x_dist, y_dist, 'Precio promedio por distancia al centro', 'Distancia al centro', 'Precio promedio (EUR)'), use_container_width=True)
+    col2.plotly_chart(_bar(x_dist, y_dist, 'Precio promedio por distancia al centro', 'Distancia al centro', 'Precio promedio (EUR)'), width='stretch')
 
     col3, col4 = st.columns(2)
 
@@ -114,11 +114,11 @@ def mostrar_graficos_analisis():
         xaxis_title='Tipo de alojamiento',
         yaxis_title='Precio promedio (EUR)',
     )
-    col3.plotly_chart(fig4, use_container_width=True)
+    col3.plotly_chart(fig4, width='stretch')
 
     # 5. Precio promedio por estrellas
     precio_est = df.groupby('estrellas')['precio'].mean().sort_index()
     x_est = [str(int(e)) + ' estrellas' for e in precio_est.index.tolist()]
     y_est = [round(float(v), 2) for v in precio_est.values.tolist()]
 
-    col4.plotly_chart(_bar(x_est, y_est, 'Precio promedio por estrellas', 'Estrellas', 'Precio promedio (EUR)'), use_container_width=True)
+    col4.plotly_chart(_bar(x_est, y_est, 'Precio promedio por estrellas', 'Estrellas', 'Precio promedio (EUR)'), width='stretch')

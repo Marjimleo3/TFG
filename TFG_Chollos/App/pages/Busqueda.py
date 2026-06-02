@@ -172,16 +172,19 @@ def main():
             st.warning('No se encontraron alojamientos para los criterios seleccionados.')
             return
 
+        n_noches = (fecha_salida - fecha_entrada).days
         with st.spinner('Procesando datos...'):
-            df_features, df_info = preprocesar_nuevos(raw_list, fecha_entrada)
+            df_features, df_info = preprocesar_nuevos(raw_list, fecha_entrada, fecha_salida)
             df_codificado        = codificar_nuevos(df_features)
-            df_resultado         = predecir_nuevos(df_codificado, df_info)
+            df_resultado         = predecir_nuevos(df_codificado, df_info, n_noches)
 
         st.session_state.df_resultado = df_resultado
         st.rerun()
 
     # Mostrar resultados filtrados si existen
-    if 'df_resultado' in st.session_state and not st.session_state.df_resultado.empty:
+    if 'df_resultado' in st.session_state and st.session_state.df_resultado.empty:
+        st.warning('El scraping completó pero ningún alojamiento tenía precio disponible para las fechas seleccionadas.')
+    elif 'df_resultado' in st.session_state and not st.session_state.df_resultado.empty:
         df = st.session_state.df_resultado
         mask = pd.Series(True, index=df.index)
         if prov_sel != 'Todas':

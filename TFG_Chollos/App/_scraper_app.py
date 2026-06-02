@@ -75,9 +75,19 @@ async def _async_scrape_listado(lugar: str, url: str, fecha_entrada: str,
             await browser.close()
 
         soup = BeautifulSoup(content, 'html.parser')
+
+        n_reales = 0
+        h1 = soup.find('h1', {'aria-live': 'assertive'})
+        if h1:
+            span = h1.find('span')
+            if span:
+                m = re.search(r'([\d.]+)\s+alojamiento', span.get_text())
+                if m:
+                    n_reales = int(m.group(1).replace('.', ''))
+
         estancias = soup.find_all('div', {'data-testid': 'property-card'})
 
-        for estancia in estancias[:MAX_CARDS]:
+        for estancia in estancias[:n_reales]:
             try:
                 enlace = estancia.find('a', {'data-testid': 'title-link'})
                 url_base = enlace['href'].split('?')[0]

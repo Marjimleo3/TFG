@@ -193,6 +193,10 @@ HOTEL_ID_PATTERNS = [
     r"accommodationId['\"]?\s*:\s*(\d+)",
     r"property_id['\"]?\s*:\s*(\d+)",
     r"var\s+hotelId\s*=\s*['\"]?(\d+)['\"]?",
+    r'"propertyId"\s*:\s*(\d+)',
+    r'"b_property_id"\s*:\s*(\d+)',
+    r'property_id=(\d{5,})',
+    r'"pid"\s*:\s*(\d{5,})',
     r'"id"\s*:\s*(\d{6,})',
 ]
  
@@ -331,17 +335,57 @@ class BookingExtractor:
     def _get_hotel_id(
         self, html_text: str, pagename: str, country_code: str
     ) -> Optional[str]:
+        # 1. Patrones regex sobre HTML crudo
         for pattern in HOTEL_ID_PATTERNS:
             m = re.search(pattern, html_text)
             if m and len(m.group(1)) >= 4 and m.group(1) not in BOOKING_INTERNAL_IDS:
                 return m.group(1)
- 
+
+        # 2. JSON embebido en __NEXT_DATA__ (Next.js / React)
+        hid = self._get_hotel_id_from_next_data(html_text)
+        if hid:
+            return hid
+
+        # 3. Fallback: nueva petición HTTP con parámetros distintos
         if pagename:
             hid = self._hotel_id_graphql(pagename, country_code)
             if hid:
                 return hid
+
         return None
- 
+
+    def _get_hotel_id_from_next_data(self, html_text: str) -> Optional[str]:
+        try:
+            soup = BeautifulSoup(html_text, 'lxml')
+            script = soup.find('script', id='__NEXT_DATA__')
+            if script and script.string:
+                return self._search_dict_for_hotel_id(json.loads(script.string))
+        except Exception:
+            pass
+        return None
+
+    def _search_dict_for_hotel_id(self, obj, depth: int = 0) -> Optional[str]:
+        if depth > 12:
+            return None
+        if isinstance(obj, dict):
+            for key in ('hotel_id', 'hotelId', 'propertyId', 'b_accommodation_id',
+                        'accommodation_id', 'b_hotel_id', 'b_property_id', 'pid'):
+                val = obj.get(key)
+                if val:
+                    s = str(val)
+                    if s.isdigit() and len(s) >= 4 and s not in BOOKING_INTERNAL_IDS:
+                        return s
+            for v in obj.values():
+                result = self._search_dict_for_hotel_id(v, depth + 1)
+                if result:
+                    return result
+        elif isinstance(obj, list):
+            for item in obj[:30]:
+                result = self._search_dict_for_hotel_id(item, depth + 1)
+                if result:
+                    return result
+        return None
+
     def _hotel_id_graphql(self, pagename: str, country_code: str) -> Optional[str]:
         fallback_url = (
             f"https://www.booking.com/hotel/{country_code}/{pagename}.es.html"

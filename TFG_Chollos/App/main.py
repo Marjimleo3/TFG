@@ -202,6 +202,7 @@ def generar_mapa(alojamientos_por_provincia: list, geojson: dict, df_puntos: pd.
 # PUNTO DE ENTRADA
 # =============================================================================
 def main():
+    st.set_page_config(page_title='Home')
     st.title('Mapa de Alojamientos de Andalucía')
 
     col1, col2 = st.columns(2)

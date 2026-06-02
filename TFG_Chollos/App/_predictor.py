@@ -47,6 +47,7 @@ from TFG_Chollos.Cleaning.preprocessing import (
     añadir_distancia_centro,
     cargar_coords_centros,
 )
+from TFG_Chollos.Modelizacion.Modelizacion import crear_etiqueta_chollo
 from TFG_Chollos.utils import conseguir_ruta_general_TFG
 
 # =============================================================================
@@ -99,6 +100,9 @@ def cargar_stats_entrenamiento():
 # =============================================================================
 # PREDICCIÓN SOBRE LA BD EXISTENTE
 # =============================================================================
+# Usa bosque_clf porque no hay precio real de una búsqueda activa:
+# el modelo infiere la categoría únicamente desde los features del alojamiento
+# (localidad, tipo, amenities, fecha...), sin conocer el precio actual.
 @st.cache_data
 def _predecir_bd(_bosque_reg, _bosque_clf):
     db_info = pd.read_parquet(
@@ -138,23 +142,56 @@ def _extraer_tamaño_habitacion(servicios_habitacion_str: str, fallback: int) ->
     return fallback
 
 
-def _extraer_precio_fecha(calendario_str: str, fecha_checkin: date) -> tuple[float | None, str | None]:
-    '''Devuelve (precio, fecha_str) para la fecha de checkin, o (None, None) si no disponible.'''
+def _extraer_precio_estancia(calendario_str: str, fecha_checkin: date, fecha_checkout: date) -> tuple[float | None, str | None]:
+    '''
+    Devuelve (precio_total_estancia, fecha_checkin_str) sumando el precio de cada noche
+    desde checkin hasta checkout-1. Si alguna noche no tiene precio disponible, devuelve None.
+    '''
+    from datetime import timedelta
     try:
         calendario = json.loads(calendario_str)
         checkin_str = str(fecha_checkin)
-        for dia in calendario:
-            if dia.get('fecha') == checkin_str and dia.get('disponible') and dia.get('precio'):
-                try:
-                    return float(dia['precio']), checkin_str
-                except (ValueError, TypeError):
-                    pass
+
+        # DEBUG: mostrar qué devuelve el calendario para las noches de la estancia
+        noche = fecha_checkin
+        while noche < fecha_checkout:
+            fecha_str = str(noche)
+            entrada = next((d for d in calendario if d.get('fecha') == fecha_str), None)
+            print(f'    [DEBUG] {fecha_str}: {entrada}')
+            noche += timedelta(days=1)
+
+        precio_por_dia = {
+            d['fecha']: float(d['precio'])
+            for d in calendario
+            if d.get('disponible') and d.get('precio')
+            and _precio_valido(d['precio'])
+        }
+
+        total = 0.0
+        noche = fecha_checkin
+        while noche < fecha_checkout:
+            precio_noche = precio_por_dia.get(str(noche))
+            if precio_noche is None:
+                return None, None
+            total += precio_noche
+            noche += timedelta(days=1)
+
+        return round(total, 2), checkin_str
+
     except Exception:
         pass
     return None, None
 
 
-def preprocesar_nuevos(raw_list: list[dict], fecha_checkin: date) -> tuple[pd.DataFrame, pd.DataFrame]:
+def _precio_valido(precio_str: str) -> bool:
+    try:
+        float(precio_str)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
+def preprocesar_nuevos(raw_list: list[dict], fecha_checkin: date, fecha_checkout: date) -> tuple[pd.DataFrame, pd.DataFrame]:
     '''
     Procesa la lista de dicts crudos del scraper.
     Devuelve (df_features, df_info):
@@ -175,7 +212,7 @@ def preprocesar_nuevos(raw_list: list[dict], fecha_checkin: date) -> tuple[pd.Da
     info = []
 
     for _, fila in raw_df.iterrows():
-        precio, fecha_disp = _extraer_precio_fecha(fila.get('calendario', '[]'), fecha_checkin)
+        precio, fecha_disp = _extraer_precio_estancia(fila.get('calendario', '[]'), fecha_checkin, fecha_checkout)
         if precio is None:
             continue
 
@@ -313,20 +350,27 @@ def codificar_nuevos(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def predecir_nuevos(df_features: pd.DataFrame, df_info: pd.DataFrame) -> pd.DataFrame:
+# Usa crear_etiqueta_chollo porque el scraper obtiene el precio real del calendario:
+# la categoría se calcula directamente del ratio precio_real / precio_predicho,
+# garantizando coherencia con el ahorro mostrado al usuario.
+def predecir_nuevos(df_features: pd.DataFrame, df_info: pd.DataFrame, n_noches: int) -> pd.DataFrame:
     '''Predice sobre datos nuevos y devuelve df_info enriquecido con predicciones.'''
     if df_features.empty:
         return pd.DataFrame()
 
-    bosque_reg, bosque_clf = cargar_modelos()
+    bosque_reg, _ = cargar_modelos()
 
     y_pred_reg = bosque_reg.predict(df_features)
-    clase_pred = bosque_clf.predict(df_features)
 
     resultado = df_info.copy()
-    resultado['precio_predicho']   = y_pred_reg.round(2)
-    resultado['ahorro']            = (resultado['precio_predicho'] - resultado['precio']).round(2)
-    resultado['prediccion_chollo'] = pd.Series(clase_pred).map(ETIQUETAS).values
+    resultado['precio_predicho'] = (y_pred_reg * n_noches).round(2)
+    resultado['ahorro']          = (resultado['precio_predicho'] - resultado['precio']).round(2)
+
+    categoria = crear_etiqueta_chollo(
+        pd.Series(resultado['precio'].values),
+        pd.Series(resultado['precio_predicho'].values),
+    )
+    resultado['prediccion_chollo'] = categoria.map(ETIQUETAS).values
 
     return resultado
 
@@ -355,9 +399,9 @@ def mostrar_resultados(df: pd.DataFrame):
             'provincia':         st.column_config.TextColumn('Provincia'),
             'localidad':         st.column_config.TextColumn('Localidad'),
             'tipo':              st.column_config.TextColumn('Tipo'),
-            'precio':            st.column_config.NumberColumn('Precio Real (€)',  format='%.2f €'),
-            'precio_predicho':   st.column_config.NumberColumn('Precio Justo (€)', format='%.2f €'),
-            'ahorro':            st.column_config.NumberColumn('Ahorro (€)',        format='%.2f €'),
+            'precio':            st.column_config.NumberColumn('Precio Real (€ total)',  format='%.2f €'),
+            'precio_predicho':   st.column_config.NumberColumn('Precio Justo (€ total)', format='%.2f €'),
+            'ahorro':            st.column_config.NumberColumn('Ahorro (€ total)',        format='%.2f €'),
             'prediccion_chollo': st.column_config.TextColumn('Categoría'),
             'url_estancia':      st.column_config.LinkColumn('Ver en Booking'),
         },
@@ -382,7 +426,7 @@ def mostrar_resultados(df: pd.DataFrame):
         hole=0.3,
     ))
     fig.update_layout(title='Distribución de categorías', margin=dict(t=40, b=10))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
 
 def mostrar_predicciones_bd():
