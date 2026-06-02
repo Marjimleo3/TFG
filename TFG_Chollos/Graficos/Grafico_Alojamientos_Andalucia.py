@@ -18,12 +18,25 @@ import requests
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 
-from TFG_Chollos.utils import conseguir_ruta_general_TFG, NOMBRES_PROVINCIAS, CENTROIDES_PROVINCIAS
+from TFG_Chollos.utils import conseguir_ruta_general_TFG
 
 # =============================================================================
 # CONSTANTES
 # =============================================================================
 BASE = conseguir_ruta_general_TFG()
+
+NOMBRES_PROVINCIAS = ['Sevilla', 'Cádiz', 'Huelva', 'Jaén', 'Granada', 'Almería', 'Córdoba', 'Málaga']
+
+CENTROIDES_PROVINCIAS = {
+    'Almería':  (37.15, -2.36),
+    'Cádiz':    (36.60, -5.80),
+    'Córdoba':  (37.90, -4.77),
+    'Granada':  (37.20, -3.40),
+    'Huelva':   (37.60, -6.94),
+    'Jaén':     (37.90, -3.50),
+    'Málaga':   (36.80, -4.70),
+    'Sevilla':  (37.50, -5.80),
+}
 
 
 # =============================================================================
