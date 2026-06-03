@@ -45,17 +45,21 @@ from TFG_Chollos.utils import configurar_logger
 # CONFIGURACIÓN
 # =============================================================================
 load_dotenv()
-BASE   = Path(os.getenv("BASE"))
+BASE   = Path(os.getenv("BASE") or Path(__file__).parent.parent)
 logger = configurar_logger(__name__)
 
-# Rutas de entrada y salida por provincia, derivadas del CSV de URLs
-df_urls_provincias = pd.read_csv(
-    BASE / "data" / "raw" / "inputs" / "urls_busqueda_booking_provincias.csv", sep="|"
-)
-urls_provincias = df_urls_provincias.set_index("localizacion")["url"].to_dict()
-
-INPUT_FILES  = {p: BASE / "data" / "raw" / "listados" / f"urls_booking_{p}.csv"       for p in urls_provincias}
-OUTPUT_FILES = {p: BASE / "data" / "raw" / "fichas"   / f"resultados_booking_{p}.csv" for p in urls_provincias}
+# Rutas de entrada y salida — solo disponibles en ejecución local
+try:
+    df_urls_provincias = pd.read_csv(
+        BASE / "data" / "raw" / "inputs" / "urls_busqueda_booking_provincias.csv", sep="|"
+    )
+    urls_provincias = df_urls_provincias.set_index("localizacion")["url"].to_dict()
+    INPUT_FILES  = {p: BASE / "data" / "raw" / "listados" / f"urls_booking_{p}.csv"       for p in urls_provincias}
+    OUTPUT_FILES = {p: BASE / "data" / "raw" / "fichas"   / f"resultados_booking_{p}.csv" for p in urls_provincias}
+except Exception:
+    urls_provincias = {}
+    INPUT_FILES     = {}
+    OUTPUT_FILES    = {}
 
 
 # =============================================================================
