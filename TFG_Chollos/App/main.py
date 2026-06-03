@@ -15,6 +15,8 @@ import time
 from datetime import date, timedelta
 from pathlib import Path
 
+import streamlit.components.v1 as components
+
 sys.path.insert(0, str(Path(__file__).parent))
 
 import pandas as pd
@@ -118,7 +120,7 @@ def _scrape_en_hilo(urls_provincias: dict, resultado: list, errores: list, progr
     Necesario porque Streamlit ya tiene su propio loop y no permite anidarlos.
     """
     import asyncio
-    loop = asyncio.ProactorEventLoop()
+    loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     try:
         loop.run_until_complete(_async_scrape(urls_provincias, resultado, progreso))
@@ -157,6 +159,17 @@ def scrape_n_alojamientos(urls_provincias: dict, barra) -> list:
     barra.progress(1.0, text='¡Listo!')
     return resultado
 
+
+
+# =============================================================================
+# INSTALACIÓN DE PLAYWRIGHT (Streamlit Cloud no la ejecuta automáticamente)
+# =============================================================================
+@st.cache_resource
+def _instalar_playwright():
+    import subprocess
+    subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=False)
+
+_instalar_playwright()
 
 
 # =============================================================================
@@ -199,7 +212,7 @@ def main():
     # Mostramos el mapa actualizado si ya se generó, o el predeterminado en caso contrario
     mapa = MAPA_ACTUALIZADO if st.session_state.mapa_listo else MAPA_PREDETERMINADO
     html = mapa.read_text(encoding='utf-8')
-    st.iframe(html, height=620)
+    components.html(html, height=620)
 
     mostrar_graficos_analisis()
 

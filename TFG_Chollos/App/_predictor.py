@@ -43,7 +43,7 @@ ETIQUETAS = {
 @st.cache_resource
 def cargar_modelos():
     """Carga el modelo Random Forest de regresión desde disco."""
-    return joblib.load(BASE / 'data' / 'models' / 'bosque_aleatorio_reg.pkl')
+    return joblib.load(BASE / 'data' / 'models' / 'boosting_reg.pkl')
 
 
 # =============================================================================
@@ -159,7 +159,7 @@ def mostrar_resultados(df: pd.DataFrame):
             'url_estancia':      st.column_config.LinkColumn('Ver en Booking'),
         },
         hide_index=True,
-        width='stretch',
+        use_container_width=True,
     )
 
     # Gráfico de tarta con la distribución de categorías, ordenado de mejor a peor
@@ -180,7 +180,7 @@ def mostrar_resultados(df: pd.DataFrame):
         hole=0.3,
     ))
     fig.update_layout(title='Distribución de categorías', margin=dict(t=40, b=10))
-    st.plotly_chart(fig, width='stretch')
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def mostrar_predicciones_bd():
