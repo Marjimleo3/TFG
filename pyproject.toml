@@ -28,4 +28,6 @@ dependencies = [
     "streamlit>=1.35",
     "webdriver-manager>=4.0.2",
     "xgboost>=3.2.0",
+    "dask>=2024.1.0",
+    "rpy2>=3.5.0",
 ]
