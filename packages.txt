@@ -1,4 +1,3 @@
-# Dependencias del sistema para Playwright (Chromium) en Streamlit Cloud
 libnss3
 libnspr4
 libatk1.0-0
