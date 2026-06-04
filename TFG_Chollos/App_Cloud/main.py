@@ -68,6 +68,16 @@ def cargar_puntos_unicos() -> pd.DataFrame:
     return df[['titulo', 'latitud', 'longitud']]
 
 
+@st.cache_data
+def cargar_mapa_predeterminado():
+    if MAPA_PREDETERMINADO.exists():
+        return MAPA_PREDETERMINADO.read_text(encoding='utf-8')
+    geojson   = cargar_geojson()
+    df_puntos = cargar_puntos_unicos()
+    fig = generar_mapa([0] * len(NOMBRES_PROVINCIAS), geojson, df_puntos, 'histórico', '')
+    return fig.to_html(include_plotlyjs=True, full_html=True)
+
+
 def _chromium_path() -> str:
     return shutil.which('chromium') or shutil.which('chromium-browser') or 'chromium'
 
@@ -177,7 +187,7 @@ def main():
         fig = generar_mapa(alojamientos, geojson, df_puntos, fe_str, fs_str)
         st.session_state['mapa_html'] = fig.to_html(include_plotlyjs=True, full_html=True)
 
-    html = st.session_state.get('mapa_html') or MAPA_PREDETERMINADO.read_text(encoding='utf-8')
+    html = st.session_state.get('mapa_html') or cargar_mapa_predeterminado()
     components.html(html, height=620)
 
     mostrar_graficos_analisis()
