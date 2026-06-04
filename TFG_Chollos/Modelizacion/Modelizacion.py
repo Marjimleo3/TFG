@@ -223,17 +223,17 @@ def crear_etiqueta_chollo(y_real: pd.Series, y_predicho: pd.Series) -> pd.Series
         hiper_chollo : 4  →  ratio <= 0.75   (más de un 25% más barato de lo esperado)
         super_chollo : 3  →  0.75 < ratio < 0.85   (entre 15% y 25% más barato)
         chollo       : 2  →  0.85 <= ratio < 0.99  (entre 1% y 15% más barato)
-        normal       : 1  →  0.99 <= ratio <= 1.01  (precio justo, ±1%)
-        inflado      : 0  →  ratio > 1.05   (más de un 5% más caro de lo esperado)
+        normal       : 1  →  0.97 <= ratio <= 1.03  (precio justo, ±3%)
+        inflado      : 0  →  ratio > 1.03   (más de un 3% más caro de lo esperado)
     """
     ratio = y_real / y_predicho
 
     condiciones = [
         ratio <= 0.75,
         (ratio > 0.75)  & (ratio < 0.85),
-        (ratio >= 0.85) & (ratio < 0.99),
-        (ratio >= 0.99) & (ratio <= 1.01),
-        ratio > 1.05,
+        (ratio >= 0.85) & (ratio < 0.97),
+        (ratio >= 0.97) & (ratio <= 1.03),
+        ratio > 1.03,
     ]
     etiquetas = [4, 3, 2, 1, 0]
 
