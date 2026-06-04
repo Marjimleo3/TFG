@@ -16,6 +16,7 @@ Flujo:
 # =============================================================================
 import asyncio
 import re
+import shutil
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -35,6 +36,10 @@ N_MENORES      = 0
 MAX_CARDS      = 25     # máximo de alojamientos por destino
 
 
+def _chromium_path() -> str:
+    return shutil.which('chromium') or shutil.which('chromium-browser') or 'chromium'
+
+
 # =============================================================================
 # FASE 1 — SCRAPING DEL LISTADO CON PLAYWRIGHT
 # =============================================================================
@@ -43,6 +48,7 @@ async def _async_scrape_listado(lugar: str, url: str, fecha_entrada: str,
     try:
         async with async_playwright() as p:
             browser = await p.chromium.launch(
+                executable_path=_chromium_path(),
                 args=[
                     '--disable-blink-features=AutomationControlled',
                     '--no-sandbox',
@@ -93,8 +99,10 @@ async def _async_scrape_listado(lugar: str, url: str, fecha_entrada: str,
                     n_reales = int(m.group(1).replace('.', ''))
 
         estancias = soup.find_all('div', {'data-testid': 'property-card'})
+        if n_reales == 0:
+            n_reales = len(estancias)
 
-        for estancia in estancias[:n_reales]:
+        for estancia in estancias[:min(n_reales, MAX_CARDS)]:
             try:
                 enlace = estancia.find('a', {'data-testid': 'title-link'})
                 url_base = enlace['href'].split('?')[0]
