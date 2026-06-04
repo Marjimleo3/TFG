@@ -9,6 +9,7 @@ Para ejecutar:
 # IMPORTS
 # =============================================================================
 import re
+import shutil
 import sys
 import threading
 import time
@@ -30,7 +31,7 @@ from graficos_analisis import mostrar_graficos_analisis
 from TFG_Chollos.Scraping.Generador_urls_generales import (
     generador_urls, PROVINCIAS, N_ADULTOS, N_HABITACIONES, N_MENORES
 )
-from TFG_Chollos.Graficos.Grafico_Alojamientos_Andalucia import generar_mapa
+from TFG_Chollos.Graficos.Grafico_Alojamientos_Andalucia import generar_mapa, NOMBRES_PROVINCIAS
 
 
 # =============================================================================
@@ -67,15 +68,22 @@ def cargar_puntos_unicos() -> pd.DataFrame:
     return df[['titulo', 'latitud', 'longitud']]
 
 
+def _chromium_path() -> str:
+    return shutil.which('chromium') or shutil.which('chromium-browser') or 'chromium'
+
+
 async def _async_scrape(urls_provincias: dict, resultado: list, progreso: list):
     async with async_playwright() as p:
-        browser = await p.chromium.launch(args=[
-            "--disable-blink-features=AutomationControlled",
-            "--no-sandbox",
-            "--disable-dev-shm-usage",
-            "--disable-gpu",
-            "--disable-setuid-sandbox",
-        ])
+        browser = await p.chromium.launch(
+            executable_path=_chromium_path(),
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--disable-setuid-sandbox",
+            ]
+        )
         context = await browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
             java_script_enabled=True,
@@ -137,17 +145,6 @@ def scrape_n_alojamientos(urls_provincias: dict, barra) -> list:
 
     barra.progress(1.0, text='¡Listo!')
     return resultado
-
-
-# =============================================================================
-# INSTALACIÓN DE PLAYWRIGHT (bloqueante, una sola vez por proceso)
-# =============================================================================
-@st.cache_resource
-def _instalar_playwright():
-    import subprocess
-    subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=False)
-
-_instalar_playwright()
 
 
 # =============================================================================
