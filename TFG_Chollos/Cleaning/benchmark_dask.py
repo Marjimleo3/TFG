@@ -4,6 +4,8 @@ benchmark_dask.py
 Compara el tiempo de calcular distancias al centro (haversine_km_vec)
 usando Pandas (secuencial) vs Dask (paralelo, 4 particiones).
 Genera images/benchmark_dask.png con la comparacion.
+
+uv add dask --active --link-mode=copy
 """
 import time
 import pandas as pd
@@ -62,7 +64,7 @@ def benchmark():
     plt.tight_layout()
 
     ruta_img = BASE / 'images' / 'benchmark_dask.png'
-    ruta_img.parent.mkdir(parents=True, exist_ok=True)
+
     plt.savefig(ruta_img, dpi=150)
     plt.close()
     logger.info(f"Grafico guardado: {ruta_img}")
