@@ -2102,7 +2102,6 @@ dependencies = [
     { name = "plotly" },
     { name = "python-dotenv" },
     { name = "requests" },
-    { name = "rpy2" },
     { name = "scikit-learn" },
     { name = "seaborn" },
     { name = "selenium" },
@@ -2110,6 +2109,11 @@ dependencies = [
     { name = "streamlit" },
     { name = "webdriver-manager" },
     { name = "xgboost" },
+]
+
+[package.optional-dependencies]
+r = [
+    { name = "rpy2" },
 ]
 
 [package.metadata]
@@ -2127,7 +2131,7 @@ requires-dist = [
     { name = "plotly", specifier = ">=6.6.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "requests", specifier = ">=2.32.5" },
-    { name = "rpy2", specifier = ">=3.5.0" },
+    { name = "rpy2", marker = "extra == 'r'", specifier = ">=3.5.0" },
     { name = "scikit-learn", specifier = ">=1.8.0" },
     { name = "seaborn", specifier = ">=0.13.2" },
     { name = "selenium", specifier = ">=4.41.0" },
@@ -2136,6 +2140,7 @@ requires-dist = [
     { name = "webdriver-manager", specifier = ">=4.0.2" },
     { name = "xgboost", specifier = ">=3.2.0" },
 ]
+provides-extras = ["r"]
 
 [[package]]
 name = "threadpoolctl"
