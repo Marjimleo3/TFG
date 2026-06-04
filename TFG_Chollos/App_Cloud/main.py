@@ -109,7 +109,7 @@ async def _async_scrape(urls_provincias: dict, resultado: list, progreso: list):
 
         provincias_lista = list(urls_provincias.items())
         for i, (provincia, url) in enumerate(provincias_lista):
-            await page.goto(url, wait_until="networkidle")
+            await page.goto(url, wait_until="load", timeout=30000)
             await page.wait_for_selector('h1', state='visible', timeout=15000)
             content = await page.content()
             soup    = BeautifulSoup(content, 'html.parser')
