@@ -1,8 +1,14 @@
 """
 preprocessing_dask.py
 =====================
-Versión paralela de preprocessing.py usando dask.delayed, con comparativa
-de tiempos frente al bucle secuencial equivalente.
+Versión paralela de preprocessing.py usando dask.distributed (Client),
+con comparativa de tiempos frente al bucle secuencial equivalente.
+
+Requiere scheduler y worker corriendo:
+    dask scheduler
+    dask worker tcp://localhost:8786
+
+Dashboard disponible en http://localhost:8787
 
 Uso:
     python -m TFG_Chollos.Cleaning.preprocessing_dask
@@ -13,9 +19,9 @@ Uso:
 # =============================================================================
 import time
 
-import dask
 import matplotlib.pyplot as plt
 import pandas as pd
+from dask.distributed import Client
 
 from TFG_Chollos.Cleaning.preprocessing import (
     añadir_columnas_fechas,
@@ -42,14 +48,13 @@ logger = configurar_logger(__name__)
 
 
 # =============================================================================
-# TAREA DASK: una provincia completa
+# FUNCIÓN DE TAREA: una provincia completa
 # =============================================================================
-@dask.delayed
 def procesar_provincia(provincia: str, tamaño_habitacion: pd.DataFrame, coords_centros: dict) -> pd.DataFrame:
     """
     Ejecuta todo el pipeline de limpieza para una sola provincia.
-    Al estar decorada con @dask.delayed, Dask la planifica como una tarea
-    independiente y la ejecuta en paralelo con las demás provincias.
+    Se envía a los workers de Dask mediante client.submit(), que la ejecuta
+    en paralelo con las demás provincias.
     """
     raw = pd.read_csv(BASE / "data" / "raw" / "fichas" / f"resultados_booking_{provincia}.csv", sep="|")
     raw['localidad'] = extraer_localidad(raw)
@@ -77,31 +82,7 @@ def procesar_provincia(provincia: str, tamaño_habitacion: pd.DataFrame, coords_
     df_5 = añadir_distancia_centro(df_5, coords_centros)
     df_6 = limpiar_db_final(df_5)
 
-    logger.info(f'Ciclo de {provincia} completado')
     return df_6
-
-
-# =============================================================================
-# VERSIÓN SECUENCIAL (benchmark de referencia)
-# =============================================================================
-def procesar_provincia_secuencial(provincia: str, tamaño_habitacion: pd.DataFrame, coords_centros: dict) -> pd.DataFrame:
-    """Misma lógica que procesar_provincia pero sin @dask.delayed, para medir el tiempo base."""
-    raw = pd.read_csv(BASE / "data" / "raw" / "fichas" / f"resultados_booking_{provincia}.csv", sep="|")
-    raw['localidad'] = extraer_localidad(raw)
-
-    servicios_generales = extraer_servicios_influyentes(raw)
-    precios_disponibles = extraer_fecha_precios_disponibles(raw)
-
-    raw_limpio = raw[['lugar', 'localidad', 'titulo', 'codigo_postal', 'latitud', 'longitud',
-                       'tipo', 'estrellas', 'valoracion_clientes', 'n_valoraciones', 'url_estancia']]
-    df_1 = raw_limpio.merge(servicios_generales)
-    df_2 = df_1.merge(tamaño_habitacion[['url_estancia', 'room_size_m2']])
-    df_3 = df_2.merge(precios_disponibles)
-
-    df_4 = añadir_columnas_fechas(df_3)
-    df_5 = reordenar_df(df_4)
-    df_5 = añadir_distancia_centro(df_5, coords_centros)
-    return limpiar_db_final(df_5)
 
 
 # =============================================================================
@@ -118,18 +99,22 @@ def main():
     # ------------------------------------------------------------------
     logger.info('--- Inicio ejecución SECUENCIAL ---')
     t0 = time.perf_counter()
-    dfs_seq = [procesar_provincia_secuencial(p, tamaño_habitacion, coords_centros) for p in lista_provincias]
+    dfs_seq = [procesar_provincia(p, tamaño_habitacion, coords_centros) for p in lista_provincias]
     t_secuencial = time.perf_counter() - t0
     logger.info(f'Secuencial completado en {t_secuencial:.2f}s')
 
     # ------------------------------------------------------------------
-    # BENCHMARK DASK (paralelo)
+    # BENCHMARK DASK (paralelo con Client)
     # ------------------------------------------------------------------
     logger.info('--- Inicio ejecución DASK (paralelo) ---')
-    tareas = [procesar_provincia(p, tamaño_habitacion, coords_centros) for p in lista_provincias]
+    client = Client('tcp://localhost:8786')
+
+    futures = [client.submit(procesar_provincia, p, tamaño_habitacion, coords_centros) for p in lista_provincias]
     t1 = time.perf_counter()
-    dfs_dask = dask.compute(*tareas)
+    dfs_dask = client.gather(futures)
     t_dask = time.perf_counter() - t1
+
+    client.close()
     logger.info(f'Dask completado en {t_dask:.2f}s')
 
     # ------------------------------------------------------------------
