@@ -15,10 +15,11 @@ import time
 from datetime import date, timedelta
 from pathlib import Path
 
+import streamlit.components.v1 as components
+
 sys.path.insert(0, str(Path(__file__).parent))
 
 import pandas as pd
-import plotly.express as px
 import requests
 import streamlit as st
 from bs4 import BeautifulSoup
@@ -29,13 +30,14 @@ from graficos_analisis import mostrar_graficos_analisis
 from TFG_Chollos.Scraping.Generador_urls_generales import (
     generador_urls, PROVINCIAS, N_ADULTOS, N_HABITACIONES, N_MENORES
 )
-from TFG_Chollos.Graficos.Grafico_Alojamientos_Andalucia import generar_mapa, NOMBRES_PROVINCIAS
+from TFG_Chollos.Graficos.Grafico_Alojamientos_Andalucia import generar_mapa
 
 
 # =============================================================================
 # CONSTANTES
 # =============================================================================
 BASE = conseguir_ruta_general_TFG()
+MAPA_PREDETERMINADO = BASE / 'Graficos' / 'mapa_predeterminado.html'
 
 
 # =============================================================================
@@ -63,13 +65,6 @@ def cargar_puntos_unicos() -> pd.DataFrame:
     df['_lon_r'] = df['longitud'].round(2)
     df = df.drop_duplicates(subset=['_lat_r', '_lon_r'])
     return df[['titulo', 'latitud', 'longitud']]
-
-
-@st.cache_data
-def cargar_mapa_predeterminado():
-    geojson   = cargar_geojson()
-    df_puntos = cargar_puntos_unicos()
-    return generar_mapa([0] * len(NOMBRES_PROVINCIAS), geojson, df_puntos, 'histórico', '')
 
 
 async def _async_scrape(urls_provincias: dict, resultado: list, progreso: list):
@@ -145,13 +140,14 @@ def scrape_n_alojamientos(urls_provincias: dict, barra) -> list:
 
 
 # =============================================================================
-# INSTALACIÓN DE PLAYWRIGHT EN SEGUNDO PLANO (no bloquea el health check)
+# INSTALACIÓN DE PLAYWRIGHT (bloqueante, una sola vez por proceso)
 # =============================================================================
+@st.cache_resource
 def _instalar_playwright():
     import subprocess
     subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=False)
 
-threading.Thread(target=_instalar_playwright, daemon=True).start()
+_instalar_playwright()
 
 
 # =============================================================================
@@ -181,10 +177,11 @@ def main():
         barra.empty()
         geojson   = cargar_geojson()
         df_puntos = cargar_puntos_unicos()
-        st.session_state.mapa_fig = generar_mapa(alojamientos, geojson, df_puntos, fe_str, fs_str)
+        fig = generar_mapa(alojamientos, geojson, df_puntos, fe_str, fs_str)
+        st.session_state['mapa_html'] = fig.to_html(include_plotlyjs=True, full_html=True)
 
-    fig = st.session_state.get('mapa_fig') or cargar_mapa_predeterminado()
-    st.plotly_chart(fig, width='stretch')
+    html = st.session_state.get('mapa_html') or MAPA_PREDETERMINADO.read_text(encoding='utf-8')
+    components.html(html, height=620)
 
     mostrar_graficos_analisis()
 
