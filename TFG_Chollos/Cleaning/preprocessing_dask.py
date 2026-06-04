@@ -4,6 +4,9 @@ preprocessing_dask.py
 Versión paralela de preprocessing.py usando dask.distributed (Client),
 con comparativa de tiempos frente al bucle secuencial equivalente.
 
+Requirements:
+uv add dask distributed "bokeh>=3.1.0" --active --link-mode=copy
+
 Requiere scheduler y worker corriendo:
     dask scheduler
     dask worker tcp://localhost:8786
@@ -147,7 +150,7 @@ def main():
     ax.set_ylim(0, max(t_secuencial, t_dask) * 1.25)
     ax.spines[['top', 'right']].set_visible(False)
 
-    ruta_grafico = BASE / "images" / "benchmark_dask.png"
+    ruta_grafico = BASE / "images" / "preprocessing_dask_pandas.png"
     fig.tight_layout()
     fig.savefig(ruta_grafico, dpi=150)
     plt.close(fig)
