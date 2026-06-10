@@ -49,4 +49,5 @@ if __name__ == '__main__':
     plt.xlabel('Precio (euros/noche)')
     plt.ylabel('Frecuencia')
     plt.savefig(BASE / 'Graficos' / 'images' / 'eda_hist_precios_python.png', dpi=150)
+    logger.info('✅ Histograma de precios guardado')
     plt.show()
