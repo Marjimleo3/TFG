@@ -5,7 +5,7 @@ Carga del modelo, predicción y UI de resultados. No es una página Streamlit.
 
 Exporta:
     cargar_modelos()                             → Random Forest cacheado
-    predecir_nuevos(df_features, df_info)        → df con predicciones
+    predecir_nuevos(df_features, df_info, n_noches) → df con predicciones
     mostrar_resultados(df)                       → tabla + gráfico de categorías
     mostrar_predicciones_bd()                    → UI completa sobre la BD existente
     ETIQUETAS                                    → dict {int: str} de categorías
@@ -89,15 +89,16 @@ def _predecir_bd(_bosque_reg):
 # Usamos crear_etiqueta_chollo porque el scraper obtiene el precio real del calendario:
 # la categoría se calcula del ratio precio_real / precio_predicho,
 # garantizando coherencia con el ahorro mostrado al usuario.
-def predecir_nuevos(df_features: pd.DataFrame, df_info: pd.DataFrame) -> pd.DataFrame:
+def predecir_nuevos(df_features: pd.DataFrame, df_info: pd.DataFrame,
+                    n_noches: int) -> pd.DataFrame:
     """
     Predice el precio justo para datos frescos del scraper y etiqueta cada alojamiento.
 
     Parámetros
     ----------
-    df_features : DataFrame codificado devuelto por codificar_nuevos(), con una fila
-                   por noche de estancia y la columna '_alojamiento_id' para agrupar
-    df_info     : DataFrame con titulo, url, precio y metadata (una fila por alojamiento)
+    df_features : DataFrame codificado devuelto por codificar_nuevos()
+    df_info     : DataFrame con titulo, url, precio y metadata
+    n_noches    : número de noches de la estancia (para escalar el precio predicho)
 
     Devuelve
     --------
@@ -107,21 +108,11 @@ def predecir_nuevos(df_features: pd.DataFrame, df_info: pd.DataFrame) -> pd.Data
         return pd.DataFrame()
 
     bosque_reg = cargar_modelos()
-
-    grupo_ids = df_features['_alojamiento_id']
-    X         = df_features.drop(columns=['_alojamiento_id'])
-
-    # El modelo predice un precio por noche → sumamos las predicciones de cada
-    # noche de la estancia para obtener el precio justo total del alojamiento
-    y_pred_noche = bosque_reg.predict(X)
-    precio_predicho_total = (
-        pd.Series(y_pred_noche, index=grupo_ids.values)
-        .groupby(level=0)
-        .sum()
-    )
+    y_pred_reg = bosque_reg.predict(df_features)
 
     resultado = df_info.copy()
-    resultado['precio_predicho'] = precio_predicho_total.reindex(resultado.index).round(2).values
+    # El modelo predice precio por noche → multiplicamos por n_noches para comparar con el precio total
+    resultado['precio_predicho'] = (y_pred_reg * n_noches).round(2)
     resultado['ahorro']          = (resultado['precio_predicho'] - resultado['precio']).round(2)
 
     categoria = crear_etiqueta_chollo(
