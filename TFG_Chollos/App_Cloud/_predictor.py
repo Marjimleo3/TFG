@@ -158,13 +158,12 @@ def mostrar_resultados(df: pd.DataFrame):
     # Tabla interactiva con columnas configuradas
     st.dataframe(
         df_mostrar[[
-            'titulo', 'provincia', 'localidad', 'tipo',
+            'titulo', 'localidad', 'tipo',
             'precio', 'precio_predicho', 'ahorro',
             'prediccion_chollo', 'url_estancia'
         ]],
         column_config={
             'titulo':            st.column_config.TextColumn('Alojamiento'),
-            'provincia':         st.column_config.TextColumn('Provincia'),
             'localidad':         st.column_config.TextColumn('Localidad'),
             'tipo':              st.column_config.TextColumn('Tipo'),
             'precio':            st.column_config.NumberColumn('Precio Real (€ total)',  format='%.2f €'),

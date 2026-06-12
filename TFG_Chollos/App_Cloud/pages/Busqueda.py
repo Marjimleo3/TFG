@@ -145,14 +145,14 @@ def main():
         df_prev = st.session_state.df_resultado
         st.sidebar.markdown('---')
         st.sidebar.subheader('Filtrar resultados')
-        prov_opts = ['Todas'] + sorted(df_prev['provincia'].unique().tolist())
-        prov_sel  = st.sidebar.selectbox('Provincia', prov_opts)
+        loc_opts  = ['Todas'] + sorted(df_prev['localidad'].unique().tolist())
+        loc_sel   = st.sidebar.selectbox('Localidad', loc_opts)
         tipo_opts = ['Todos'] + sorted(df_prev['tipo'].unique().tolist())
         tipo_sel  = st.sidebar.selectbox('Tipo de alojamiento', tipo_opts)
         cat_opts  = ['Todas'] + list(ETIQUETAS.values())
         cat_sel   = st.sidebar.selectbox('Categoría', cat_opts)
     else:
-        prov_sel = 'Todas'
+        loc_sel  = 'Todas'
         tipo_sel = 'Todos'
         cat_sel  = 'Todas'
 
@@ -204,8 +204,8 @@ def main():
     elif 'df_resultado' in st.session_state and not st.session_state.df_resultado.empty:
         df = st.session_state.df_resultado
         mask = pd.Series(True, index=df.index)
-        if prov_sel != 'Todas':
-            mask &= df['provincia'] == prov_sel
+        if loc_sel != 'Todas':
+            mask &= df['localidad'] == loc_sel
         if tipo_sel != 'Todos':
             mask &= df['tipo'] == tipo_sel
         if cat_sel != 'Todas':
