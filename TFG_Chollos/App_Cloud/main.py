@@ -8,8 +8,10 @@ Para ejecutar:
 # =============================================================================
 # IMPORTS
 # =============================================================================
+import asyncio
 import re
 import shutil
+import subprocess
 import sys
 import threading
 import time
@@ -78,14 +80,22 @@ def cargar_mapa_predeterminado():
     return fig.to_html(include_plotlyjs=True, full_html=True)
 
 
-def _chromium_path() -> str:
-    return shutil.which('chromium') or shutil.which('chromium-browser') or 'chromium'
+def _ensure_playwright_chromium():
+    import os
+    cache = os.path.expanduser('~/.cache/ms-playwright')
+    already = os.path.isdir(cache) and any(
+        e.startswith('chromium') for e in os.listdir(cache)
+    ) if os.path.isdir(cache) else False
+    if not already:
+        subprocess.run(
+            [sys.executable, '-m', 'playwright', 'install', 'chromium'],
+            check=False, timeout=180
+        )
 
 
 async def _async_scrape(urls_provincias: dict, resultado: list, progreso: list):
     async with async_playwright() as p:
         browser = await p.chromium.launch(
-            executable_path=_chromium_path(),
             args=[
                 "--disable-blink-features=AutomationControlled",
                 "--no-sandbox",
@@ -110,6 +120,15 @@ async def _async_scrape(urls_provincias: dict, resultado: list, progreso: list):
         provincias_lista = list(urls_provincias.items())
         for i, (provincia, url) in enumerate(provincias_lista):
             await page.goto(url, wait_until="load", timeout=30000)
+            # Dismiss cookie consent modal if present
+            for sel in ['#onetrust-accept-btn-handler', '[data-testid="accept-button"]',
+                        'button[aria-label*="ookie"]', 'button[id*="accept"]']:
+                try:
+                    await page.click(sel, timeout=3000)
+                    await asyncio.sleep(0.8)
+                    break
+                except Exception:
+                    pass
             await page.wait_for_selector('h1', state='visible', timeout=15000)
             content = await page.content()
             soup    = BeautifulSoup(content, 'html.parser')
@@ -129,7 +148,6 @@ async def _async_scrape(urls_provincias: dict, resultado: list, progreso: list):
 
 
 def _scrape_en_hilo(urls_provincias: dict, resultado: list, errores: list, progreso: list):
-    import asyncio
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     try:
@@ -141,6 +159,7 @@ def _scrape_en_hilo(urls_provincias: dict, resultado: list, errores: list, progr
 
 
 def scrape_n_alojamientos(urls_provincias: dict, barra) -> list:
+    _ensure_playwright_chromium()
     resultado, errores, progreso = [], [], [0]
     provincias_lista = list(urls_provincias.items())
     total = len(provincias_lista)

@@ -82,6 +82,7 @@ def generador_urls(lugares: list, fecha_entrada: str, fecha_salida: str) -> dict
             f'&group_adults={N_ADULTOS}'
             f'&no_rooms={N_HABITACIONES}'
             f'&group_children={N_MENORES}'
+            f'&selected_currency=EUR'
         )
         urls[lugar] = url
     logger.info(f'URLs generadas: {len(urls)}')
@@ -167,22 +168,34 @@ def main():
         print(urls_con_filtro)
 
         # Fase de scraping: listado de alojamientos + detalle de cada uno
-        barra    = st.progress(0, text='Iniciando...')
-        raw_list = scrape_busqueda(urls_con_filtro, str(fecha_entrada), str(fecha_salida), barra)
+        barra = st.progress(0, text='Iniciando...')
+        diag_scraping = []
+        try:
+            raw_list = scrape_busqueda(urls_con_filtro, str(fecha_entrada), str(fecha_salida), barra, diag_scraping)
+        except Exception as e:
+            barra.empty()
+            st.error(f'Error durante el scraping: {e}')
+            return
+
+        st.session_state.diag_scraping = diag_scraping
 
         if not raw_list:
             st.warning('No se encontraron alojamientos para los criterios seleccionados.')
             return
 
         # Fase de predicción: preprocesado → encoding → modelo → etiquetado
-        n_noches = (fecha_salida - fecha_entrada).days
+        # (preprocesar_nuevos genera una fila por noche de la estancia; predecir_nuevos
+        # predice cada noche por separado y agrupa por alojamiento sumando los totales)
         with st.spinner('Procesando datos...'):
             df_features, df_info = preprocesar_nuevos(raw_list, fecha_entrada, fecha_salida)
             df_codificado        = codificar_nuevos(df_features)
-            df_resultado         = predecir_nuevos(df_codificado, df_info, n_noches)
+            df_resultado         = predecir_nuevos(df_codificado, df_info)
 
         # Guardamos en session_state y relanzamos para activar los filtros de la sidebar
-        st.session_state.df_resultado = df_resultado
+        st.session_state.df_resultado  = df_resultado
+        st.session_state.df_features   = df_features
+        st.session_state.df_codificado = df_codificado
+        st.session_state.raw_list      = raw_list
         st.rerun()
 
     # Mostramos los resultados aplicando los filtros de la barra lateral si existen
@@ -198,6 +211,18 @@ def main():
         if cat_sel != 'Todas':
             mask &= df['prediccion_chollo'] == cat_sel
         mostrar_resultados(df[mask])
+
+    # Debug interno: dataframes intermedios del modelo
+    if 'raw_list' in st.session_state or 'df_features' in st.session_state:
+        with st.expander('Debug interno: dataframes del modelo', expanded=False):
+            if 'raw_list' in st.session_state:
+                st.caption('Datos crudos del scraper (antes de preprocesar)')
+                st.dataframe(pd.DataFrame(st.session_state.raw_list), width='stretch')
+            if 'df_features' in st.session_state and 'df_codificado' in st.session_state:
+                st.caption('Preprocesado (entrada del modelo, sin codificar)')
+                st.dataframe(st.session_state.df_features, width='stretch')
+                st.caption('Codificado (entrada real al modelo)')
+                st.dataframe(st.session_state.df_codificado, width='stretch')
 
 
 if __name__ == '__main__':

@@ -5,7 +5,7 @@ Carga del modelo, predicción y UI de resultados. No es una página Streamlit.
 
 Exporta:
     cargar_modelos()                             → Random Forest cacheado
-    predecir_nuevos(df_features, df_info, n_noches) → df con predicciones
+    predecir_nuevos(df_features, df_info)        → df con predicciones (una fila por alojamiento)
     mostrar_resultados(df)                       → tabla + gráfico de categorías
     mostrar_predicciones_bd()                    → UI completa sobre la BD existente
     ETIQUETAS                                    → dict {int: str} de categorías
@@ -89,20 +89,24 @@ def _predecir_bd(_bosque_reg):
 # Usamos crear_etiqueta_chollo porque el scraper obtiene el precio real del calendario:
 # la categoría se calcula del ratio precio_real / precio_predicho,
 # garantizando coherencia con el ahorro mostrado al usuario.
-def predecir_nuevos(df_features: pd.DataFrame, df_info: pd.DataFrame,
-                    n_noches: int) -> pd.DataFrame:
+def predecir_nuevos(df_features: pd.DataFrame, df_info: pd.DataFrame) -> pd.DataFrame:
     """
     Predice el precio justo para datos frescos del scraper y etiqueta cada alojamiento.
 
+    df_features y df_info traen una fila por cada noche de la estancia (mismas
+    características salvo las variables temporales y el precio de esa noche). El
+    modelo predice el precio justo de cada noche por separado y luego se agrupa por
+    alojamiento sumando el precio real y el predicho de todas sus noches.
+
     Parámetros
     ----------
-    df_features : DataFrame codificado devuelto por codificar_nuevos()
-    df_info     : DataFrame con titulo, url, precio y metadata
-    n_noches    : número de noches de la estancia (para escalar el precio predicho)
+    df_features : DataFrame codificado devuelto por codificar_nuevos() (una fila por noche)
+    df_info     : DataFrame con titulo, url, precio y metadata (una fila por noche)
 
     Devuelve
     --------
-    df_info enriquecido con precio_predicho, ahorro y prediccion_chollo
+    DataFrame con una fila por alojamiento: precio y precio_predicho son la suma de
+    todas las noches, más ahorro y prediccion_chollo.
     """
     if df_features.empty:
         return pd.DataFrame()
@@ -110,9 +114,20 @@ def predecir_nuevos(df_features: pd.DataFrame, df_info: pd.DataFrame,
     bosque_reg = cargar_modelos()
     y_pred_reg = bosque_reg.predict(df_features)
 
-    resultado = df_info.copy()
-    # El modelo predice precio por noche → multiplicamos por n_noches para comparar con el precio total
-    resultado['precio_predicho'] = (y_pred_reg * n_noches).round(2)
+    por_noche = df_info.copy()
+    por_noche['precio_predicho'] = y_pred_reg.round(2)
+
+    # Sumamos precio real y precio predicho de todas las noches por alojamiento
+    resultado = por_noche.groupby('url_estancia', as_index=False).agg({
+        'titulo':          'first',
+        'provincia':       'first',
+        'localidad':       'first',
+        'tipo':            'first',
+        'precio':          'sum',
+        'precio_predicho': 'sum',
+    })
+    resultado['precio']          = resultado['precio'].round(2)
+    resultado['precio_predicho'] = resultado['precio_predicho'].round(2)
     resultado['ahorro']          = (resultado['precio_predicho'] - resultado['precio']).round(2)
 
     categoria = crear_etiqueta_chollo(

@@ -12,6 +12,7 @@ Exporta:
 # =============================================================================
 # IMPORTS
 # =============================================================================
+import ast
 import json
 import re
 from datetime import date, timedelta
@@ -22,7 +23,6 @@ import pandas as pd
 import streamlit as st
 
 from TFG_Chollos.Cleaning.preprocessing import (
-    extraer_servicios_influyentes,
     extraer_localidad,
     añadir_distancia_centro,
     cargar_coords_centros,
@@ -81,6 +81,72 @@ def _precio_valido(precio_str: str) -> bool:
         return False
 
 
+def _extraer_servicios_influyentes(ficha: pd.DataFrame) -> pd.DataFrame:
+    """
+    Versión local de extraer_servicios_influyentes (Cleaning/preprocessing.py)
+    que recorre 'servicios' y 'servicios_habitacion' por separado.
+
+    El original las recorre con zip(servicios, servicios_habitacion): si
+    'servicios' (amenities generales vía GraphQL) viene vacío, zip no itera
+    ni una vez y ni siquiera se comprueban los servicios de habitación
+    (Aire, Calefaccion, Vistas, Terraza, Baño_privado), dejando todo en
+    False/0 aunque servicios_habitacion sí tenga datos.
+    """
+    lista = []
+
+    for _, fila in ficha.iterrows():
+        servicios = [serv.lower().strip('"') for serv in ast.literal_eval(fila['servicios'])]
+        servicios_habitacion = [serv.lower().strip('"') for serv in ast.literal_eval(fila['servicios_habitacion'])]
+
+        parking = parking_gratis = gimnasio = restaurante = piscina = piscina_interior = piscina_infinita = aire = calefaccion = vistas = terraza = baño_privado = False
+
+        for servicio in servicios:
+            if 'parking' in servicio and ('parking fuera del alojamiento' not in servicio and 'parking en la calle' not in servicio):
+                parking = servicio
+            if 'parking gratis' in servicio or 'free parking' in servicio:
+                parking_gratis = servicio
+            if ('gimnasio' in servicio or 'gym' in servicio) and 'taquillas en el gimnasio / spa' not in servicio:
+                gimnasio = servicio
+            if 'restaurante' in servicio or 'restaurant' in servicio:
+                restaurante = servicio
+            if ('piscina' in servicio or 'pool' in servicio) and 'vistas a la piscina' not in servicio:
+                piscina = servicio
+            if 'piscina interior' in servicio or 'cubierta' in servicio:
+                piscina_interior = servicio
+            if 'piscina infinita' in servicio or 'infinity pool' in servicio:
+                piscina_infinita = servicio
+
+        for servicio_habitacion in servicios_habitacion:
+            if ('aire' in servicio_habitacion or 'air' in servicio_habitacion) and ('aire libre' not in servicio_habitacion and 'stairs' not in servicio_habitacion and 'hair' not in servicio_habitacion and 'chair' not in servicio_habitacion and 'purifier' not in servicio_habitacion):
+                aire = servicio_habitacion
+            if 'calefacción' in servicio_habitacion or 'calefaccion' in servicio_habitacion or 'heat' in servicio_habitacion:
+                calefaccion = servicio_habitacion
+            if ('vista' in servicio_habitacion or 'views' in servicio_habitacion or 'scenary' in servicio_habitacion) and ('pay-per-view channels' not in servicio_habitacion and 'piscina con vistas' not in servicio_habitacion):
+                vistas = servicio_habitacion
+            if 'terraza' in servicio_habitacion or 'terrace' in servicio_habitacion or 'deck' in servicio_habitacion or 'balcón' in servicio_habitacion or 'balcon' in servicio_habitacion:
+                terraza = servicio_habitacion
+            if ('baño' in servicio_habitacion or 'bath' in servicio_habitacion) and ('shared bathroom' not in servicio_habitacion and 'bath-robe' not in servicio_habitacion):
+                baño_privado = servicio_habitacion
+
+        lista.append({
+            'Parking':          parking != False,
+            'Parking_gratis':   parking_gratis != False,
+            'Gimnasio':         gimnasio != False,
+            'Restaurante':      restaurante != False,
+            'Piscina':          piscina != False,
+            'Piscina_interior': piscina_interior != False,
+            'Piscina_infinita': piscina_infinita != False,
+            'Aire':             aire != False,
+            'Calefaccion':      calefaccion != False,
+            'Vistas':           vistas != False,
+            'Terraza':          terraza != False,
+            'Baño_privado':     baño_privado != False,
+            'url_estancia':     fila['url_estancia'],
+        })
+
+    return pd.DataFrame(lista)
+
+
 def _extraer_tamaño_habitacion(servicios_habitacion_str: str, fallback: int) -> int:
     """
     Busca el patrón 'X m²' en la lista de servicios de la habitación.
@@ -98,37 +164,48 @@ def _extraer_tamaño_habitacion(servicios_habitacion_str: str, fallback: int) ->
     return fallback
 
 
-def _extraer_precio_estancia(calendario_str: str, fecha_checkin: date,
-                              fecha_checkout: date) -> tuple:
+def _precios_por_noche(calendario_str: str, noches: list, precio_total_fallback: float) -> dict:
     """
-    Suma el precio de cada noche desde checkin hasta checkout-1 usando el calendario.
-    Devuelve (precio_total, fecha_checkin_str) o (None, None) si alguna noche falta.
+    Devuelve un dict {fecha_noche: precio} con el precio de cada noche de la estancia,
+    leído del calendario de disponibilidad.
+
+    Si alguna noche concreta no tiene precio en el calendario (pero otras sí), se rellena
+    con el precio de la noche conocida más cercana (la anterior si existe, si no la
+    siguiente). Si el calendario no aporta ningún precio (p.ej. hotel_id no encontrado),
+    se reparte precio_total_fallback (precio_listado de la tarjeta de búsqueda) a partes
+    iguales entre las noches.
     """
     try:
-        calendario  = json.loads(calendario_str)
-        checkin_str = str(fecha_checkin)
+        calendario = json.loads(calendario_str)
 
-        # Construimos un dict fecha → precio solo con días disponibles y con precio válido
+        # Dict fecha → precio para días disponibles con precio válido
         precio_por_dia = {
             d['fecha']: float(d['precio'])
             for d in calendario
             if d.get('disponible') and d.get('precio') and _precio_valido(d['precio'])
         }
 
-        total = 0.0
-        noche = fecha_checkin
-        while noche < fecha_checkout:
-            precio_noche = precio_por_dia.get(str(noche))
-            if precio_noche is None:
-                return None, None   # Falta precio para alguna noche → descartamos el alojamiento
-            total += precio_noche
-            noche += timedelta(days=1)
+        if any(n in precio_por_dia for n in noches):
+            precios = {}
+            ultimo = None
+            for n in noches:
+                ultimo = precio_por_dia.get(n, ultimo)
+                precios[n] = ultimo
 
-        return round(total, 2), checkin_str
+            siguiente = None
+            for n in reversed(noches):
+                if precios[n] is None:
+                    precios[n] = siguiente
+                else:
+                    siguiente = precios[n]
+
+            return precios
 
     except Exception:
         pass
-    return None, None
+
+    # Sin datos de calendario: repartimos el precio total a partes iguales
+    return {n: precio_total_fallback / len(noches) for n in noches}
 
 
 # =============================================================================
@@ -154,20 +231,47 @@ def preprocesar_nuevos(raw_list: list, fecha_checkin: date,
     stats          = cargar_stats_entrenamiento()
     coords_centros = cargar_coords_centros(BASE)
 
-    raw_df           = pd.DataFrame(raw_list)
-    raw_df['localidad'] = extraer_localidad(raw_df)
-    servicios_df     = extraer_servicios_influyentes(raw_df)
+    raw_df = pd.DataFrame(raw_list)
+
+    # Extraer localidad con cadena de fallback: regex CP → ciudad → lugar
+    # IMPORTANTE: fillna solo reemplaza NaN, no strings vacíos → normalizamos "" a NaN primero
+    if 'direccion' in raw_df.columns:
+        _loc = extraer_localidad(raw_df).replace('', np.nan)
+    else:
+        _loc = pd.Series([np.nan] * len(raw_df), index=raw_df.index)
+    for _col in ['ciudad', 'lugar']:
+        if _col in raw_df.columns:
+            _loc = _loc.fillna(raw_df[_col].replace('', np.nan))
+    raw_df['localidad'] = _loc
+    servicios_df     = _extraer_servicios_influyentes(raw_df)
 
     hoy       = date.today()
     registros = []
     info      = []
 
+    # Lista de noches de la estancia (checkin incluido, checkout excluido)
+    noches = []
+    noche = fecha_checkin
+    while noche < fecha_checkout:
+        noches.append(str(noche))
+        noche += timedelta(days=1)
+
     for _, fila in raw_df.iterrows():
-        # Usamos el precio de la tarjeta del listado (total estancia con impuestos)
-        precio = fila.get('precio_listado')
-        if not precio:
+        # Precio Real: span data-testid="price-and-discounted-price" de la tarjeta de
+        # búsqueda de Booking. Aun con checkin/checkout concretos, este span muestra el
+        # precio POR NOCHE (no el total de la estancia), así que lo multiplicamos por
+        # el nº de noches para obtener el total. Si la tarjeta muestra explícitamente
+        # un total ("X € en total" / price-for-X-nights → precio_total_card), ese es
+        # más fiable y se usa directamente. El total se usa como reparto de respaldo
+        # si el calendario no tiene precio para alguna noche.
+        precio_listado = fila.get('precio_listado')
+        if not precio_listado or not noches:
             continue
-        fecha_disp = str(fecha_checkin)
+
+        precio_total_card = fila.get('precio_total_card')
+        precio_total = float(precio_total_card) if precio_total_card else float(precio_listado) * len(noches)
+
+        precios_noche = _precios_por_noche(fila.get('calendario', '[]'), noches, precio_total)
 
         # Tamaño de habitación: extraemos del texto o usamos la mediana del dataset
         tamaño = _extraer_tamaño_habitacion(
@@ -201,12 +305,6 @@ def preprocesar_nuevos(raw_list: list, fecha_checkin: date,
         tipo = fila.get('tipo', 'Otro')
         tipo = tipo if tipo == 'Hotel' else 'Otro'
 
-        # Variables temporales derivadas de la fecha de disponibilidad
-        fecha_disp_dt  = pd.Timestamp(fecha_disp)
-        dias_restantes = (fecha_disp_dt.date() - hoy).days
-        es_finde       = int(fecha_disp_dt.dayofweek in [4, 5])
-        es_domingo     = int(fecha_disp_dt.dayofweek == 6)
-
         # Servicios del alojamiento (amenities binarios)
         url           = fila.get('url_estancia', '')
         servicios_fila = servicios_df[servicios_df['url_estancia'] == url]
@@ -225,36 +323,45 @@ def preprocesar_nuevos(raw_list: list, fecha_checkin: date,
         except (AttributeError, TypeError):
             cp = -1
 
-        registros.append({
-            'localidad':           fila.get('localidad', ''),
-            'provincia':           fila.get('lugar', ''),
-            'codigo_postal':       cp,
-            'latitud':             lat,
-            'longitud':            lon,
-            'tipo':                tipo,
-            'estrellas':           estrellas,
-            'valoracion_clientes': valoracion,
-            'n_valoraciones':      n_val,
-            **{k: int(v) for k, v in amenities.items()},
-            'tamaño_habitacion':   tamaño,
-            'fecha_disponible':    fecha_disp_dt,
-            'dias_restantes':      dias_restantes,
-            'es_finde':            es_finde,
-            'es_domingo':          es_domingo,
-            'precio':              precio,
-            'titulo':              fila.get('titulo', ''),
-            'url_estancia':        url,
-            'fecha_extraccion':    str(hoy),
-        })
+        # Una fila por cada noche de la estancia, con sus propias variables
+        # temporales (fecha, días restantes, fin de semana...) y su precio real
+        for noche_str in noches:
+            fecha_disp_dt  = pd.Timestamp(noche_str)
+            dias_restantes = (fecha_disp_dt.date() - hoy).days
+            es_finde       = int(fecha_disp_dt.dayofweek in [4, 5])
+            es_domingo     = int(fecha_disp_dt.dayofweek == 6)
+            precio_noche   = round(precios_noche[noche_str], 2)
 
-        info.append({
-            'titulo':       fila.get('titulo', ''),
-            'url_estancia': url,
-            'precio':       precio,
-            'provincia':    fila.get('lugar', ''),
-            'localidad':    fila.get('localidad', ''),
-            'tipo':         tipo,
-        })
+            registros.append({
+                'localidad':           fila.get('localidad', ''),
+                'provincia':           fila.get('lugar', ''),
+                'codigo_postal':       cp,
+                'latitud':             lat,
+                'longitud':            lon,
+                'tipo':                tipo,
+                'estrellas':           estrellas,
+                'valoracion_clientes': valoracion,
+                'n_valoraciones':      n_val,
+                **{k: int(v) for k, v in amenities.items()},
+                'tamaño_habitacion':   tamaño,
+                'fecha_disponible':    fecha_disp_dt,
+                'dias_restantes':      dias_restantes,
+                'es_finde':            es_finde,
+                'es_domingo':          es_domingo,
+                'precio':              precio_noche,
+                'titulo':              fila.get('titulo', ''),
+                'url_estancia':        url,
+                'fecha_extraccion':    str(hoy),
+            })
+
+            info.append({
+                'titulo':       fila.get('titulo', ''),
+                'url_estancia': url,
+                'precio':       precio_noche,
+                'provincia':    fila.get('lugar', ''),
+                'localidad':    fila.get('localidad', ''),
+                'tipo':         tipo,
+            })
 
     df      = pd.DataFrame(registros)
     df_info = pd.DataFrame(info)
