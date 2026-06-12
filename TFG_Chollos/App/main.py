@@ -3,6 +3,7 @@ Home - Mapa de Alojamientos de Andalucía
 =========================================
 Para ejecutar:
     python App/run.py
+    python TFG_Chollos/App/run.py
 '''
 
 # =============================================================================
