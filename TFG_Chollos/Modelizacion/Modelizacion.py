@@ -56,10 +56,12 @@ logger = configurar_logger(__name__)
 
 def crear_regresion_lineal(conjunto_ent_est: pd.DataFrame, conjunto_val_est: pd.DataFrame,
                             target_ent_est: pd.Series, target_val_est: pd.Series,
-                            variable_representar: str):
+                            variable_representar: str,
+                            X_plot: pd.DataFrame = None, y_plot: pd.Series = None):
     """
     Entrena una Regresión Lineal Múltiple sobre datos estandarizados.
-    Genera un gráfico de dispersión con la recta de regresión para una variable.
+    Genera un gráfico de dispersión en unidades originales si se pasan X_plot e y_plot,
+    o en escala estandarizada en caso contrario.
     """
     logger.info('⏳ Creando "Regresión Lineal Múltiple"')
 
@@ -67,11 +69,16 @@ def crear_regresion_lineal(conjunto_ent_est: pd.DataFrame, conjunto_val_est: pd.
     regresion.fit(conjunto_ent_est, target_ent_est)
     logger.info('✅ Creado y entrenado el modelo de "Regresión Lineal Múltiple" correctamente')
 
-    # Gráfico: dispersión real vs recta predicha para la variable elegida
-    sns.scatterplot(x=conjunto_ent_est[variable_representar], y=target_ent_est)
-    sns.lineplot(x=conjunto_ent_est[variable_representar],
-                 y=regresion.predict(conjunto_ent_est))
-    plt.title(f'Regresión Lineal: {variable_representar} vs {target_ent_est.name}')
+    # Gráfico: dispersión en unidades originales si se pasan X_plot/y_plot, estandarizadas si no
+    X_graf = X_plot if X_plot is not None else conjunto_ent_est
+    y_graf = y_plot if y_plot is not None else target_ent_est
+    xlabel = f'{variable_representar} (m²)' if X_plot is not None else f'{variable_representar} (z-score)'
+    ylabel = 'precio (€)' if X_plot is not None else 'precio (z-score)'
+
+    sns.scatterplot(x=X_graf[variable_representar], y=y_graf, alpha=0.3, s=5)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(f'Relación entre {variable_representar} y precio')
     ruta = BASE / 'images' / f'regresion_lineal_{variable_representar}.png'
     ruta.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(ruta, bbox_inches='tight', dpi=150)
@@ -268,7 +275,7 @@ def main():
 
     # 3. ENTRENAMIENTO DE MODELOS
     # -------------------------------------------------------------------------
-    regresion = crear_regresion_lineal(X_train_est, X_val_est, y_train_est, y_val_est, 'tamaño_habitacion')
+    regresion = crear_regresion_lineal(X_train_est, X_val_est, y_train_est, y_val_est, 'tamaño_habitacion', X_plot=X_train, y_plot=y_train)
     arbol     = crear_arbol_decision(X_train, X_val, y_train, y_val)
     # bosque  = crear_bosque_aleatorio(X_train, X_val, y_train, y_val)
     bosque    = joblib.load(BASE / 'data' / 'models' / 'bosque_aleatorio_reg.pkl')
