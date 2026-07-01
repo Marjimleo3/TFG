@@ -296,8 +296,8 @@ def codificar_nuevos(df: pd.DataFrame) -> pd.DataFrame:
         lambda x: le_provincia.transform([x])[0] if x in clases_prov else -1
     )
 
-    # One-Hot Encoding de tipo (replicando drop_first=True sobre Hotel/Otro)
-    df['tipo_Otro'] = (df['tipo'] == 'Otro').astype(int)
+    # One-Hot Encoding de tipo (replicando encoding.py: tipo_Hotel=1 si es hotel)
+    df['tipo_Hotel'] = (df['tipo'] == 'Hotel').astype(int)
 
     # Descomposición de la fecha en mes y día como variables numéricas
     df['mes_disponible'] = df['fecha_disponible'].dt.month
