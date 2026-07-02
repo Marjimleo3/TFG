@@ -43,9 +43,8 @@ def encoding(db_final: pd.DataFrame) -> pd.DataFrame:
     # Eliminamos columnas identificativas que no aportan valor predictivo al modelo
     db_final = db_final.drop(columns=['titulo', 'codigo_postal', 'url_estancia', 'fecha_extraccion'])
 
-    # One-Hot Encoding de 'tipo': drop_first elimina 'Hotel' (primero alfabéticamente); invertimos para que tipo_Hotel=1 signifique "es hotel"
-    db_final = pd.get_dummies(db_final, columns=['tipo'], drop_first=True)
-    db_final['tipo_Hotel'] = 1 - db_final['tipo_Otro']
+    # One-Hot Encoding de 'tipo': tipo_Hotel=1 si es hotel, 0 si no. Se elimina tipo_Otro por redundancia.
+    db_final = pd.get_dummies(db_final, columns=['tipo'], drop_first=False)
     db_final = db_final.drop(columns=['tipo_Otro'])
 
     # Label Encoding de localidad y provincia: asigna un entero a cada categoría.

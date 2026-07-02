@@ -41,8 +41,8 @@ def transformar_post_analisis(db_final: pd.DataFrame) -> pd.DataFrame:
 
     # Eliminación de villas/fincas por umbral de negocio en tamaño_habitacion
     antes = len(db_final)
-    db_final = db_final[db_final['tamaño_habitacion'] <= 500]
-    logger.info(f'Registros eliminados por tamaño_habitacion > 500m²: {antes - len(db_final)} registros')
+    db_final = db_final[db_final['tamaño_habitacion'] <= 150]
+    logger.info(f'Registros eliminados por tamaño_habitacion > 150m²: {antes - len(db_final)} registros')
 
     # Eliminación de errores de geocodificación y alojamientos fuera del núcleo urbano
     antes = len(db_final)
@@ -57,9 +57,11 @@ def transformar_post_analisis(db_final: pd.DataFrame) -> pd.DataFrame:
 # =============================================================================
 def main():
     db_final = pd.read_parquet(BASE / "data" / "processed" / "final" / "db_final.parquet")
+    n_antes = len(db_final)
 
     db_analisis = transformar_post_analisis(db_final)
     db_analisis.to_parquet(BASE / "data" / "processed" / "analisis" / "db_final_analisis.parquet", index=False)
+    logger.info(f'Porcentaje de registros eliminados post-análisis: {round(len(db_analisis)/n_antes*100)} registros')
     logger.info('✅ Dataset analítico guardado correctamente')
 
 
