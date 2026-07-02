@@ -69,28 +69,28 @@ def crear_regresion_lineal(conjunto_ent_est: pd.DataFrame, conjunto_val_est: pd.
     regresion.fit(conjunto_ent_est, target_ent_est)
     logger.info('✅ Creado y entrenado el modelo de "Regresión Lineal Múltiple" correctamente')
 
-    # Gráfico: dispersión en unidades originales si se pasan X_plot/y_plot, estandarizadas si no
-    X_graf = X_plot if X_plot is not None else conjunto_ent_est
-    y_graf = y_plot if y_plot is not None else target_ent_est
-    xlabel = f'{variable_representar} (m²)' if X_plot is not None else f'{variable_representar} (z-score)'
-    ylabel = 'precio (€)' if X_plot is not None else 'precio (z-score)'
-
-    sns.scatterplot(x=X_graf[variable_representar], y=y_graf, alpha=0.3, s=5)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.title(f'Relación entre {variable_representar} y precio')
-    ruta = BASE / 'images' / f'regresion_lineal_{variable_representar}.png'
-    ruta.parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(ruta, bbox_inches='tight', dpi=150)
-    plt.close()
-    logger.info(f'✅ Gráfico guardado: {ruta}')
-
     r2_val = regresion.score(conjunto_val_est, target_val_est)
     logger.info(f'R² en validación: {r2_val:.4f}')
 
     ruta_modelo = BASE / 'data' / 'models' / 'regresion_lineal_reg.pkl'
     joblib.dump(regresion, ruta_modelo)
     logger.info(f'✅ Modelo guardado: {ruta_modelo}')
+
+    # Gráfico: dispersión en unidades originales si se pasan X_plot/y_plot, estandarizadas si no
+    X_graf = X_plot if X_plot is not None else conjunto_ent_est
+    y_graf = y_plot if y_plot is not None else target_ent_est
+    xlabel = f'{variable_representar} (m²)' if X_plot is not None else f'{variable_representar} (z-score)'
+    ylabel = 'precio (€)' if X_plot is not None else 'precio (z-score)'
+    sns.scatterplot(x=X_graf[variable_representar], y=y_graf, alpha=0.3, s=5)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(f'Relación entre {variable_representar} y precio')
+
+    ruta = BASE / 'images' / f'regresion_lineal_{variable_representar}.png'
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(ruta, bbox_inches='tight', dpi=150)
+    plt.close()
+    logger.info(f'✅ Gráfico guardado: {ruta}')
 
     return regresion
 
@@ -119,6 +119,13 @@ def crear_arbol_decision(conjunto_ent: pd.DataFrame, conjunto_val: pd.DataFrame,
     logger.info('✅ Creado y entrenado el modelo "Árbol de Decisión" correctamente')
     logger.info(f'Mejores hiperparámetros: {grid_search.best_params_}')
 
+    r2_val = mejor_arbol.score(conjunto_val, target_val)
+    logger.info(f'R² en validación: {r2_val:.4f}')
+
+    ruta_modelo = BASE / 'data' / 'models' / 'arbol_decision_reg.pkl'
+    joblib.dump(mejor_arbol, ruta_modelo)
+    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
+
     # Visualizamos las 3 primeras capas del árbol (las decisiones más importantes)
     plt.figure(figsize=(20, 10))
     plot_tree(
@@ -133,13 +140,6 @@ def crear_arbol_decision(conjunto_ent: pd.DataFrame, conjunto_val: pd.DataFrame,
     plt.savefig(ruta, bbox_inches='tight', dpi=150)
     plt.close()
     logger.info(f'✅ Gráfico guardado: {ruta}')
-
-    r2_val = mejor_arbol.score(conjunto_val, target_val)
-    logger.info(f'R² en validación: {r2_val:.4f}')
-
-    ruta_modelo = BASE / 'data' / 'models' / 'arbol_decision_reg.pkl'
-    joblib.dump(mejor_arbol, ruta_modelo)
-    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
 
     return mejor_arbol
 
@@ -277,8 +277,8 @@ def main():
     # -------------------------------------------------------------------------
     regresion = crear_regresion_lineal(X_train_est, X_val_est, y_train_est, y_val_est, 'tamaño_habitacion', X_plot=X_train, y_plot=y_train)
     arbol     = crear_arbol_decision(X_train, X_val, y_train, y_val)
-    # bosque  = crear_bosque_aleatorio(X_train, X_val, y_train, y_val)
-    bosque    = joblib.load(BASE / 'data' / 'models' / 'bosque_aleatorio_reg.pkl')
+    bosque  = crear_bosque_aleatorio(X_train, X_val, y_train, y_val)
+    # bosque    = joblib.load(BASE / 'data' / 'models' / 'bosque_aleatorio_reg.pkl')
     boosting  = crear_boosting(X_train, X_val, y_train, y_val)
 
     # 4. SELECCIÓN DEL MEJOR MODELO (por R² en validación)
@@ -308,12 +308,8 @@ def main():
     # 5. ETIQUETADO DE CHOLLOS con el mejor modelo
     # -------------------------------------------------------------------------
     y_pred_train = mejor_modelo_reg.predict(mejor_X_train)
-    y_pred_val   = mejor_modelo_reg.predict(mejor_X_val)
-    y_pred_test  = mejor_modelo_reg.predict(mejor_X_test)
 
     chollo_train = crear_etiqueta_chollo(mejor_y_train, pd.Series(y_pred_train, index=mejor_y_train.index))
-    chollo_val   = crear_etiqueta_chollo(mejor_y_val,   pd.Series(y_pred_val,   index=mejor_y_val.index))
-    chollo_test  = crear_etiqueta_chollo(mejor_y_test,  pd.Series(y_pred_test,  index=mejor_y_test.index))
     logger.info(f'Distribución categorías train: {chollo_train.value_counts().to_dict()}')
 
     # 6. EVALUACIÓN FINAL EN TEST
