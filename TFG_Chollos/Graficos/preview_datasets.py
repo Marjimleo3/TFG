@@ -27,16 +27,12 @@ logger = configurar_logger(__name__)
 
 # Columnas a mostrar según el tipo de dataset
 COLS_RAW = [
-    'lugar', 'titulo', 'tipo', 'estrellas', 'valoracion_clientes',
-    'n_valoraciones', 'fecha_entrada', 'fecha_salida',
-    'n_adultos', 'n_habitaciones', 'direccion', 'ciudad', 'codigo_postal',
-    'servicios',
+    'lugar', 'titulo', 'tipo', 'estrellas',
+    'valoracion_clientes', 'n_valoraciones', 'servicios',
 ]
 COLS_PROCESSED = [
-    'provincia', 'localidad', 'tipo', 'estrellas', 'valoracion_clientes',
-    'n_valoraciones', 'distancia_centro_km', 'Piscina', 'Parking',
-    'Gimnasio', 'Restaurante', 'Aire', 'tamaño_habitacion',
-    'fecha_disponible', 'dias_restantes', 'es_finde', 'precio',
+    'provincia', 'localidad', 'tipo', 'estrellas',
+    'distancia_centro_km', 'tamaño_habitacion', 'precio',
 ]
 N_FILAS = 5
 
@@ -102,30 +98,21 @@ def generar_preview(ruta: Path, titulo: str, ruta_salida: Path,
     col_labels = [c[:14] + '…' if len(c) > 14 else c for c in cols]
 
     # Tamaño de figura
-    fig_w = max(22, n_mostrar * 1.45)
-    fig_h = 3.8
+    fig_w = max(18, n_mostrar * 2.8)
+    fig_h = 4.0
     fig, ax = plt.subplots(figsize=(fig_w, fig_h))
     fig.patch.set_facecolor('white')
     ax.axis('off')
-
-    subtitulo = (
-        f'{n_registros:,} registros · {n_cols} columnas · '
-        f'Peso en disco: {peso_mb:.1f} MB'
-        f'   (mostrando {n_mostrar} de {n_cols} columnas, {N_FILAS} primeras filas)'
-    )
-    fig.text(0.012, 0.97, titulo,    fontsize=13, fontweight='bold',
-             color=COLOR_HEADER_TEXTO, va='top', fontfamily='monospace')
-    fig.text(0.012, 0.87, subtitulo, fontsize=8.5, color='#555555', va='top')
 
     table = ax.table(
         cellText=df_str.values,
         colLabels=col_labels,
         cellLoc='center',
         loc='center',
-        bbox=[0, 0, 1, 0.78],
+        bbox=[0, 0, 1, 1],
     )
     table.auto_set_font_size(False)
-    table.set_fontsize(8)
+    table.set_fontsize(12)
     table.auto_set_column_width(col=list(range(n_mostrar)))
 
     for (fila, col), cell in table.get_celld().items():
