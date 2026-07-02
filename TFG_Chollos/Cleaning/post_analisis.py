@@ -65,6 +65,7 @@ def main():
     db_analisis = transformar_post_analisis(db_final)
     db_analisis.to_parquet(BASE / "data" / "processed" / "analisis" / "db_final_analisis.parquet", index=False)
     logger.info(f'Porcentaje de registros totales eliminados en post-análisis: {round(100 - (len(db_analisis)/n_antes*100))}% de registros')
+    logger.info(f'Número de registros de la tabla post-análisis: {len(db_analisis)} registros')
     logger.info('✅ Dataset analítico guardado correctamente')
 
 
