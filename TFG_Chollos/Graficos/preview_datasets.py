@@ -30,6 +30,7 @@ COLS_RAW = [
     'lugar', 'titulo', 'tipo', 'estrellas', 'valoracion_clientes',
     'n_valoraciones', 'fecha_entrada', 'fecha_salida',
     'n_adultos', 'n_habitaciones', 'direccion', 'ciudad', 'codigo_postal',
+    'servicios',
 ]
 COLS_PROCESSED = [
     'provincia', 'localidad', 'tipo', 'estrellas', 'valoracion_clientes',
@@ -151,12 +152,12 @@ def main():
     generar_preview(
         ruta=BASE / 'data' / 'raw' / 'fichas' / 'resultados_booking_Málaga.csv',
         titulo='Datos RAW — resultados_booking_Málaga.csv',
-        ruta_salida=BASE / 'images' / 'preview_Malaga_raw.png',
+        ruta_salida=BASE / 'images' / 'tabla_raw.png',
     )
     generar_preview(
         ruta=BASE / 'data' / 'processed' / 'analisis' / 'db_final_analisis.parquet',
         titulo='Datos PROCESSED — db_final_analisis.parquet',
-        ruta_salida=BASE / 'images' / 'preview_data_total_analisis.png',
+        ruta_salida=BASE / 'images' / 'tabla_processed.png',
     )
 
 
