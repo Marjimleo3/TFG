@@ -51,6 +51,19 @@ logger = configurar_logger(__name__)
 
 
 # =============================================================================
+# HELPERS
+# =============================================================================
+
+def _log_metricas(y_real, y_pred, etiqueta: str, units: str = '€'):
+    """Calcula y loguea R², MAE y RMSE."""
+    r2   = r2_score(y_real, y_pred)
+    mae  = mean_absolute_error(y_real, y_pred)
+    rmse = np.sqrt(mean_squared_error(y_real, y_pred))
+    logger.info(f'{etiqueta} R²={r2:.4f} | MAE={mae:.2f}{units} | RMSE={rmse:.2f}{units}')
+    return r2
+
+
+# =============================================================================
 # MODELOS DE REGRESIÓN
 # =============================================================================
 
@@ -60,6 +73,8 @@ def crear_regresion_lineal(conjunto_ent_est: pd.DataFrame, conjunto_val_est: pd.
                             X_plot: pd.DataFrame = None, y_plot: pd.Series = None):
     """
     Entrena una Regresión Lineal Múltiple sobre datos estandarizados.
+    Las métricas de validación se reportan en unidades z-score porque tanto X como y
+    están estandarizados; la conversión a € se realiza en main() con inverse_transform.
     Genera un gráfico de dispersión en unidades originales si se pasan X_plot e y_plot,
     o en escala estandarizada en caso contrario.
     """
@@ -67,10 +82,10 @@ def crear_regresion_lineal(conjunto_ent_est: pd.DataFrame, conjunto_val_est: pd.
 
     regresion = linear_model.LinearRegression()
     regresion.fit(conjunto_ent_est, target_ent_est)
-    logger.info('✅ Creado y entrenado el modelo de "Regresión Lineal Múltiple" correctamente')
+    logger.info('✅ Modelo entrenado')
 
-    r2_val = regresion.score(conjunto_val_est, target_val_est)
-    logger.info(f'R² en validación: {r2_val:.4f}')
+    y_pred_val = regresion.predict(conjunto_val_est)
+    _log_metricas(target_val_est, y_pred_val, '[VAL - Regresión Lineal]', units=' (z-score)')
 
     ruta_modelo = BASE / 'data' / 'models' / 'regresion_lineal_reg.pkl'
     joblib.dump(regresion, ruta_modelo)
@@ -98,8 +113,9 @@ def crear_regresion_lineal(conjunto_ent_est: pd.DataFrame, conjunto_val_est: pd.
 def crear_arbol_decision(conjunto_ent: pd.DataFrame, conjunto_val: pd.DataFrame,
                           target_ent: pd.Series, target_val: pd.Series):
     """
-    Entrena un Árbol de Decisión con búsqueda de hiperparámetros (max_depth).
+    Entrena un Árbol de Decisión con búsqueda en rejilla de max_depth.
     No requiere escalado: solo compara umbrales, la magnitud no importa.
+    Métricas de validación en €.
     Genera un gráfico del árbol con profundidad 3 para visualizar las decisiones principales.
     """
     logger.info('⏳ Creando "Árbol de Decisión"')
@@ -116,11 +132,10 @@ def crear_arbol_decision(conjunto_ent: pd.DataFrame, conjunto_val: pd.DataFrame,
     )
     grid_search.fit(conjunto_ent, target_ent)
     mejor_arbol = grid_search.best_estimator_
-    logger.info('✅ Creado y entrenado el modelo "Árbol de Decisión" correctamente')
-    logger.info(f'Mejores hiperparámetros: {grid_search.best_params_}')
+    logger.info(f'✅ Modelo entrenado | Mejores hiperparámetros: {grid_search.best_params_}')
 
-    r2_val = mejor_arbol.score(conjunto_val, target_val)
-    logger.info(f'R² en validación: {r2_val:.4f}')
+    y_pred_val = mejor_arbol.predict(conjunto_val)
+    _log_metricas(target_val, y_pred_val, '[VAL - Árbol de Decisión]')
 
     ruta_modelo = BASE / 'data' / 'models' / 'arbol_decision_reg.pkl'
     joblib.dump(mejor_arbol, ruta_modelo)
@@ -147,8 +162,9 @@ def crear_arbol_decision(conjunto_ent: pd.DataFrame, conjunto_val: pd.DataFrame,
 def crear_bosque_aleatorio(conjunto_ent: pd.DataFrame, conjunto_val: pd.DataFrame,
                             target_ent: pd.Series, target_val: pd.Series):
     """
-    Entrena un Random Forest con búsqueda de hiperparámetros (n_estimators, max_depth).
+    Entrena un Random Forest con búsqueda en rejilla de n_estimators y max_depth.
     Técnica Bagging: combina múltiples árboles con subconjuntos aleatorios de datos y features.
+    Métricas de validación en €.
     No requiere escalado.
     """
     logger.info('⏳ Creando "Bosque Aleatorio"')
@@ -168,11 +184,10 @@ def crear_bosque_aleatorio(conjunto_ent: pd.DataFrame, conjunto_val: pd.DataFram
     )
     grid_search.fit(conjunto_ent, target_ent)
     mejor_bosque = grid_search.best_estimator_
-    logger.info('✅ Creado y entrenado el modelo "Bosque Aleatorio" correctamente')
-    logger.info(f'Mejores hiperparámetros: {grid_search.best_params_}')
+    logger.info(f'✅ Modelo entrenado | Mejores hiperparámetros: {grid_search.best_params_}')
 
-    r2_val = mejor_bosque.score(conjunto_val, target_val)
-    logger.info(f'R² en validación: {r2_val:.4f}')
+    y_pred_val = mejor_bosque.predict(conjunto_val)
+    _log_metricas(target_val, y_pred_val, '[VAL - Bosque Aleatorio]')
 
     ruta_modelo = BASE / 'data' / 'models' / 'bosque_aleatorio_reg.pkl'
     joblib.dump(mejor_bosque, ruta_modelo)
@@ -184,8 +199,9 @@ def crear_bosque_aleatorio(conjunto_ent: pd.DataFrame, conjunto_val: pd.DataFram
 def crear_boosting(conjunto_ent: pd.DataFrame, conjunto_val: pd.DataFrame,
                    target_ent: pd.Series, target_val: pd.Series):
     """
-    Entrena un XGBoost con búsqueda de hiperparámetros (n_estimators, learning_rate, max_depth).
+    Entrena un XGBoost con búsqueda en rejilla de n_estimators, learning_rate y max_depth.
     Gradient Boosting: construye árboles secuencialmente corrigiendo los errores del anterior.
+    Métricas de validación en €.
     No requiere escalado.
     """
     logger.info('⏳ Creando "XGBoost"')
@@ -206,11 +222,10 @@ def crear_boosting(conjunto_ent: pd.DataFrame, conjunto_val: pd.DataFrame,
     )
     grid_search.fit(conjunto_ent, target_ent)
     mejor_boosting = grid_search.best_estimator_
-    logger.info('✅ Creado y entrenado el modelo de "XGBoost" correctamente')
-    logger.info(f'Mejores hiperparámetros: {grid_search.best_params_}')
+    logger.info(f'✅ Modelo entrenado | Mejores hiperparámetros: {grid_search.best_params_}')
 
-    r2_val = mejor_boosting.score(conjunto_val, target_val)
-    logger.info(f'R² en validación: {r2_val:.4f}')
+    y_pred_val = mejor_boosting.predict(conjunto_val)
+    _log_metricas(target_val, y_pred_val, '[VAL - XGBoost]')
 
     ruta_modelo = BASE / 'data' / 'models' / 'boosting_reg.pkl'
     joblib.dump(mejor_boosting, ruta_modelo)
@@ -274,14 +289,17 @@ def main():
         estandarizar_datos(X_train, X_val, X_test, y_train, y_val, y_test)
 
     # 3. ENTRENAMIENTO DE MODELOS
+    # Las funciones loguean métricas de validación inmediatamente tras el entrenamiento. Para LR las métricas son en z-score; el resto en €.
     # -------------------------------------------------------------------------
     regresion = crear_regresion_lineal(X_train_est, X_val_est, y_train_est, y_val_est, 'tamaño_habitacion', X_plot=X_train, y_plot=y_train)
     arbol     = crear_arbol_decision(X_train, X_val, y_train, y_val)
-    bosque  = crear_bosque_aleatorio(X_train, X_val, y_train, y_val)
-    # bosque    = joblib.load(BASE / 'data' / 'models' / 'bosque_aleatorio_reg.pkl')
+    bosque    = crear_bosque_aleatorio(X_train, X_val, y_train, y_val)
+    # bosque  = joblib.load(BASE / 'data' / 'models' / 'bosque_aleatorio_reg.pkl')
     boosting  = crear_boosting(X_train, X_val, y_train, y_val)
 
-    # 4. SELECCIÓN DEL MEJOR MODELO (por R² en validación)
+    # 4. SELECCIÓN DEL MEJOR MODELO + EVALUACIÓN EN TEST
+    # Todas las métricas en € (inverse_transform para LR) para que sean comparables.
+    # La selección se basa en R² val; el test se calcula pero no influye en la decisión.
     # -------------------------------------------------------------------------
     modelos_regresion = [
         ('Regresión Lineal',  regresion, X_train_est, X_val_est, X_test_est, y_train_est, y_val_est, y_test_est),
@@ -296,29 +314,50 @@ def main():
     mejor_y_train = mejor_y_val = mejor_y_test = None
 
     for nombre, modelo, X_tr, X_va, X_te, y_tr, y_va, y_te in modelos_regresion:
-        score = modelo.score(X_va, y_va)
-        if mejor_score is None or score > mejor_score:
-            mejor_score  = score
+        y_pred_va = modelo.predict(X_va)
+        y_pred_te = modelo.predict(X_te)
+
+        # LR: inverse_transform para obtener MAE/RMSE en € comparables con el resto
+        if nombre == 'Regresión Lineal':
+            y_pred_va_eur = scaler_y.inverse_transform(y_pred_va.reshape(-1, 1)).ravel()
+            y_pred_te_eur = scaler_y.inverse_transform(y_pred_te.reshape(-1, 1)).ravel()
+            y_va_eur = y_val.values
+            y_te_eur = y_test.values
+        else:
+            y_pred_va_eur, y_pred_te_eur = y_pred_va, y_pred_te
+            y_va_eur = y_va.values
+            y_te_eur = y_te.values
+
+        r2_va = _log_metricas(y_va_eur, y_pred_va_eur, f'[VAL  - {nombre}]')
+        _log_metricas(y_te_eur, y_pred_te_eur, f'[TEST - {nombre}]')
+
+        if mejor_score is None or r2_va > mejor_score:
+            mejor_score  = r2_va
             mejor_nombre, mejor_modelo_reg = nombre, modelo
             mejor_X_train, mejor_X_val, mejor_X_test = X_tr, X_va, X_te
             mejor_y_train, mejor_y_val, mejor_y_test = y_tr, y_va, y_te
 
-    logger.info(f'✅ Mejor modelo de regresión: {mejor_nombre} (R²={mejor_score:.4f})')
+    logger.info(f'✅ Mejor modelo de regresión: {mejor_nombre} (R² val={mejor_score:.4f})')
+
+    # Énfasis especial en Bosque Aleatorio: importancia de variables
+    if mejor_nombre == 'Bosque Aleatorio':
+        importancias = pd.Series(
+            mejor_modelo_reg.feature_importances_,
+            index=mejor_X_train.columns,
+        ).sort_values(ascending=False)
+        logger.info('Top 10 variables más importantes (Bosque Aleatorio):')
+        for feat, imp in importancias.head(10).items():
+            logger.info(f'  {feat:35s} {imp:.4f}')
 
     # 5. ETIQUETADO DE CHOLLOS con el mejor modelo
     # -------------------------------------------------------------------------
     y_pred_train = mejor_modelo_reg.predict(mejor_X_train)
-
     chollo_train = crear_etiqueta_chollo(mejor_y_train, pd.Series(y_pred_train, index=mejor_y_train.index))
     logger.info(f'Distribución categorías train: {chollo_train.value_counts().to_dict()}')
 
-    # 6. EVALUACIÓN FINAL EN TEST
+    # 6. PREDICCIONES TEST del modelo ganador (ya evaluadas en el paso 4)
     # -------------------------------------------------------------------------
     y_pred_test_reg = mejor_modelo_reg.predict(mejor_X_test)
-    r2_test   = r2_score(mejor_y_test, y_pred_test_reg)
-    mae_test  = mean_absolute_error(mejor_y_test, y_pred_test_reg)
-    rmse_test = np.sqrt(mean_squared_error(mejor_y_test, y_pred_test_reg))
-    logger.info(f'[TEST - {mejor_nombre}] R²={r2_test:.4f} | MAE={mae_test:.2f} | RMSE={rmse_test:.2f}')
 
     # 7. GUARDAR SCALERS del modelo ganador (solo si es Regresión Lineal)
     # -------------------------------------------------------------------------
@@ -327,7 +366,6 @@ def main():
         joblib.dump(scaler_X, modelos_dir / 'scaler_X_regresion.pkl')
         joblib.dump(scaler_y, modelos_dir / 'scaler_y_regresion.pkl')
         logger.info(f'✅ Scalers guardados en {modelos_dir}')
-
 
 
 if __name__ == '__main__':
