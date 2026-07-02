@@ -47,9 +47,7 @@ def encoding(db_final: pd.DataFrame) -> pd.DataFrame:
     db_final = pd.get_dummies(db_final, columns=['tipo'], drop_first=False)
     db_final = db_final.drop(columns=['tipo_Otro'])
 
-    # Label Encoding de localidad y provincia: asigna un entero a cada categoría.
-    # Se eligió Label Encoding (en lugar de OHE) porque el alto número de categorías
-    # habría generado una dimensionalidad excesiva con One-Hot Encoding.
+    # Label Encoding de localidad y provincia: asigna un entero a cada categoría. Se eligió Label Encoding (en lugar de OHE) porque el alto número de categorías habría generado una dimensionalidad excesiva con One-Hot Encoding.
     le_localidad = LabelEncoder()
     le_provincia = LabelEncoder()
     db_final['localidad'] = le_localidad.fit_transform(db_final['localidad'])
