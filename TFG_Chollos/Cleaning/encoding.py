@@ -41,7 +41,7 @@ logger = configurar_logger(__name__)
 def encoding(db_final: pd.DataFrame) -> pd.DataFrame:
 
     # Eliminamos columnas identificativas que no aportan valor predictivo al modelo
-    db_final = db_final.drop(columns=['titulo', 'codigo_postal', 'url_estancia', 'fecha_extraccion'])
+    db_final = db_final.drop(columns=['titulo', 'codigo_postal', 'url_estancia', 'fecha_extraccion', 'latitud', 'longitud', 'latitud_centro', 'longitud_centro'])
 
     # One-Hot Encoding de 'tipo': tipo_Hotel=1 si es hotel, 0 si no. Se elimina tipo_Otro por redundancia.
     db_final = pd.get_dummies(db_final, columns=['tipo'], drop_first=False)
