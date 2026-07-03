@@ -182,7 +182,10 @@ def main():
             df_resultado         = predecir_nuevos(df_codificado, df_info, n_noches)
 
         # Guardamos en session_state y relanzamos para activar los filtros de la sidebar
-        st.session_state.df_resultado = df_resultado
+        st.session_state.df_resultado  = df_resultado
+        st.session_state.df_features   = df_features
+        st.session_state.df_codificado = df_codificado
+        st.session_state.raw_list      = raw_list
         st.rerun()
 
     # Mostramos los resultados aplicando los filtros de la barra lateral si existen
@@ -198,6 +201,19 @@ def main():
         if cat_sel != 'Todas':
             mask &= df['prediccion_chollo'] == cat_sel
         mostrar_resultados(df[mask])
+
+
+    # Herramientas del desarrollador: dataframes intermedios del pipeline
+    if 'raw_list' in st.session_state or 'df_features' in st.session_state:
+        with st.expander('🛠️ Herramientas del desarrollador', expanded=False):
+            if 'raw_list' in st.session_state:
+                st.caption('Datos crudos del scraper (antes de preprocesar)')
+                st.dataframe(pd.DataFrame(st.session_state.raw_list), use_container_width=True)
+            if 'df_features' in st.session_state and 'df_codificado' in st.session_state:
+                st.caption('Preprocesado (entrada del modelo, sin codificar)')
+                st.dataframe(st.session_state.df_features, use_container_width=True)
+                st.caption('Codificado (entrada real al modelo)')
+                st.dataframe(st.session_state.df_codificado, use_container_width=True)
 
 
 if __name__ == '__main__':
