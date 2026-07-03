@@ -178,7 +178,7 @@ def mostrar_resultados(df: pd.DataFrame):
 
     # Gráfico de tarta con la distribución de categorías, ordenado de mejor a peor
     conteo  = df_mostrar['prediccion_chollo'].value_counts()
-    orden   = [ETIQUETAS[k] for k in sorted(ETIQUETAS) if ETIQUETAS[k] in conteo.index]
+    orden   = [ETIQUETAS[k] for k in sorted(ETIQUETAS, reverse=True) if ETIQUETAS[k] in conteo.index]
     colores = {
         'Inflado':      '#e74c3c',
         'Normal':       '#f39c12',
@@ -192,6 +192,7 @@ def mostrar_resultados(df: pd.DataFrame):
         values=[conteo[o] for o in orden],
         marker_colors=[colores[o] for o in orden],
         hole=0.3,
+        sort=False,
     ))
     fig.update_layout(title='Distribución de categorías', margin=dict(t=40, b=10))
     st.plotly_chart(fig, width='stretch')

@@ -34,6 +34,13 @@ from TFG_Chollos.utils import conseguir_ruta_general_TFG
 # =============================================================================
 BASE = conseguir_ruta_general_TFG()
 
+# Prefijo de código postal → provincia (los 8 prefijos de Andalucía). Más fiable
+# que el campo 'lugar' de búsqueda, que puede ser una localidad y no una provincia.
+CP_PREFIJO_PROVINCIA = {
+    '04': 'Almería', '11': 'Cádiz',   '14': 'Córdoba', '18': 'Granada',
+    '21': 'Huelva',  '23': 'Jaén',    '29': 'Málaga',  '41': 'Sevilla',
+}
+
 
 # =============================================================================
 # CARGA DE ENCODERS Y ESTADÍSTICAS (una sola vez por sesión)
@@ -56,15 +63,12 @@ def cargar_stats_entrenamiento():
     """
     db = pd.read_parquet(
         BASE / 'data' / 'processed' / 'analisis' / 'db_final_analisis.parquet',
-        columns=['tamaño_habitacion', 'valoracion_clientes',
-                 'distancia_centro_km', 'latitud_centro', 'longitud_centro']
+        columns=['tamaño_habitacion', 'valoracion_clientes', 'distancia_centro_km']
     )
     return {
         'tamaño_habitacion_median':   int(db['tamaño_habitacion'].median()),
         'valoracion_clientes_mean':   round(float(db['valoracion_clientes'].astype(float).mean()), 1),
         'distancia_centro_km_median': round(float(db['distancia_centro_km'].median()), 3),
-        'latitud_centro_median':      round(float(db['latitud_centro'].median()), 6),
-        'longitud_centro_median':     round(float(db['longitud_centro'].median()), 6),
     }
 
 
@@ -158,7 +162,7 @@ def _extraer_tamaño_habitacion(servicios_habitacion_str: str, fallback: int) ->
             m = re.search(r'(\d+)\s*m²', serv.lower())
             if m:
                 val = int(m.group(1))
-                return val if val <= 500 else fallback
+                return val if val <= 150 else fallback
     except Exception:
         pass
     return fallback
@@ -318,10 +322,17 @@ def preprocesar_nuevos(raw_list: list, fecha_checkin: date,
             ]}
 
         # Código postal: extraemos los 5 dígitos o usamos -1 como valor nulo
+        cp_match = re.search(r'\d{5}', str(fila.get('codigo_postal', '')))
         try:
-            cp = int(re.search(r'\d{5}', str(fila.get('codigo_postal', ''))).group())
+            cp = int(cp_match.group()) if cp_match else -1
         except (AttributeError, TypeError):
             cp = -1
+
+        # Provincia real a partir del prefijo del código postal; si no se reconoce
+        # (CP no extraído, fuera de Andalucía...) usamos el lugar buscado como fallback
+        provincia = CP_PREFIJO_PROVINCIA.get(
+            cp_match.group()[:2] if cp_match else None, fila.get('lugar', '')
+        )
 
         # Una fila por cada noche de la estancia, con sus propias variables
         # temporales (fecha, días restantes, fin de semana...) y su precio real
@@ -334,7 +345,7 @@ def preprocesar_nuevos(raw_list: list, fecha_checkin: date,
 
             registros.append({
                 'localidad':           fila.get('localidad', ''),
-                'provincia':           fila.get('lugar', ''),
+                'provincia':           provincia,
                 'codigo_postal':       cp,
                 'latitud':             lat,
                 'longitud':            lon,
@@ -358,7 +369,7 @@ def preprocesar_nuevos(raw_list: list, fecha_checkin: date,
                 'titulo':       fila.get('titulo', ''),
                 'url_estancia': url,
                 'precio':       precio_noche,
-                'provincia':    fila.get('lugar', ''),
+                'provincia':    provincia,
                 'localidad':    fila.get('localidad', ''),
                 'tipo':         tipo,
             })

@@ -948,7 +948,7 @@ def scrape_busqueda(urls: dict, fecha_entrada: str, fecha_salida: str, barra,
                 fichas.append(ficha)
             procesados[0] += 1
             progreso = 0.5 + 0.5 * (procesados[0] / len(listados))
-            barra.progress(progreso, text=f'Detalle {procesados[0]}/{len(listados)}...')
+            barra.progress(progreso, text=f'{procesados[0]}/{len(listados)} alojamientos extraídos...')
 
     barra.progress(1.0, text='¡Listo!')
     return fichas

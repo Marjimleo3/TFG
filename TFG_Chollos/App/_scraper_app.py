@@ -39,7 +39,8 @@ MAX_CARDS      = 25     # máximo de alojamientos por destino
 # FASE 1 — SCRAPING DEL LISTADO CON PLAYWRIGHT
 # =============================================================================
 async def _async_scrape_listado(lugar: str, url: str, fecha_entrada: str,
-                                 fecha_salida: str, resultado: list, errores: list):
+                                 fecha_salida: str, resultado: list, errores: list,
+                                 debug_info: list):
     try:
         async with async_playwright() as p:
             browser = await p.chromium.launch(
@@ -76,18 +77,31 @@ async def _async_scrape_listado(lugar: str, url: str, fecha_entrada: str,
 
         soup = BeautifulSoup(content, 'html.parser')
 
+        page_title = soup.find('title')
+        title_text = page_title.get_text(strip=True)[:60] if page_title else '(sin título)'
+        es_homepage = 'sitio oficial' in title_text.lower() or 'booking.com |' in title_text.lower()
+
         n_reales = 0
         h1 = soup.find('h1', {'aria-live': 'assertive'})
+        h1_texto = None
         if h1:
             span = h1.find('span')
             if span:
-                m = re.search(r'([\d.]+)\s+alojamiento', span.get_text())
+                h1_texto = span.get_text()
+                m = re.search(r'([\d.]+)\s+alojamiento', h1_texto)
                 if m:
                     n_reales = int(m.group(1).replace('.', ''))
 
         estancias = soup.find_all('div', {'data-testid': 'property-card'})
+        if n_reales == 0:
+            n_reales = len(estancias)
 
-        for estancia in estancias[:n_reales]:
+        debug_info.append(
+            f'título={title_text!r} | es_homepage={es_homepage} | h1_texto={h1_texto!r} | '
+            f'n_reales={n_reales} | tarjetas={len(estancias)}'
+        )
+
+        for estancia in estancias[:min(n_reales, MAX_CARDS)]:
             try:
                 enlace = estancia.find('a', {'data-testid': 'title-link'})
                 url_base = enlace['href'].split('?')[0]
@@ -158,12 +172,12 @@ async def _async_scrape_listado(lugar: str, url: str, fecha_entrada: str,
 
 
 def _listado_en_hilo(lugar: str, url: str, fecha_entrada: str, fecha_salida: str,
-                     resultado: list, errores: list):
+                     resultado: list, errores: list, debug_info: list):
     loop = asyncio.ProactorEventLoop()
     asyncio.set_event_loop(loop)
     try:
         loop.run_until_complete(
-            _async_scrape_listado(lugar, url, fecha_entrada, fecha_salida, resultado, errores)
+            _async_scrape_listado(lugar, url, fecha_entrada, fecha_salida, resultado, errores, debug_info)
         )
     finally:
         loop.close()
@@ -172,7 +186,8 @@ def _listado_en_hilo(lugar: str, url: str, fecha_entrada: str, fecha_salida: str
 # =============================================================================
 # FUNCIÓN PRINCIPAL
 # =============================================================================
-def scrape_busqueda(urls: dict, fecha_entrada: str, fecha_salida: str, barra) -> list[dict]:
+def scrape_busqueda(urls: dict, fecha_entrada: str, fecha_salida: str, barra,
+                     diag_out: list | None = None) -> list[dict]:
     '''
     Orquesta el scraping completo para los destinos indicados.
 
@@ -182,6 +197,9 @@ def scrape_busqueda(urls: dict, fecha_entrada: str, fecha_salida: str, barra) ->
     fecha_entrada : str "YYYY-MM-DD"
     fecha_salida  : str "YYYY-MM-DD"
     barra         : st.progress() para mostrar progreso
+    diag_out      : si se pasa una lista, se rellena con el diagnóstico
+                    (título de página, homepage detectada, tarjetas) de
+                    cada destino, para depurar por qué no aparecen resultados
 
     Devuelve
     --------
@@ -192,23 +210,32 @@ def scrape_busqueda(urls: dict, fecha_entrada: str, fecha_salida: str, barra) ->
 
     # ── FASE 1: listados ─────────────────────────────────────────────────────
     listados = []
+    diagnosticos = []
     for i, (lugar, url) in enumerate(destinos):
         barra.progress(
             i / (total_destinos * 2),
             text=f'Buscando alojamientos en {lugar}...'
         )
-        resultado, errores = [], []
+        resultado, errores, debug_info = [], [], []
         t = threading.Thread(
             target=_listado_en_hilo,
-            args=(lugar, url, fecha_entrada, fecha_salida, resultado, errores),
+            args=(lugar, url, fecha_entrada, fecha_salida, resultado, errores, debug_info),
             daemon=True,
         )
         t.start()
         t.join()
+        if debug_info:
+            diagnosticos.append(f'{lugar}: {debug_info[0]}')
+        else:
+            diagnosticos.append(f'{lugar}: sin diagnóstico')
         listados.extend(resultado)
 
+    if diag_out is not None:
+        diag_out.extend(diagnosticos)
+
     if not listados:
-        barra.progress(1.0, text='No se encontraron alojamientos.')
+        resumen = ' | '.join(diagnosticos) if diagnosticos else 'sin datos'
+        barra.progress(1.0, text=f'0 resultados — {resumen}')
         return []
 
     # ── FASE 2: fichas de detalle ─────────────────────────────────────────────
@@ -235,7 +262,7 @@ def scrape_busqueda(urls: dict, fecha_entrada: str, fecha_salida: str, barra) ->
                 fichas.append(ficha)
             procesados[0] += 1
             progreso = 0.5 + 0.5 * (procesados[0] / len(listados))
-            barra.progress(progreso, text=f'Detalle {procesados[0]}/{len(listados)}...')
+            barra.progress(progreso, text=f'{procesados[0]}/{len(listados)} alojamientos extraídos...')
 
     barra.progress(1.0, text='¡Listo!')
     return fichas

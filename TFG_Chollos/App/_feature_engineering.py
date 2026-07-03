@@ -34,6 +34,13 @@ from TFG_Chollos.utils import conseguir_ruta_general_TFG
 # =============================================================================
 BASE = conseguir_ruta_general_TFG()
 
+# Prefijo de código postal → provincia (los 8 prefijos de Andalucía). Más fiable
+# que el campo 'lugar' de búsqueda, que puede ser una localidad y no una provincia.
+CP_PREFIJO_PROVINCIA = {
+    '04': 'Almería', '11': 'Cádiz',   '14': 'Córdoba', '18': 'Granada',
+    '21': 'Huelva',  '23': 'Jaén',    '29': 'Málaga',  '41': 'Sevilla',
+}
+
 
 # =============================================================================
 # CARGA DE ENCODERS Y ESTADÍSTICAS (una sola vez por sesión)
@@ -56,15 +63,12 @@ def cargar_stats_entrenamiento():
     """
     db = pd.read_parquet(
         BASE / 'data' / 'processed' / 'analisis' / 'db_final_analisis.parquet',
-        columns=['tamaño_habitacion', 'valoracion_clientes',
-                 'distancia_centro_km', 'latitud_centro', 'longitud_centro']
+        columns=['tamaño_habitacion', 'valoracion_clientes', 'distancia_centro_km']
     )
     return {
         'tamaño_habitacion_median':   int(db['tamaño_habitacion'].median()),
         'valoracion_clientes_mean':   round(float(db['valoracion_clientes'].astype(float).mean()), 1),
         'distancia_centro_km_median': round(float(db['distancia_centro_km'].median()), 3),
-        'latitud_centro_median':      round(float(db['latitud_centro'].median()), 6),
-        'longitud_centro_median':     round(float(db['longitud_centro'].median()), 6),
     }
 
 
@@ -92,43 +96,54 @@ def _extraer_tamaño_habitacion(servicios_habitacion_str: str, fallback: int) ->
             m = re.search(r'(\d+)\s*m²', serv.lower())
             if m:
                 val = int(m.group(1))
-                return val if val <= 500 else fallback
+                return val if val <= 150 else fallback
     except Exception:
         pass
     return fallback
 
 
-def _extraer_precio_estancia(calendario_str: str, fecha_checkin: date,
-                              fecha_checkout: date) -> tuple:
+def _precios_por_noche(calendario_str: str, noches: list, precio_total_fallback: float) -> dict:
     """
-    Suma el precio de cada noche desde checkin hasta checkout-1 usando el calendario.
-    Devuelve (precio_total, fecha_checkin_str) o (None, None) si alguna noche falta.
+    Devuelve un dict {fecha_noche: precio} con el precio de cada noche de la estancia,
+    leído del calendario de disponibilidad.
+
+    Si alguna noche concreta no tiene precio en el calendario (pero otras sí), se rellena
+    con el precio de la noche conocida más cercana (la anterior si existe, si no la
+    siguiente). Si el calendario no aporta ningún precio (p.ej. hotel_id no encontrado),
+    se reparte precio_total_fallback (precio_listado de la tarjeta de búsqueda) a partes
+    iguales entre las noches.
     """
     try:
-        calendario  = json.loads(calendario_str)
-        checkin_str = str(fecha_checkin)
+        calendario = json.loads(calendario_str)
 
-        # Construimos un dict fecha → precio solo con días disponibles y con precio válido
+        # Dict fecha → precio para días disponibles con precio válido
         precio_por_dia = {
             d['fecha']: float(d['precio'])
             for d in calendario
             if d.get('disponible') and d.get('precio') and _precio_valido(d['precio'])
         }
 
-        total = 0.0
-        noche = fecha_checkin
-        while noche < fecha_checkout:
-            precio_noche = precio_por_dia.get(str(noche))
-            if precio_noche is None:
-                return None, None   # Falta precio para alguna noche → descartamos el alojamiento
-            total += precio_noche
-            noche += timedelta(days=1)
+        if any(n in precio_por_dia for n in noches):
+            precios = {}
+            ultimo = None
+            for n in noches:
+                ultimo = precio_por_dia.get(n, ultimo)
+                precios[n] = ultimo
 
-        return round(total, 2), checkin_str
+            siguiente = None
+            for n in reversed(noches):
+                if precios[n] is None:
+                    precios[n] = siguiente
+                else:
+                    siguiente = precios[n]
+
+            return precios
 
     except Exception:
         pass
-    return None, None
+
+    # Sin datos de calendario: repartimos el precio total a partes iguales
+    return {n: precio_total_fallback / len(noches) for n in noches}
 
 
 # =============================================================================
@@ -162,12 +177,21 @@ def preprocesar_nuevos(raw_list: list, fecha_checkin: date,
     registros = []
     info      = []
 
+    # Lista de noches de la estancia (checkin incluido, checkout excluido)
+    noches = []
+    noche = fecha_checkin
+    while noche < fecha_checkout:
+        noches.append(str(noche))
+        noche += timedelta(days=1)
+
     for _, fila in raw_df.iterrows():
         # Usamos el precio de la tarjeta del listado (total estancia con impuestos)
-        precio = fila.get('precio_listado')
-        if not precio:
+        # como reparto de respaldo si el calendario no tiene precio para alguna noche.
+        precio_total = fila.get('precio_listado')
+        if not precio_total or not noches:
             continue
-        fecha_disp = str(fecha_checkin)
+
+        precios_noche = _precios_por_noche(fila.get('calendario', '[]'), noches, float(precio_total))
 
         # Tamaño de habitación: extraemos del texto o usamos la mediana del dataset
         tamaño = _extraer_tamaño_habitacion(
@@ -201,12 +225,6 @@ def preprocesar_nuevos(raw_list: list, fecha_checkin: date,
         tipo = fila.get('tipo', 'Otro')
         tipo = tipo if tipo == 'Hotel' else 'Otro'
 
-        # Variables temporales derivadas de la fecha de disponibilidad
-        fecha_disp_dt  = pd.Timestamp(fecha_disp)
-        dias_restantes = (fecha_disp_dt.date() - hoy).days
-        es_finde       = int(fecha_disp_dt.dayofweek in [4, 5])
-        es_domingo     = int(fecha_disp_dt.dayofweek == 6)
-
         # Servicios del alojamiento (amenities binarios)
         url           = fila.get('url_estancia', '')
         servicios_fila = servicios_df[servicios_df['url_estancia'] == url]
@@ -220,41 +238,57 @@ def preprocesar_nuevos(raw_list: list, fecha_checkin: date,
             ]}
 
         # Código postal: extraemos los 5 dígitos o usamos -1 como valor nulo
+        cp_match = re.search(r'\d{5}', str(fila.get('codigo_postal', '')))
         try:
-            cp = int(re.search(r'\d{5}', str(fila.get('codigo_postal', ''))).group())
+            cp = int(cp_match.group()) if cp_match else -1
         except (AttributeError, TypeError):
             cp = -1
 
-        registros.append({
-            'localidad':           fila.get('localidad', ''),
-            'provincia':           fila.get('lugar', ''),
-            'codigo_postal':       cp,
-            'latitud':             lat,
-            'longitud':            lon,
-            'tipo':                tipo,
-            'estrellas':           estrellas,
-            'valoracion_clientes': valoracion,
-            'n_valoraciones':      n_val,
-            **{k: int(v) for k, v in amenities.items()},
-            'tamaño_habitacion':   tamaño,
-            'fecha_disponible':    fecha_disp_dt,
-            'dias_restantes':      dias_restantes,
-            'es_finde':            es_finde,
-            'es_domingo':          es_domingo,
-            'precio':              precio,
-            'titulo':              fila.get('titulo', ''),
-            'url_estancia':        url,
-            'fecha_extraccion':    str(hoy),
-        })
+        # Provincia real a partir del prefijo del código postal; si no se reconoce
+        # (CP no extraído, fuera de Andalucía...) usamos el lugar buscado como fallback
+        provincia = CP_PREFIJO_PROVINCIA.get(
+            cp_match.group()[:2] if cp_match else None, fila.get('lugar', '')
+        )
 
-        info.append({
-            'titulo':       fila.get('titulo', ''),
-            'url_estancia': url,
-            'precio':       precio,
-            'provincia':    fila.get('lugar', ''),
-            'localidad':    fila.get('localidad', ''),
-            'tipo':         tipo,
-        })
+        # Una fila por cada noche de la estancia, con sus propias variables
+        # temporales (fecha, días restantes, fin de semana...) y su precio real
+        for noche_str in noches:
+            fecha_disp_dt  = pd.Timestamp(noche_str)
+            dias_restantes = (fecha_disp_dt.date() - hoy).days
+            es_finde       = int(fecha_disp_dt.dayofweek in [4, 5])
+            es_domingo     = int(fecha_disp_dt.dayofweek == 6)
+            precio_noche   = round(precios_noche[noche_str], 2)
+
+            registros.append({
+                'localidad':           fila.get('localidad', ''),
+                'provincia':           provincia,
+                'codigo_postal':       cp,
+                'latitud':             lat,
+                'longitud':            lon,
+                'tipo':                tipo,
+                'estrellas':           estrellas,
+                'valoracion_clientes': valoracion,
+                'n_valoraciones':      n_val,
+                **{k: int(v) for k, v in amenities.items()},
+                'tamaño_habitacion':   tamaño,
+                'fecha_disponible':    fecha_disp_dt,
+                'dias_restantes':      dias_restantes,
+                'es_finde':            es_finde,
+                'es_domingo':          es_domingo,
+                'precio':              precio_noche,
+                'titulo':              fila.get('titulo', ''),
+                'url_estancia':        url,
+                'fecha_extraccion':    str(hoy),
+            })
+
+            info.append({
+                'titulo':       fila.get('titulo', ''),
+                'url_estancia': url,
+                'precio':       precio_noche,
+                'provincia':    provincia,
+                'localidad':    fila.get('localidad', ''),
+                'tipo':         tipo,
+            })
 
     df      = pd.DataFrame(registros)
     df_info = pd.DataFrame(info)

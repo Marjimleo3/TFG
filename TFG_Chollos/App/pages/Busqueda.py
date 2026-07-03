@@ -167,19 +167,23 @@ def main():
         print(urls_con_filtro)
 
         # Fase de scraping: listado de alojamientos + detalle de cada uno
-        barra    = st.progress(0, text='Iniciando...')
-        raw_list = scrape_busqueda(urls_con_filtro, str(fecha_entrada), str(fecha_salida), barra)
+        barra = st.progress(0, text='Iniciando...')
+        diag_scraping = []
+        raw_list = scrape_busqueda(urls_con_filtro, str(fecha_entrada), str(fecha_salida), barra, diag_scraping)
+
+        st.session_state.diag_scraping = diag_scraping
 
         if not raw_list:
             st.warning('No se encontraron alojamientos para los criterios seleccionados.')
             return
 
         # Fase de predicción: preprocesado → encoding → modelo → etiquetado
-        n_noches = (fecha_salida - fecha_entrada).days
+        # (preprocesar_nuevos genera una fila por noche de la estancia; predecir_nuevos
+        # predice cada noche por separado y agrupa por alojamiento sumando los totales)
         with st.spinner('Procesando datos...'):
             df_features, df_info = preprocesar_nuevos(raw_list, fecha_entrada, fecha_salida)
             df_codificado        = codificar_nuevos(df_features)
-            df_resultado         = predecir_nuevos(df_codificado, df_info, n_noches)
+            df_resultado         = predecir_nuevos(df_codificado, df_info)
 
         # Guardamos en session_state y relanzamos para activar los filtros de la sidebar
         st.session_state.df_resultado  = df_resultado
@@ -204,8 +208,12 @@ def main():
 
 
     # Herramientas del desarrollador: dataframes intermedios del pipeline
-    if 'raw_list' in st.session_state or 'df_features' in st.session_state:
+    if 'raw_list' in st.session_state or 'df_features' in st.session_state or 'diag_scraping' in st.session_state:
         with st.expander('🛠️ Herramientas del desarrollador', expanded=False):
+            if 'diag_scraping' in st.session_state and st.session_state.diag_scraping:
+                st.caption('Diagnóstico del scraping (título de página, homepage detectada, tarjetas)')
+                for linea in st.session_state.diag_scraping:
+                    st.text(linea)
             if 'raw_list' in st.session_state:
                 st.caption('Datos crudos del scraper (antes de preprocesar)')
                 st.dataframe(pd.DataFrame(st.session_state.raw_list), use_container_width=True)
