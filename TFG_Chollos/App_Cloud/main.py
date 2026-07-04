@@ -59,7 +59,7 @@ def cargar_geojson():
 @st.cache_data
 def cargar_puntos_unicos() -> pd.DataFrame:
     df = pd.read_parquet(
-        BASE / 'data' / 'processed' / 'final' / 'db_final.parquet',
+        BASE / 'data' / 'processed' / 'analisis' / 'db_final_analisis.parquet',
         columns=['titulo', 'latitud', 'longitud', 'url_estancia']
     )
     df = df.drop_duplicates(subset='url_estancia')[['titulo', 'latitud', 'longitud']]
@@ -76,7 +76,7 @@ def cargar_mapa_predeterminado():
         return MAPA_PREDETERMINADO.read_text(encoding='utf-8')
     geojson   = cargar_geojson()
     df_puntos = cargar_puntos_unicos()
-    fig = generar_mapa([0] * len(NOMBRES_PROVINCIAS), geojson, df_puntos, 'histórico', '')
+    fig = generar_mapa({p: 0 for p in NOMBRES_PROVINCIAS}, geojson, df_puntos, 'histórico', '')
     return fig.to_html(include_plotlyjs=True, full_html=True)
 
 
@@ -93,7 +93,7 @@ def _ensure_playwright_chromium():
         )
 
 
-async def _async_scrape(urls_provincias: dict, resultado: list, progreso: list):
+async def _async_scrape(urls_provincias: dict, resultado: dict, progreso: list):
     async with async_playwright() as p:
         browser = await p.chromium.launch(
             args=[
@@ -141,13 +141,13 @@ async def _async_scrape(urls_provincias: dict, resultado: list, progreso: list):
             if not match:
                 raise ValueError(f"No se encontró número en: {texto!r}")
             numero = int(match.group().replace(".", "").replace(",", ""))
-            resultado.append(numero)
+            resultado[provincia] = numero
             progreso[0] = i + 1
 
         await browser.close()
 
 
-def _scrape_en_hilo(urls_provincias: dict, resultado: list, errores: list, progreso: list):
+def _scrape_en_hilo(urls_provincias: dict, resultado: dict, errores: list, progreso: list):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     try:
@@ -158,9 +158,9 @@ def _scrape_en_hilo(urls_provincias: dict, resultado: list, errores: list, progr
         loop.close()
 
 
-def scrape_n_alojamientos(urls_provincias: dict, barra) -> list:
+def scrape_n_alojamientos(urls_provincias: dict, barra) -> dict:
     _ensure_playwright_chromium()
-    resultado, errores, progreso = [], [], [0]
+    resultado, errores, progreso = {}, [], [0]
     provincias_lista = list(urls_provincias.items())
     total = len(provincias_lista)
 

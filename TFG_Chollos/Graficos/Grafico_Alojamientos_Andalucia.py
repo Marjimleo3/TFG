@@ -1,6 +1,6 @@
 """
 Genera el mapa coroplético de alojamientos de Andalucía por provincias,
-con todos los puntos únicos de alojamiento de db_final.parquet.
+con todos los puntos únicos de alojamiento de db_final_analisis.parquet.
 El HTML resultante se usa como mapa predeterminado en el Streamlit.
 
 Uso:
@@ -42,8 +42,8 @@ CENTROIDES_PROVINCIAS = {
 # =============================================================================
 # FUNCIONES
 # =============================================================================
-def scrape_n_alojamientos(urls_provincias: dict) -> list:
-    resultado = []
+def scrape_n_alojamientos(urls_provincias: dict) -> dict:
+    resultado = {}
     with sync_playwright() as p:
         browser = p.chromium.launch(args=["--disable-blink-features=AutomationControlled"])
         context = browser.new_context(
@@ -68,7 +68,7 @@ def scrape_n_alojamientos(urls_provincias: dict) -> list:
             if not match:
                 raise ValueError(f"No se encontró número en: {texto!r}")
             numero = int(match.group().replace(".", "").replace(",", ""))
-            resultado.append(numero)
+            resultado[provincia] = numero
             print(f"  {provincia}: {numero} alojamientos")
 
         browser.close()
@@ -77,7 +77,7 @@ def scrape_n_alojamientos(urls_provincias: dict) -> list:
 
 def cargar_puntos_unicos() -> pd.DataFrame:
     df = pd.read_parquet(
-        BASE / 'data' / 'processed' / 'final' / 'db_final.parquet',
+        BASE / 'data' / 'processed' / 'analisis' / 'db_final_analisis.parquet',
         columns=['titulo', 'latitud', 'longitud', 'url_estancia']
     )
     df = df.drop_duplicates(subset='url_estancia')[['titulo', 'latitud', 'longitud']]
@@ -90,16 +90,19 @@ def cargar_puntos_unicos() -> pd.DataFrame:
     return df[['titulo', 'latitud', 'longitud']]
 
 
-def generar_mapa(alojamientos_por_provincia: list, geojson: dict, df_puntos: pd.DataFrame,
+def generar_mapa(alojamientos_por_provincia: dict, geojson: dict, df_puntos: pd.DataFrame,
                  fecha_entrada: str, fecha_salida: str):
-    maximo = max(alojamientos_por_provincia)
+    # Reordenamos por nombre de provincia (no por posición) para que cada valor se
+    # empareje con la provincia correcta, independientemente del orden de scraping.
+    valores = [alojamientos_por_provincia.get(p, 0) for p in NOMBRES_PROVINCIAS]
+    maximo = max(valores)
     techo = (maximo // 1000 + 1) * 1000
 
     fig = px.choropleth(
         locations=NOMBRES_PROVINCIAS,
         geojson=geojson,
         featureidkey="properties.name",
-        color=alojamientos_por_provincia,
+        color=valores,
         range_color=[0, techo],
         color_continuous_scale="Reds",
         title=f"Alojamientos en Andalucía ({fecha_entrada} → {fecha_salida})",

@@ -62,7 +62,7 @@ def cargar_puntos_unicos() -> pd.DataFrame:
     Filtra coordenadas fuera de Andalucía para que el mapa no se aleje.
     """
     df = pd.read_parquet(
-        BASE / 'data' / 'processed' / 'final' / 'db_final.parquet',
+        BASE / 'data' / 'processed' / 'analisis' / 'db_final_analisis.parquet',
         columns=['titulo', 'latitud', 'longitud', 'url_estancia']
     )
     # Eliminamos duplicados por URL y filtramos coordenadas fuera de Andalucía
@@ -75,7 +75,7 @@ def cargar_puntos_unicos() -> pd.DataFrame:
     return df[['titulo', 'latitud', 'longitud']]
 
 
-async def _async_scrape(urls_provincias: dict, resultado: list, progreso: list):
+async def _async_scrape(urls_provincias: dict, resultado: dict, progreso: list):
     """
     Navega con Playwright a la página de resultados de cada provincia y extrae
     el número total de alojamientos disponibles del h1. Bloquea recursos estáticos
@@ -112,13 +112,13 @@ async def _async_scrape(urls_provincias: dict, resultado: list, progreso: list):
             if not match:
                 raise ValueError(f"No se encontró número en: {texto!r}")
             numero = int(match.group().replace(".", "").replace(",", ""))
-            resultado.append(numero)
+            resultado[provincia] = numero
             progreso[0] = i + 1
 
         await browser.close()
 
 
-def _scrape_en_hilo(urls_provincias: dict, resultado: list, errores: list, progreso: list):
+def _scrape_en_hilo(urls_provincias: dict, resultado: dict, errores: list, progreso: list):
     """
     Lanza el scraping asíncrono en un hilo separado con su propio event loop.
     Necesario porque Streamlit ya tiene su propio loop y no permite anidarlos.
@@ -134,13 +134,13 @@ def _scrape_en_hilo(urls_provincias: dict, resultado: list, errores: list, progr
         loop.close()
 
 
-def scrape_n_alojamientos(urls_provincias: dict, barra) -> list:
+def scrape_n_alojamientos(urls_provincias: dict, barra) -> dict:
     """
     Orquesta el scraping en un hilo daemon y actualiza la barra de progreso
     de Streamlit mientras el hilo trabaja en segundo plano.
-    Devuelve la lista de conteos en el mismo orden que urls_provincias.
+    Devuelve un dict {provincia: número de alojamientos}.
     """
-    resultado, errores, progreso = [], [], [0]
+    resultado, errores, progreso = {}, [], [0]
     provincias_lista = list(urls_provincias.items())
     total = len(provincias_lista)
 
