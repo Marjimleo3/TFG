@@ -7,7 +7,6 @@ Exporta:
     cargar_modelos()                             → Random Forest cacheado
     predecir_nuevos(df_features, df_info)        → (resultado, por_noche)
     mostrar_resultados(df)                       → tabla + gráfico de categorías
-    mostrar_predicciones_bd()                    → UI completa sobre la BD existente
     ETIQUETAS                                    → dict {int: str} de categorías
 '''
 
@@ -44,42 +43,6 @@ ETIQUETAS = {
 def cargar_modelos():
     """Carga el modelo Random Forest de regresión desde disco."""
     return joblib.load(BASE / 'data' / 'models' / 'bosque_aleatorio_reg.pkl')
-
-
-# =============================================================================
-# PREDICCIÓN SOBRE LA BASE DE DATOS EXISTENTE
-# =============================================================================
-
-@st.cache_data
-def _predecir_bd(_bosque_reg):
-    """
-    Aplica el modelo sobre toda la BD procesada y calcula la etiqueta chollo.
-    El argumento empieza con _ para que Streamlit no intente hashear el modelo.
-    """
-    db_info = pd.read_parquet(
-        BASE / 'data' / 'processed' / 'analisis' / 'db_final_analisis.parquet',
-        columns=['titulo', 'url_estancia', 'precio', 'provincia', 'localidad', 'tipo']
-    )
-    db_cod = pd.read_parquet(
-        BASE / 'data' / 'processed' / 'modelizacion' / 'db_final_codificada.parquet'
-    )
-
-    # Predecimos el precio justo para cada alojamiento
-    X          = db_cod.drop(columns=['precio'])
-    y_pred_reg = _bosque_reg.predict(X)
-
-    db_info = db_info.copy()
-    db_info['precio_predicho'] = y_pred_reg.round(2)
-    db_info['ahorro']          = (db_info['precio_predicho'] - db_info['precio']).round(2)
-
-    # Calculamos la categoría chollo a partir del ratio precio_real / precio_predicho
-    categoria = crear_etiqueta_chollo(
-        db_info['precio'].reset_index(drop=True),
-        pd.Series(y_pred_reg),
-    )
-    db_info['prediccion_chollo'] = categoria.map(ETIQUETAS).values
-
-    return db_info
 
 
 # =============================================================================
@@ -200,37 +163,3 @@ def mostrar_resultados(df: pd.DataFrame):
     ))
     fig.update_layout(title='Distribución de categorías', margin=dict(t=40, b=10))
     st.plotly_chart(fig, width='stretch')
-
-
-def mostrar_predicciones_bd():
-    """
-    UI completa para explorar los chollos sobre la BD existente.
-    Incluye filtros por provincia, tipo y categoría en la barra lateral.
-    """
-    st.header('Detector de Chollos')
-
-    bosque_reg = cargar_modelos()
-
-    with st.spinner('Cargando datos y calculando predicciones...'):
-        df = _predecir_bd(bosque_reg)
-
-    # Filtros en la barra lateral
-    st.sidebar.markdown('---')
-    st.sidebar.subheader('Detector de Chollos')
-    provincias    = ['Todas'] + sorted(df['provincia'].unique().tolist())
-    tipos         = ['Todos'] + sorted(df['tipo'].unique().tolist())
-    categorias    = ['Todas'] + list(ETIQUETAS.values())
-    provincia_sel = st.sidebar.selectbox('Provincia',            provincias)
-    tipo_sel      = st.sidebar.selectbox('Tipo de alojamiento',  tipos)
-    categoria_sel = st.sidebar.selectbox('Categoría',            categorias)
-
-    # Aplicamos los filtros seleccionados
-    mask = pd.Series(True, index=df.index)
-    if provincia_sel != 'Todas':
-        mask &= df['provincia'] == provincia_sel
-    if tipo_sel != 'Todos':
-        mask &= df['tipo'] == tipo_sel
-    if categoria_sel != 'Todas':
-        mask &= df['prediccion_chollo'] == categoria_sel
-
-    mostrar_resultados(df[mask].head(200))
