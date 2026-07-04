@@ -104,9 +104,14 @@ async def _async_scrape(urls_provincias: dict, resultado: list, progreso: list):
             content = await page.content()
             soup    = BeautifulSoup(content, 'html.parser')
             titulo  = soup.find('h1')
-            texto   = titulo.find('span').get_text(strip=True)
-            # Extraemos el número entero del texto "X alojamientos encontrados"
-            numero  = int(re.search(r"[\d.]+", texto).group().replace(".", ""))
+            if titulo is None:
+                raise ValueError(f"No se encontró h1 para {provincia}")
+            span   = titulo.find('span')
+            texto  = (span if span else titulo).get_text(strip=True)
+            match  = re.search(r"[\d.,]+", texto)
+            if not match:
+                raise ValueError(f"No se encontró número en: {texto!r}")
+            numero = int(match.group().replace(".", "").replace(",", ""))
             resultado.append(numero)
             progreso[0] = i + 1
 
