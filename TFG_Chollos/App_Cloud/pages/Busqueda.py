@@ -140,7 +140,7 @@ def main():
          'Desayuno Incluido', 'Valoración >= 8', '3 o más estrellas', 'Admite Mascotas']
     )
 
-    st.subheader('Estrictez de la categorización de chollo:')
+    st.subheader('¿Cómo quiere que sea la categorización de los chollos?')
     nivel_estrictez = st.select_slider(
         'Cuanto más estricto, más ahorro hace falta para calificar como chollo',
         options=list(NIVELES_ESTRICTEZ.keys()),
@@ -163,7 +163,30 @@ def main():
         tipo_sel = 'Todos'
         cat_sel  = 'Todas'
 
-    if st.button('Detectar Chollos'):
+    st.markdown('<div style="margin-top: 1em;"></div>', unsafe_allow_html=True)
+    st.markdown(
+        '''
+        <style>
+        div.stButton > button {
+            font-size: 1.3em;
+            padding: 0.6em 2.5em;
+            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+        div.stButton > button:hover {
+            background-color: #2ecc71;
+            color: white;
+            border-color: #2ecc71;
+        }
+        </style>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    col_izq, col_centro, col_der = st.columns([1, 1, 1])
+    with col_centro:
+        detectar = st.button('Detectar Chollos', use_container_width=True)
+
+    if detectar:
         if not destinos:
             st.warning('Por favor, selecciona al menos un destino.')
             return
