@@ -5,9 +5,11 @@ Carga del modelo, predicción y UI de resultados. No es una página Streamlit.
 
 Exporta:
     cargar_modelos()                             → Random Forest cacheado
-    predecir_nuevos(df_features, df_info)        → (resultado, por_noche)
+    predecir_nuevos(df_features, df_info)        → (resultado, por_noche), sin categorizar
+    categorizar_chollos(df, nivel_estrictez)     → df con la columna prediccion_chollo
     mostrar_resultados(df)                       → tabla + gráfico de categorías
     ETIQUETAS                                    → dict {int: str} de categorías
+    NIVELES_ESTRICTEZ                            → dict {nombre: umbrales} para el slider
 '''
 
 # =============================================================================
@@ -34,6 +36,14 @@ ETIQUETAS = {
     4: 'Hiper Chollo',
 }
 
+# Umbrales de ratio (precio_real / precio_predicho) por nivel de estrictez.
+# 'Predeterminado' coincide con los umbrales canónicos usados para entrenar el modelo.
+NIVELES_ESTRICTEZ = {
+    'Predeterminado': {'umbral_hiper': 0.75, 'umbral_super': 0.85, 'umbral_chollo': 0.97, 'umbral_inflado': 1.03},
+    'Más estricto':   {'umbral_hiper': 0.65, 'umbral_super': 0.80, 'umbral_chollo': 0.94, 'umbral_inflado': 1.03},
+    'Muy estricto':   {'umbral_hiper': 0.50, 'umbral_super': 0.70, 'umbral_chollo': 0.90, 'umbral_inflado': 1.03},
+}
+
 
 # =============================================================================
 # CARGA DEL MODELO (una sola vez por sesión)
@@ -54,12 +64,15 @@ def cargar_modelos():
 # garantizando coherencia con el ahorro mostrado al usuario.
 def predecir_nuevos(df_features: pd.DataFrame, df_info: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Predice el precio justo para datos frescos del scraper y etiqueta cada alojamiento.
+    Predice el precio justo para datos frescos del scraper (sin categorizar todavía).
 
     df_features y df_info traen una fila por cada noche de la estancia (mismas
     características salvo las variables temporales y el precio de esa noche). El
     modelo predice el precio justo de cada noche por separado y luego se agrupa por
     alojamiento sumando el precio real y el predicho de todas sus noches.
+
+    La categorización de chollo se hace aparte, en categorizar_chollos(), para que
+    cambiar el nivel de estrictez no requiera repetir el scraping ni la predicción.
 
     Parámetros
     ----------
@@ -70,7 +83,7 @@ def predecir_nuevos(df_features: pd.DataFrame, df_info: pd.DataFrame) -> tuple[p
     --------
     (resultado, por_noche)
     resultado : una fila por alojamiento; precio y precio_predicho son la suma de
-                todas las noches, más ahorro y prediccion_chollo.
+                todas las noches, más ahorro. Sin prediccion_chollo todavía.
     por_noche : una fila por noche, con el precio_predicho individual de esa noche
                 (para comparar precio real y predicho día a día).
     """
@@ -96,13 +109,27 @@ def predecir_nuevos(df_features: pd.DataFrame, df_info: pd.DataFrame) -> tuple[p
     resultado['precio_predicho'] = resultado['precio_predicho'].round(2)
     resultado['ahorro']          = (resultado['precio_predicho'] - resultado['precio']).round(2)
 
-    categoria = crear_etiqueta_chollo(
-        pd.Series(resultado['precio'].values),
-        pd.Series(resultado['precio_predicho'].values),
-    )
-    resultado['prediccion_chollo'] = categoria.map(ETIQUETAS).values
-
     return resultado, por_noche
+
+
+def categorizar_chollos(df: pd.DataFrame, nivel_estrictez: str = 'Predeterminado') -> pd.DataFrame:
+    """
+    Añade (o recalcula) la columna prediccion_chollo según el nivel de estrictez elegido.
+    Al operar sobre precio/precio_predicho ya calculados, cambiar de nivel es instantáneo:
+    no hace falta volver a scrapear ni a predecir.
+    """
+    if df.empty:
+        return df
+
+    df = df.copy()
+    umbrales = NIVELES_ESTRICTEZ[nivel_estrictez]
+    categoria = crear_etiqueta_chollo(
+        pd.Series(df['precio'].values),
+        pd.Series(df['precio_predicho'].values),
+        **umbrales,
+    )
+    df['prediccion_chollo'] = categoria.map(ETIQUETAS).values
+    return df
 
 
 # =============================================================================

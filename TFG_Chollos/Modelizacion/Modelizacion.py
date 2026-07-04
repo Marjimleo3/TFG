@@ -238,24 +238,30 @@ def crear_boosting(conjunto_ent: pd.DataFrame, conjunto_val: pd.DataFrame,
 # ETIQUETADO DE CHOLLOS
 # =============================================================================
 
-def crear_etiqueta_chollo(y_real: pd.Series, y_predicho: pd.Series) -> pd.Series:
+def crear_etiqueta_chollo(y_real: pd.Series, y_predicho: pd.Series,
+                          umbral_hiper: float = 0.75, umbral_super: float = 0.85,
+                          umbral_chollo: float = 0.97, umbral_inflado: float = 1.03) -> pd.Series:
     """
     Clasifica cada alojamiento según el ratio precio_real / precio_predicho:
 
-        hiper_chollo : 4  →  ratio <= 0.75   (más de un 25% más barato de lo esperado)
-        super_chollo : 3  →  0.75 < ratio < 0.85   (entre 15% y 25% más barato)
-        chollo       : 2  →  0.85 <= ratio < 0.99  (entre 1% y 15% más barato)
-        normal       : 1  →  0.97 <= ratio <= 1.03  (precio justo, ±3%)
-        inflado      : 0  →  ratio > 1.03   (más de un 3% más caro de lo esperado)
+        hiper_chollo : 4  →  ratio <= umbral_hiper
+        super_chollo : 3  →  umbral_hiper < ratio < umbral_super
+        chollo       : 2  →  umbral_super <= ratio < umbral_chollo
+        normal       : 1  →  umbral_chollo <= ratio <= umbral_inflado
+        inflado      : 0  →  ratio > umbral_inflado
+
+    Los valores por defecto (0.75, 0.85, 0.97, 1.03) son los umbrales canónicos
+    usados para etiquetar el dataset de entrenamiento; no cambiarlos aquí.
+    Las apps pueden pasar umbrales distintos para el control de estrictez del usuario.
     """
     ratio = y_real / y_predicho
 
     condiciones = [
-        ratio <= 0.75,
-        (ratio > 0.75)  & (ratio < 0.85),
-        (ratio >= 0.85) & (ratio < 0.97),
-        (ratio >= 0.97) & (ratio <= 1.03),
-        ratio > 1.03,
+        ratio <= umbral_hiper,
+        (ratio > umbral_hiper)  & (ratio < umbral_super),
+        (ratio >= umbral_super) & (ratio < umbral_chollo),
+        (ratio >= umbral_chollo) & (ratio <= umbral_inflado),
+        ratio > umbral_inflado,
     ]
     etiquetas = [4, 3, 2, 1, 0]
 

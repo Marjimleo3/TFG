@@ -21,7 +21,7 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from _scraper_app import scrape_busqueda
 from _feature_engineering import preprocesar_nuevos, codificar_nuevos
-from _predictor import predecir_nuevos, mostrar_resultados, ETIQUETAS
+from _predictor import predecir_nuevos, categorizar_chollos, mostrar_resultados, ETIQUETAS, NIVELES_ESTRICTEZ
 
 from TFG_Chollos.utils import conseguir_ruta_general_TFG, configurar_logger
 
@@ -139,6 +139,13 @@ def main():
          'Desayuno Incluido', 'Valoración >= 8', '3 o más estrellas', 'Admite Mascotas']
     )
 
+    st.subheader('Estrictez de la categorización de chollo:')
+    nivel_estrictez = st.select_slider(
+        'Cuanto más estricto, más ahorro hace falta para calificar como chollo',
+        options=list(NIVELES_ESTRICTEZ.keys()),
+        value='Predeterminado',
+    )
+
     # Filtros sidebar (solo visibles si hay resultados previos)
     if 'df_resultado' in st.session_state and not st.session_state.df_resultado.empty:
         df_prev = st.session_state.df_resultado
@@ -202,7 +209,8 @@ def main():
     if 'df_resultado' in st.session_state and st.session_state.df_resultado.empty:
         st.warning('El scraping completó pero ningún alojamiento tenía precio disponible para las fechas seleccionadas.')
     elif 'df_resultado' in st.session_state and not st.session_state.df_resultado.empty:
-        df = st.session_state.df_resultado
+        # Recategorizamos con el nivel de estrictez actual (instantáneo, sin re-scrapear)
+        df = categorizar_chollos(st.session_state.df_resultado, nivel_estrictez)
         mask = pd.Series(True, index=df.index)
         if prov_sel != 'Todas':
             mask &= df['provincia'] == prov_sel
