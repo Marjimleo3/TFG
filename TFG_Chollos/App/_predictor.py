@@ -5,7 +5,7 @@ Carga del modelo, predicción y UI de resultados. No es una página Streamlit.
 
 Exporta:
     cargar_modelos()                             → Random Forest cacheado
-    predecir_nuevos(df_features, df_info)        → df con predicciones (una fila por alojamiento)
+    predecir_nuevos(df_features, df_info)        → (resultado, por_noche)
     mostrar_resultados(df)                       → tabla + gráfico de categorías
     mostrar_predicciones_bd()                    → UI completa sobre la BD existente
     ETIQUETAS                                    → dict {int: str} de categorías
@@ -89,7 +89,7 @@ def _predecir_bd(_bosque_reg):
 # Usamos crear_etiqueta_chollo porque el scraper obtiene el precio real del calendario:
 # la categoría se calcula del ratio precio_real / precio_predicho,
 # garantizando coherencia con el ahorro mostrado al usuario.
-def predecir_nuevos(df_features: pd.DataFrame, df_info: pd.DataFrame) -> pd.DataFrame:
+def predecir_nuevos(df_features: pd.DataFrame, df_info: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Predice el precio justo para datos frescos del scraper y etiqueta cada alojamiento.
 
@@ -105,11 +105,14 @@ def predecir_nuevos(df_features: pd.DataFrame, df_info: pd.DataFrame) -> pd.Data
 
     Devuelve
     --------
-    DataFrame con una fila por alojamiento: precio y precio_predicho son la suma de
-    todas las noches, más ahorro y prediccion_chollo.
+    (resultado, por_noche)
+    resultado : una fila por alojamiento; precio y precio_predicho son la suma de
+                todas las noches, más ahorro y prediccion_chollo.
+    por_noche : una fila por noche, con el precio_predicho individual de esa noche
+                (para comparar precio real y predicho día a día).
     """
     if df_features.empty:
-        return pd.DataFrame()
+        return pd.DataFrame(), pd.DataFrame()
 
     bosque_reg = cargar_modelos()
     y_pred_reg = bosque_reg.predict(df_features)
@@ -126,7 +129,7 @@ def predecir_nuevos(df_features: pd.DataFrame, df_info: pd.DataFrame) -> pd.Data
         'precio':          'sum',
         'precio_predicho': 'sum',
     })
-    resultado['precio']          = resultado['precio'].round(2)
+    resultado['precio']          = resultado['precio'].round(0).astype(int)
     resultado['precio_predicho'] = resultado['precio_predicho'].round(2)
     resultado['ahorro']          = (resultado['precio_predicho'] - resultado['precio']).round(2)
 
@@ -136,7 +139,7 @@ def predecir_nuevos(df_features: pd.DataFrame, df_info: pd.DataFrame) -> pd.Data
     )
     resultado['prediccion_chollo'] = categoria.map(ETIQUETAS).values
 
-    return resultado
+    return resultado, por_noche
 
 
 # =============================================================================
@@ -167,7 +170,7 @@ def mostrar_resultados(df: pd.DataFrame):
             'provincia':         st.column_config.TextColumn('Provincia'),
             'localidad':         st.column_config.TextColumn('Localidad'),
             'tipo':              st.column_config.TextColumn('Tipo'),
-            'precio':            st.column_config.NumberColumn('Precio Real (€ total)',  format='%.2f €'),
+            'precio':            st.column_config.NumberColumn('Precio Real (€ total)',  format='%d €'),
             'precio_predicho':   st.column_config.NumberColumn('Precio Justo (€ total)', format='%.2f €'),
             'ahorro':            st.column_config.NumberColumn('Ahorro (€ total)',        format='%.2f €'),
             'prediccion_chollo': st.column_config.TextColumn('Categoría'),

@@ -76,15 +76,6 @@ def cargar_stats_entrenamiento():
 # HELPERS PRIVADOS DE EXTRACCIÓN
 # =============================================================================
 
-def _precio_valido(precio_str: str) -> bool:
-    """Devuelve True si el string puede convertirse a float."""
-    try:
-        float(precio_str)
-        return True
-    except (ValueError, TypeError):
-        return False
-
-
 def _extraer_tamaño_habitacion(servicios_habitacion_str: str, fallback: int) -> int:
     """
     Busca el patrón 'X m²' en la lista de servicios de la habitación.
@@ -100,50 +91,6 @@ def _extraer_tamaño_habitacion(servicios_habitacion_str: str, fallback: int) ->
     except Exception:
         pass
     return fallback
-
-
-def _precios_por_noche(calendario_str: str, noches: list, precio_total_fallback: float) -> dict:
-    """
-    Devuelve un dict {fecha_noche: precio} con el precio de cada noche de la estancia,
-    leído del calendario de disponibilidad.
-
-    Si alguna noche concreta no tiene precio en el calendario (pero otras sí), se rellena
-    con el precio de la noche conocida más cercana (la anterior si existe, si no la
-    siguiente). Si el calendario no aporta ningún precio (p.ej. hotel_id no encontrado),
-    se reparte precio_total_fallback (precio_listado de la tarjeta de búsqueda) a partes
-    iguales entre las noches.
-    """
-    try:
-        calendario = json.loads(calendario_str)
-
-        # Dict fecha → precio para días disponibles con precio válido
-        precio_por_dia = {
-            d['fecha']: float(d['precio'])
-            for d in calendario
-            if d.get('disponible') and d.get('precio') and _precio_valido(d['precio'])
-        }
-
-        if any(n in precio_por_dia for n in noches):
-            precios = {}
-            ultimo = None
-            for n in noches:
-                ultimo = precio_por_dia.get(n, ultimo)
-                precios[n] = ultimo
-
-            siguiente = None
-            for n in reversed(noches):
-                if precios[n] is None:
-                    precios[n] = siguiente
-                else:
-                    siguiente = precios[n]
-
-            return precios
-
-    except Exception:
-        pass
-
-    # Sin datos de calendario: repartimos el precio total a partes iguales
-    return {n: precio_total_fallback / len(noches) for n in noches}
 
 
 # =============================================================================
@@ -185,13 +132,15 @@ def preprocesar_nuevos(raw_list: list, fecha_checkin: date,
         noche += timedelta(days=1)
 
     for _, fila in raw_df.iterrows():
-        # Usamos el precio de la tarjeta del listado (total estancia con impuestos)
-        # como reparto de respaldo si el calendario no tiene precio para alguna noche.
+        # Precio de la tarjeta del listado (total estancia con impuestos), repartido
+        # a partes iguales entre las noches: el calendario de Booking es una fuente
+        # ruidosa (precio medio de la oferta más barata en el instante de la consulta,
+        # no el precio real de la reserva) y provocaba inconsistencias entre búsquedas.
         precio_total = fila.get('precio_listado')
         if not precio_total or not noches:
             continue
 
-        precios_noche = _precios_por_noche(fila.get('calendario', '[]'), noches, float(precio_total))
+        precio_noche_uniforme = float(precio_total) / len(noches)
 
         # Tamaño de habitación: extraemos del texto o usamos la mediana del dataset
         tamaño = _extraer_tamaño_habitacion(
@@ -251,13 +200,14 @@ def preprocesar_nuevos(raw_list: list, fecha_checkin: date,
         )
 
         # Una fila por cada noche de la estancia, con sus propias variables
-        # temporales (fecha, días restantes, fin de semana...) y su precio real
+        # temporales (fecha, días restantes, fin de semana...); el precio real
+        # se reparte a partes iguales entre las noches
         for noche_str in noches:
             fecha_disp_dt  = pd.Timestamp(noche_str)
             dias_restantes = (fecha_disp_dt.date() - hoy).days
             es_finde       = int(fecha_disp_dt.dayofweek in [4, 5])
             es_domingo     = int(fecha_disp_dt.dayofweek == 6)
-            precio_noche   = round(precios_noche[noche_str], 2)
+            precio_noche   = precio_noche_uniforme
 
             registros.append({
                 'localidad':           fila.get('localidad', ''),

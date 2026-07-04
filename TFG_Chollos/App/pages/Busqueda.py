@@ -181,14 +181,20 @@ def main():
         # (preprocesar_nuevos genera una fila por noche de la estancia; predecir_nuevos
         # predice cada noche por separado y agrupa por alojamiento sumando los totales)
         with st.spinner('Procesando datos...'):
-            df_features, df_info = preprocesar_nuevos(raw_list, fecha_entrada, fecha_salida)
-            df_codificado        = codificar_nuevos(df_features)
-            df_resultado         = predecir_nuevos(df_codificado, df_info)
+            df_features, df_info    = preprocesar_nuevos(raw_list, fecha_entrada, fecha_salida)
+            df_codificado            = codificar_nuevos(df_features)
+            df_resultado, df_por_noche = predecir_nuevos(df_codificado, df_info)
+
+        # Tabla codificada (entrada real del modelo) + precio real y predicho de cada noche
+        df_codificado_prediccion = df_codificado.copy()
+        df_codificado_prediccion['precio']           = df_por_noche['precio'].values
+        df_codificado_prediccion['precio_predicho']  = df_por_noche['precio_predicho'].values
 
         # Guardamos en session_state y relanzamos para activar los filtros de la sidebar
         st.session_state.df_resultado  = df_resultado
         st.session_state.df_features   = df_features
         st.session_state.df_codificado = df_codificado
+        st.session_state.df_codificado_prediccion = df_codificado_prediccion
         st.session_state.raw_list      = raw_list
         st.rerun()
 
@@ -222,6 +228,9 @@ def main():
                 st.dataframe(st.session_state.df_features, use_container_width=True)
                 st.caption('Codificado (entrada real al modelo)')
                 st.dataframe(st.session_state.df_codificado, use_container_width=True)
+            if 'df_codificado_prediccion' in st.session_state:
+                st.caption('Codificado + precio real y predicho de cada noche')
+                st.dataframe(st.session_state.df_codificado_prediccion, use_container_width=True)
 
 
 if __name__ == '__main__':
