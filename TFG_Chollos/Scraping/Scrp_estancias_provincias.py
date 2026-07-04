@@ -186,7 +186,8 @@ def n_alojamientos(driver):
     try:
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         titulo = soup.find('h1')
-        texto = titulo.find('span').get_text(strip=True)
+        span  = titulo.find('span') if titulo else None
+        texto = (span if span else titulo).get_text(strip=True)
         return int(re.search(r"[\d.]+", texto).group().replace(".", ""))
     except Exception as e:
         print(f"⚠️ No se pudo leer el total de resultados: {e}")
