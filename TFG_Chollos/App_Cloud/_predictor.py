@@ -19,6 +19,7 @@ import joblib
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from huggingface_hub import hf_hub_download
 
 from TFG_Chollos.Modelizacion.Modelizacion import crear_etiqueta_chollo
 from TFG_Chollos.utils import conseguir_ruta_general_TFG
@@ -27,6 +28,12 @@ from TFG_Chollos.utils import conseguir_ruta_general_TFG
 # CONSTANTES
 # =============================================================================
 BASE = conseguir_ruta_general_TFG()
+
+# Repositorio público de Hugging Face donde vive el Bosque Aleatorio (~1,3 GB,
+# demasiado grande para GitHub). Debe coincidir con REPO_ID en
+# Modelizacion/subir_modelo_hf.py. Al ser público, no hace falta token para leerlo.
+HF_REPO_ID       = "mario878/tfg-chollos-modelos"
+HF_MODELO_ARCHIVO = "bosque_aleatorio_reg.pkl"
 
 ETIQUETAS = {
     0: 'Inflado',
@@ -40,8 +47,8 @@ ETIQUETAS = {
 # 'Predeterminado' coincide con los umbrales canónicos usados para entrenar el modelo.
 NIVELES_ESTRICTEZ = {
     'Predeterminado': {'umbral_hiper': 0.75, 'umbral_super': 0.85, 'umbral_chollo': 0.97, 'umbral_inflado': 1.03},
-    'Más estricto':   {'umbral_hiper': 0.65, 'umbral_super': 0.80, 'umbral_chollo': 0.94, 'umbral_inflado': 1.03},
-    'Muy estricto':   {'umbral_hiper': 0.50, 'umbral_super': 0.70, 'umbral_chollo': 0.90, 'umbral_inflado': 1.03},
+    'Más estricto':   {'umbral_hiper': 0.65, 'umbral_super': 0.80, 'umbral_chollo': 0.90, 'umbral_inflado': 1.03},
+    'Muy estricto':   {'umbral_hiper': 0.50, 'umbral_super': 0.70, 'umbral_chollo': 0.85, 'umbral_inflado': 1.03},
 }
 
 
@@ -51,8 +58,12 @@ NIVELES_ESTRICTEZ = {
 
 @st.cache_resource
 def cargar_modelos():
-    """Carga el modelo Random Forest de regresión desde disco."""
-    return joblib.load(BASE / 'data' / 'models' / 'boosting_reg.pkl')
+    """
+    Descarga el Bosque Aleatorio desde Hugging Face Hub (repo público, cacheado
+    en disco por huggingface_hub tras la primera descarga) y lo carga en memoria.
+    """
+    ruta = hf_hub_download(repo_id=HF_REPO_ID, filename=HF_MODELO_ARCHIVO)
+    return joblib.load(ruta)
 
 
 # =============================================================================

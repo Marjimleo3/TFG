@@ -40,8 +40,8 @@ ETIQUETAS = {
 # 'Predeterminado' coincide con los umbrales canónicos usados para entrenar el modelo.
 NIVELES_ESTRICTEZ = {
     'Predeterminado': {'umbral_hiper': 0.75, 'umbral_super': 0.85, 'umbral_chollo': 0.97, 'umbral_inflado': 1.03},
-    'Más estricto':   {'umbral_hiper': 0.65, 'umbral_super': 0.80, 'umbral_chollo': 0.94, 'umbral_inflado': 1.03},
-    'Muy estricto':   {'umbral_hiper': 0.50, 'umbral_super': 0.70, 'umbral_chollo': 0.90, 'umbral_inflado': 1.03},
+    'Más estricto':   {'umbral_hiper': 0.65, 'umbral_super': 0.80, 'umbral_chollo': 0.90, 'umbral_inflado': 1.03},
+    'Muy estricto':   {'umbral_hiper': 0.50, 'umbral_super': 0.70, 'umbral_chollo': 0.85, 'umbral_inflado': 1.03},
 }
 
 

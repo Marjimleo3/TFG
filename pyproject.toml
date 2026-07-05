@@ -31,6 +31,7 @@ dependencies = [
     "dask>=2024.1.0",
     "distributed>=2026.3.0",
     "bokeh>=3.1.0",
+    "huggingface-hub>=0.27.0",
 ]
 
 [project.optional-dependencies]

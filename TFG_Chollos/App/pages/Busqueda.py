@@ -140,11 +140,38 @@ def main():
     )
 
     st.subheader('¿Cómo quiere que sea la categorización de los chollos?')
-    nivel_estrictez = st.select_slider(
-        'Cuanto más estricto, más ahorro hace falta para calificar como chollo',
-        options=list(NIVELES_ESTRICTEZ.keys()),
-        value='Predeterminado',
-    )
+    col_slider, col_info = st.columns([6, 1])
+    with col_slider:
+        nivel_estrictez = st.select_slider(
+            'Cuanto más estricto, más ahorro hace falta para calificar como chollo',
+            options=list(NIVELES_ESTRICTEZ.keys()),
+            value='Predeterminado',
+        )
+    with col_info:
+        st.markdown('<div style="margin-top: 1.8em;"></div>', unsafe_allow_html=True)
+        with st.popover('ℹ️'):
+            st.markdown('''
+**Predeterminado**
+- Hiper-chollo: ahorras más de un 25%
+- Super-chollo: ahorras entre un 15% y un 25%
+- Chollo: ahorras entre un 3% y un 15%
+- Normal: precio justo (±3%)
+- Inflado: no hay ahorro — precio al menos un 3% superior al estimado
+
+**Más estricto**
+- Hiper-chollo: ahorras más de un 35%
+- Super-chollo: ahorras entre un 20% y un 35%
+- Chollo: ahorras entre un 10% y un 20%
+- Normal: ahorro menor al 10% (o hasta un 3% más caro)
+- Inflado: no hay ahorro — precio al menos un 3% superior al estimado
+
+**Muy estricto**
+- Hiper-chollo: ahorras más de un 50%
+- Super-chollo: ahorras entre un 30% y un 50%
+- Chollo: ahorras entre un 15% y un 30%
+- Normal: ahorro menor al 15% (o hasta un 3% más caro)
+- Inflado: no hay ahorro — precio al menos un 3% superior al estimado
+''')
 
     # Filtros sidebar (solo visibles si hay resultados previos)
     if 'df_resultado' in st.session_state and not st.session_state.df_resultado.empty:
