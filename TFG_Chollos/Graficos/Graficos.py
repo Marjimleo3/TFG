@@ -21,7 +21,7 @@ import joblib
 import pandas as pd
 
 from TFG_Chollos.utils import configurar_logger, conseguir_ruta_general_TFG
-from TFG_Chollos.Modelizacion.Modelizacion import crear_etiqueta_chollo
+from TFG_Chollos.Modelizacion.categorizacion import crear_etiqueta_chollo
 from TFG_Chollos.Modelizacion.transformaciones import train_test_validation_particion
 
 # =============================================================================

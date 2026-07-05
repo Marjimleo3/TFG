@@ -21,7 +21,7 @@ import plotly.graph_objects as go
 import streamlit as st
 # from huggingface_hub import hf_hub_download  # descomentar si se vuelve a usar el RF (ver cargar_modelos)
 
-from TFG_Chollos.Modelizacion.Modelizacion import crear_etiqueta_chollo
+from TFG_Chollos.Modelizacion.categorizacion import crear_etiqueta_chollo
 from TFG_Chollos.utils import conseguir_ruta_general_TFG
 
 # =============================================================================

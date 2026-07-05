@@ -20,7 +20,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from TFG_Chollos.Modelizacion.Modelizacion import crear_etiqueta_chollo
+from TFG_Chollos.Modelizacion.categorizacion import crear_etiqueta_chollo
 from TFG_Chollos.utils import conseguir_ruta_general_TFG
 
 # =============================================================================
