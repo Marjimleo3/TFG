@@ -67,9 +67,8 @@ def mostrar_graficos_analisis():
         df = df[df['provincia'].isin(provincias_sel)]
 
     # 1. Precio promedio por mes — línea temporal para ver estacionalidad
-    df_mes = df.copy()
-    df_mes['mes_num'] = df_mes['fecha_disponible'].dt.month.astype(int)
-    precio_mes = df_mes.groupby('mes_num')['precio'].mean().sort_index()
+    mes_num = df['fecha_disponible'].dt.month.astype(int)
+    precio_mes = df.groupby(mes_num)['precio'].mean().sort_index()
     x_mes = [MESES_ES[m] for m in precio_mes.index.tolist()]
     y_mes = [round(float(v), 2) for v in precio_mes.values.tolist()]
 
@@ -80,18 +79,16 @@ def mostrar_graficos_analisis():
     col1, col2 = st.columns(2)
 
     # 2. Precio promedio por tamaño de habitación — agrupado en rangos de m²
-    df_tam = df.copy()
-    df_tam['bin'] = pd.cut(df_tam['tamaño_habitacion'].astype(float), bins=BINS_TAM, labels=False, include_lowest=True).astype('Int64')
-    precio_tam = df_tam.groupby('bin')['precio'].mean().sort_index().dropna()
+    bin_tam = pd.cut(df['tamaño_habitacion'].astype(float), bins=BINS_TAM, labels=False, include_lowest=True)
+    precio_tam = df.groupby(bin_tam)['precio'].mean().sort_index().dropna()
     x_tam = [LABELS_TAM[int(i)] for i in precio_tam.index.tolist()]
     y_tam = [round(float(v), 2) for v in precio_tam.values.tolist()]
 
     col1.plotly_chart(_bar(x_tam, y_tam, 'Precio promedio por tamaño de habitacion', 'Tamaño', 'Precio promedio (EUR)'), use_container_width=True)
 
     # 3. Precio promedio por distancia al centro — agrupado en rangos de km
-    df_dist = df.copy()
-    df_dist['bin'] = pd.cut(df_dist['distancia_centro_km'].astype(float), bins=BINS_DIST, labels=False, include_lowest=True).astype('Int64')
-    precio_dist = df_dist.groupby('bin')['precio'].mean().sort_index().dropna()
+    bin_dist = pd.cut(df['distancia_centro_km'].astype(float), bins=BINS_DIST, labels=False, include_lowest=True)
+    precio_dist = df.groupby(bin_dist)['precio'].mean().sort_index().dropna()
     x_dist = [LABELS_DIST[int(i)] for i in precio_dist.index.tolist()]
     y_dist = [round(float(v), 2) for v in precio_dist.values.tolist()]
 
@@ -100,11 +97,10 @@ def mostrar_graficos_analisis():
     col3, col4 = st.columns(2)
 
     # 4. Precio promedio por tipo y periodo — barras agrupadas entre semana vs fin de semana
-    df_tipo = df.copy()
-    df_tipo['es_finde_int'] = df_tipo['es_finde'].astype(int)
-    precio_tipo = df_tipo.groupby(['tipo', 'es_finde_int'])['precio'].mean()
+    es_finde_int = df['es_finde'].astype(int)
+    precio_tipo = df.groupby([df['tipo'], es_finde_int])['precio'].mean()
 
-    tipos = sorted(df_tipo['tipo'].unique().tolist())
+    tipos = sorted(df['tipo'].unique().tolist())
     y_semana = [round(float(precio_tipo.get((t, 0), 0)), 2) for t in tipos]
     y_finde  = [round(float(precio_tipo.get((t, 1), 0)), 2) for t in tipos]
 

@@ -28,9 +28,6 @@ dependencies = [
     "streamlit>=1.35",
     "webdriver-manager>=4.0.2",
     "xgboost>=3.2.0",
-    "dask>=2024.1.0",
-    "distributed>=2026.3.0",
-    "bokeh>=3.1.0",
     "huggingface-hub>=0.27.0",
 ]
 
