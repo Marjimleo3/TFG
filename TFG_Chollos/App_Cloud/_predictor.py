@@ -19,7 +19,7 @@ import joblib
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
-from huggingface_hub import hf_hub_download
+# from huggingface_hub import hf_hub_download  # descomentar si se vuelve a usar el RF (ver cargar_modelos)
 
 from TFG_Chollos.Modelizacion.Modelizacion import crear_etiqueta_chollo
 from TFG_Chollos.utils import conseguir_ruta_general_TFG
@@ -32,6 +32,10 @@ BASE = conseguir_ruta_general_TFG()
 # Repositorio público de Hugging Face donde vive el Bosque Aleatorio (~1,3 GB,
 # demasiado grande para GitHub). Debe coincidir con REPO_ID en
 # Modelizacion/subir_modelo_hf.py. Al ser público, no hace falta token para leerlo.
+# NOTA: cargar el RF (~549 MB en memoria tras descomprimir) sumado al resto de la
+# app supera el límite de RAM (~1 GB) del plan gratuito de Streamlit Cloud, y
+# probablemente es la causa del crash "Oh no. Error running app.". Se vuelve a
+# usar boosting_reg.pkl (~194 MB) temporalmente para confirmarlo.
 HF_REPO_ID       = "mario878/tfg-chollos-modelos"
 HF_MODELO_ARCHIVO = "bosque_aleatorio_reg.pkl"
 
@@ -59,11 +63,17 @@ NIVELES_ESTRICTEZ = {
 @st.cache_resource
 def cargar_modelos():
     """
-    Descarga el Bosque Aleatorio desde Hugging Face Hub (repo público, cacheado
-    en disco por huggingface_hub tras la primera descarga) y lo carga en memoria.
-    """
+    Carga el modelo de boosting desde disco (~194 MB en memoria).
+
+    TODO: volver a usar el Bosque Aleatorio (descargado desde Hugging Face Hub,
+    ~549 MB en memoria) cuando se disponga de más RAM que el plan gratuito de
+    Streamlit Cloud (~1 GB), o se reduzca el tamaño del modelo entrenado.
+    Código de descarga conservado abajo, comentado:
+
     ruta = hf_hub_download(repo_id=HF_REPO_ID, filename=HF_MODELO_ARCHIVO)
     return joblib.load(ruta)
+    """
+    return joblib.load(BASE / 'data' / 'models' / 'boosting_reg.pkl')
 
 
 # =============================================================================
