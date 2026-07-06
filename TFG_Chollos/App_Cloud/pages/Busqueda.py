@@ -111,6 +111,12 @@ def generador_filtros(tipos: list, servicios: list) -> str:
 # PUNTO DE ENTRADA
 # =============================================================================
 def main():
+    # NOTA: la carga del RF (cargar_modelos, en _predictor.predecir_nuevos) se
+    # probó a precargar aquí para separarla en el tiempo del pico de memoria
+    # del scraping, pero crasheaba la app solo con cargar el modelo, incluso
+    # sin haber hecho ninguna búsqueda: el RF por sí solo ya satura la RAM del
+    # plan gratuito de Streamlit Cloud. Se descarta la precarga (vuelve a
+    # cargarse de forma perezosa, solo si el usuario llega a buscar).
     st.header('¡¡Bienvenidos al mejor buscador de chollos de todo internet!!')
 
     st.subheader('Seleccione el lugar/es donde quiera hospedarse (máximo 5):')
@@ -277,9 +283,9 @@ def main():
             mask &= df['prediccion_chollo'] == cat_sel
         mostrar_resultados(df[mask])
 
-    # Debug interno: dataframes intermedios del modelo
+    # Herramientas del desarrollador: dataframes intermedios del pipeline
     if 'raw_list' in st.session_state or 'df_features' in st.session_state or 'urls_busqueda' in st.session_state:
-        with st.expander('Debug interno: dataframes del modelo', expanded=False):
+        with st.expander('🛠️ Herramientas del desarrollador', expanded=False):
             if 'urls_busqueda' in st.session_state and st.session_state.urls_busqueda:
                 st.caption('URL de búsqueda en Booking por destino')
                 for lugar, url in st.session_state.urls_busqueda.items():

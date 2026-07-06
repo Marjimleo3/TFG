@@ -19,7 +19,6 @@ import joblib
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
-from huggingface_hub import hf_hub_download
 
 from TFG_Chollos.Modelizacion.categorizacion import crear_etiqueta_chollo
 from TFG_Chollos.utils import conseguir_ruta_general_TFG
@@ -28,12 +27,6 @@ from TFG_Chollos.utils import conseguir_ruta_general_TFG
 # CONSTANTES
 # =============================================================================
 BASE = conseguir_ruta_general_TFG()
-
-# Repositorio público de Hugging Face donde vive el Bosque Aleatorio (~1,3 GB,
-# demasiado grande para GitHub). Debe coincidir con REPO_ID en
-# Modelizacion/subir_modelo_hf.py. Al ser público, no hace falta token para leerlo.
-HF_REPO_ID       = "mario878/tfg-chollos-modelos"
-HF_MODELO_ARCHIVO = "bosque_aleatorio_reg.pkl"
 
 ETIQUETAS = {
     0: 'Inflado',
@@ -58,9 +51,15 @@ NIVELES_ESTRICTEZ = {
 
 @st.cache_resource
 def cargar_modelos():
-    """Descarga (o recupera de caché local) el Bosque Aleatorio desde Hugging Face Hub."""
-    ruta = hf_hub_download(repo_id=HF_REPO_ID, filename=HF_MODELO_ARCHIVO)
-    return joblib.load(ruta)
+    """
+    Carga el Bosque Aleatorio podado a 20 árboles (ver Modelizacion/podar_bosque_aleatorio.py).
+
+    El modelo completo (100 árboles) ocupa ~1,4 GB en memoria y crashea la app
+    en el plan gratuito de Streamlit Community Cloud. Esta versión podada
+    ocupa ~373 MB (R²=0,8634 en test, frente a 0,8676 del completo) y cabe
+    directamente en GitHub (~59 MB comprimido), sin necesitar Hugging Face Hub.
+    """
+    return joblib.load(BASE / 'data' / 'models' / 'bosque_aleatorio_reg_ligero.pkl')
 
 
 # =============================================================================

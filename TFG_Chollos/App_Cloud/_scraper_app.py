@@ -45,7 +45,7 @@ from TFG_Chollos.Scraping.Scrp_caracteristicas_estancias import (
 N_ADULTOS      = 2
 N_HABITACIONES = 1
 N_MENORES      = 0
-MAX_CARDS      = 25     
+MAX_CARDS      = 25
 
 # Caché en memoria de (ss, dest_id, dest_type) resueltos vía autocomplete,
 # para no repetir la navegación a la home en cada búsqueda del mismo lugar
@@ -233,6 +233,13 @@ def _fetch_location_y_servicios(url: str) -> dict:
     "longitud" vacíos. _room_amenities() sí funciona porque carga la página
     con Playwright (ejecuta JS); replicamos ese mismo enfoque aquí para
     obtener el HTML completo y extraer de él lat/lon, dirección y servicios.
+
+    NOTA: se probó a reutilizar un navegador por hilo en vez de lanzar uno
+    nuevo por ficha (para reducir el tiempo de scraping en Streamlit Cloud),
+    pero en producción (donde este fallback se ejecuta para casi todas las
+    fichas, al contrario que en local) provocaba que la mayoría de fichas se
+    perdieran silenciosamente. Se revierte a lanzar y cerrar un navegador
+    nuevo por llamada, que es el comportamiento ya probado y estable.
     """
     extra = {
         'latitud': '', 'longitud': '', 'direccion': '', 'ciudad': '',
@@ -242,7 +249,13 @@ def _fetch_location_y_servicios(url: str) -> dict:
         with sync_playwright() as pw:
             browser = pw.chromium.launch(
                 headless=True,
-                args=['--no-sandbox', '--disable-blink-features=AutomationControlled'],
+                args=[
+                    '--no-sandbox',
+                    '--disable-blink-features=AutomationControlled',
+                    '--disable-dev-shm-usage',
+                    '--disable-gpu',
+                    '--disable-setuid-sandbox',
+                ],
             )
             context = browser.new_context(
                 user_agent=(
@@ -268,7 +281,9 @@ def _fetch_location_y_servicios(url: str) -> dict:
             except Exception:
                 pass
             try:
-                page.wait_for_selector('script[type="application/ld+json"]', timeout=5_000)
+                # 3s en vez de 5s: solo se nota en el peor caso (la página no
+                # trae JSON-LD), donde de todos modos se sigue sin ese dato.
+                page.wait_for_selector('script[type="application/ld+json"]', timeout=3_000)
             except Exception:
                 pass
             html = page.content()
@@ -462,10 +477,12 @@ async def _async_scrape_listado(lugar: str, url: str, fecha_entrada: str,
                 except Exception:
                     _texto_inicial = None
 
+                # Techo de espera reducido de 8s a 4s (10 x 0.4s): el bucle ya
+                # corta en cuanto detecta el cambio, esto solo baja el peor caso.
                 _texto_final = _texto_inicial
                 if _texto_inicial is not None:
-                    for _ in range(16):
-                        await asyncio.sleep(0.5)
+                    for _ in range(10):
+                        await asyncio.sleep(0.4)
                         try:
                             _texto_actual = await h1.inner_text(timeout=1000)
                         except Exception:
@@ -485,7 +502,7 @@ async def _async_scrape_listado(lugar: str, url: str, fecha_entrada: str,
                 )
 
                 await page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
-                await asyncio.sleep(1.5)
+                await asyncio.sleep(1.0)
 
                 _html = await page.content()
                 return _html
@@ -526,12 +543,12 @@ async def _async_scrape_listado(lugar: str, url: str, fecha_entrada: str,
                     await _dismiss_cookies()
 
                     ss_input = page.locator('input[name="ss"]')
-                    await ss_input.click(timeout=10000)
+                    await ss_input.click(timeout=8000)
                     await ss_input.fill('')
                     await ss_input.type(lugar, delay=50)
 
                     sugerencia = page.locator('[data-testid="autocomplete-result"]').first
-                    await sugerencia.wait_for(timeout=8000)
+                    await sugerencia.wait_for(timeout=6000)
                     await sugerencia.click()
 
                     await page.locator('button[type="submit"]').first.click()
@@ -937,7 +954,10 @@ def scrape_busqueda(urls: dict, fecha_entrada: str, fecha_salida: str, barra,
 
         return ficha
 
-    with ThreadPoolExecutor(max_workers=3) as executor:
+    # 4 en vez de 3: con el RF podado (~373 MB en vez de ~1,4 GB) hay más
+    # margen de memoria libre para navegadores Chromium concurrentes y
+    # transitorios (se lanzan y cierran por ficha, no se reutilizan).
+    with ThreadPoolExecutor(max_workers=4) as executor:
         futures = {
             executor.submit(_procesar, row, i + 1): i
             for i, row in enumerate(listados)
