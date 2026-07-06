@@ -237,7 +237,13 @@ def _get_thread_browser():
         _thread_local.pw = sync_playwright().start()
         _thread_local.browser = _thread_local.pw.chromium.launch(
             headless=True,
-            args=['--no-sandbox', '--disable-blink-features=AutomationControlled'],
+            args=[
+                '--no-sandbox',
+                '--disable-blink-features=AutomationControlled',
+                '--disable-dev-shm-usage',
+                '--disable-gpu',
+                '--disable-setuid-sandbox',
+            ],
         )
     return _thread_local.browser
 
@@ -972,7 +978,11 @@ def scrape_busqueda(urls: dict, fecha_entrada: str, fecha_salida: str, barra,
 
         return ficha
 
-    MAX_WORKERS_FICHAS = 3
+    # 2 en vez de 3: con el navegador reutilizado por hilo (ver _get_thread_browser),
+    # cada hilo mantiene su Chromium abierto durante toda la fase 2, no solo el
+    # instante de una ficha. Menos hilos concurrentes = menos navegadores vivos
+    # a la vez, para no sumar demasiada memoria al RF ya cargado en el proceso.
+    MAX_WORKERS_FICHAS = 2
     with ThreadPoolExecutor(max_workers=MAX_WORKERS_FICHAS) as executor:
         futures = {
             executor.submit(_procesar, row, i + 1): i
