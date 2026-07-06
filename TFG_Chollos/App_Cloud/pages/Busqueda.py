@@ -280,9 +280,13 @@ def main():
             mask &= df['prediccion_chollo'] == cat_sel
         mostrar_resultados(df[mask])
 
-    # Debug interno: dataframes intermedios del modelo
-    if 'raw_list' in st.session_state or 'df_features' in st.session_state:
-        with st.expander('Debug interno: dataframes del modelo', expanded=False):
+    # Herramientas del desarrollador: dataframes intermedios del pipeline
+    if 'raw_list' in st.session_state or 'df_features' in st.session_state or 'diag_scraping' in st.session_state:
+        with st.expander('🛠️ Herramientas del desarrollador', expanded=False):
+            if 'diag_scraping' in st.session_state and st.session_state.diag_scraping:
+                st.caption('Diagnóstico del scraping (título de página, homepage detectada, tarjetas)')
+                for linea in st.session_state.diag_scraping:
+                    st.text(linea)
             if 'raw_list' in st.session_state:
                 st.caption('Datos crudos del scraper (antes de preprocesar)')
                 st.dataframe(pd.DataFrame(st.session_state.raw_list), width='stretch')
