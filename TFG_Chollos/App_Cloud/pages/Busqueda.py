@@ -21,7 +21,7 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from _scraper_app import scrape_busqueda
 from _feature_engineering import preprocesar_nuevos, codificar_nuevos
-from _predictor import predecir_nuevos, categorizar_chollos, mostrar_resultados, ETIQUETAS, NIVELES_ESTRICTEZ
+from _predictor import predecir_nuevos, categorizar_chollos, mostrar_resultados, ETIQUETAS, NIVELES_ESTRICTEZ, cargar_modelos
 
 from TFG_Chollos.utils import conseguir_ruta_general_TFG, configurar_logger
 
@@ -111,6 +111,14 @@ def generador_filtros(tipos: list, servicios: list) -> str:
 # PUNTO DE ENTRADA
 # =============================================================================
 def main():
+    # Precarga del RF (descarga desde Hugging Face Hub la primera vez, cacheada
+    # con @st.cache_resource) al entrar a la página, en vez de esperar a que el
+    # usuario pulse "Buscar". Así el pico de memoria de la carga del modelo no
+    # coincide con el de la extracción (Chromium abierto + dataframes recién
+    # creados), que es cuando se ha observado el crash por memoria.
+    with st.spinner('Preparando el modelo de predicción...'):
+        cargar_modelos()
+
     st.header('¡¡Bienvenidos al mejor buscador de chollos de todo internet!!')
 
     st.subheader('Seleccione el lugar/es donde quiera hospedarse (máximo 5):')
