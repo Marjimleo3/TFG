@@ -26,6 +26,7 @@ import json
 import os
 import random
 import re
+import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -40,6 +41,15 @@ from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
 
 from TFG_Chollos.utils import configurar_logger
+
+# Los print() de depuración de este módulo usan emojis; en Windows, si stdout
+# no está adjunto a una consola UTF-8 (p. ej. al ejecutarse embebido en
+# Streamlit), la codificación por defecto (cp1252) no puede representarlos y
+# lanza UnicodeEncodeError. Forzamos UTF-8 con 'replace' para no crashear.
+try:
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+except Exception:
+    pass
 
 # =============================================================================
 # CONFIGURACIÓN
