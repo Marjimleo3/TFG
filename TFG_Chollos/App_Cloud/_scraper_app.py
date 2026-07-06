@@ -281,7 +281,9 @@ def _fetch_location_y_servicios(url: str) -> dict:
             except Exception:
                 pass
             try:
-                page.wait_for_selector('script[type="application/ld+json"]', timeout=5_000)
+                # 3s en vez de 5s: solo se nota en el peor caso (la página no
+                # trae JSON-LD), donde de todos modos se sigue sin ese dato.
+                page.wait_for_selector('script[type="application/ld+json"]', timeout=3_000)
             except Exception:
                 pass
             html = page.content()
@@ -475,10 +477,12 @@ async def _async_scrape_listado(lugar: str, url: str, fecha_entrada: str,
                 except Exception:
                     _texto_inicial = None
 
+                # Techo de espera reducido de 8s a 4s (10 x 0.4s): el bucle ya
+                # corta en cuanto detecta el cambio, esto solo baja el peor caso.
                 _texto_final = _texto_inicial
                 if _texto_inicial is not None:
-                    for _ in range(16):
-                        await asyncio.sleep(0.5)
+                    for _ in range(10):
+                        await asyncio.sleep(0.4)
                         try:
                             _texto_actual = await h1.inner_text(timeout=1000)
                         except Exception:
@@ -498,7 +502,7 @@ async def _async_scrape_listado(lugar: str, url: str, fecha_entrada: str,
                 )
 
                 await page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
-                await asyncio.sleep(1.5)
+                await asyncio.sleep(1.0)
 
                 _html = await page.content()
                 return _html
