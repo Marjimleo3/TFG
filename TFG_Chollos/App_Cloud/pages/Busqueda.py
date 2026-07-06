@@ -62,11 +62,15 @@ logger = configurar_logger(__name__)
 # =============================================================================
 # FUNCIONES
 # =============================================================================
+# 'Rota Cádiz' es un duplicado de 'Rota' (dirección sin coma entre localidad y provincia en esa ficha); se excluye del formulario para no fragmentar Rota en dos entradas.
+LOCALIDADES_EXCLUIDAS = {'Rota Cádiz'}
+
+
 @st.cache_data
 def cargar_destinos_db() -> list:
     db = pd.read_parquet(DB_FINAL, columns=['provincia', 'localidad'])
     provincias = db['provincia'].unique().tolist()
-    localidades = sorted(db['localidad'].unique().tolist())
+    localidades = sorted(set(db['localidad'].unique().tolist()) - LOCALIDADES_EXCLUIDAS)
     return provincias + localidades
 
 
