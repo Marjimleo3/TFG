@@ -26,7 +26,6 @@ import json
 import os
 import random
 import re
-import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -41,15 +40,6 @@ from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
 
 from TFG_Chollos.utils import configurar_logger
-
-# Los print() de depuración de este módulo usan emojis; en Windows, si stdout
-# no está adjunto a una consola UTF-8 (p. ej. al ejecutarse embebido en
-# Streamlit), la codificación por defecto (cp1252) no puede representarlos y
-# lanza UnicodeEncodeError. Forzamos UTF-8 con 'replace' para no crashear.
-try:
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-except Exception:
-    pass
 
 # =============================================================================
 # CONFIGURACIÓN
@@ -255,7 +245,7 @@ class BookingSession:
 
     def _init_session(self):
         """Lanza Playwright, navega a booking.com y transfiere las cookies a requests."""
-        print("\n  🌐 Resolviendo AWS WAF con Playwright...")
+        print("\n  Resolviendo AWS WAF con Playwright...")
         with sync_playwright() as pw:
             browser = pw.chromium.launch(
                 headless=True,
@@ -286,7 +276,7 @@ class BookingSession:
                     domain=c.get("domain", ".booking.com"),
                     path=c.get("path", "/"),
                 )
-            print(f"  ✅ {len(cookies)} cookies transferidas.")
+            print(f"  OK: {len(cookies)} cookies transferidas.")
             browser.close()
 
     def _tick(self):
@@ -310,7 +300,7 @@ class BookingSession:
             try:
                 r = self.session.get(url, params=params, headers=HEADERS_HTML, timeout=25)
                 if self._is_waf(r):
-                    print(f"    ⚠ WAF en GET (intento {attempt+1}) → refrescando...")
+                    print(f"    AVISO: WAF en GET (intento {attempt+1}) -> refrescando...")
                     self._init_session()
                     time.sleep(random.uniform(2, 4))
                     continue
@@ -331,14 +321,14 @@ class BookingSession:
             try:
                 r = self.session.post(url, json=payload, headers=hdrs, timeout=25)
                 if self._is_waf(r):
-                    print(f"    ⚠ WAF en POST (intento {attempt+1}) → refrescando...")
+                    print(f"    AVISO: WAF en POST (intento {attempt+1}) -> refrescando...")
                     self._init_session()
                     time.sleep(random.uniform(2, 4))
                     continue
                 r.raise_for_status()
                 data = r.json()
                 if "errors" in data and not data.get("data"):
-                    print(f"    ⚠ GraphQL error: {data['errors'][0].get('message','')}")
+                    print(f"    AVISO: GraphQL error: {data['errors'][0].get('message','')}")
                     return None
                 return data
             except (requests.RequestException, json.JSONDecodeError) as exc:
@@ -662,7 +652,7 @@ class BookingExtractor:
                 # Esperamos a que aparezca la tabla de habitaciones (requiere JS)
                 page.wait_for_selector("tr.hprt-table-cheapest-block", timeout=15_000)
             except PWTimeout:
-                print("    ⚠ Timeout esperando tabla de habitaciones")
+                print("    AVISO: Timeout esperando tabla de habitaciones")
                 browser.close()
                 return []
 
@@ -674,7 +664,7 @@ class BookingExtractor:
         # La clase hprt-table-cheapest-block identifica siempre la oferta más barata
         primera_oferta = soup.select_one("tr.hprt-table-cheapest-block")
         if not primera_oferta:
-            print("    ⚠ No se encontró la primera oferta en el HTML renderizado")
+            print("    AVISO: No se encontró la primera oferta en el HTML renderizado")
             return []
 
         # Extraemos los badges de servicios de esa primera oferta
@@ -785,7 +775,7 @@ class BookingExtractor:
         tag = f"[{idx}/{total}] " if idx else ""
         print(f"\n{tag}{sep}")
         print(f"  Alojamiento : {row.get('titulo', '')}")
-        print(f"  Periodo     : {checkin} → {checkout}  |  Adultos: {adults}")
+        print(f"  Periodo     : {checkin} -> {checkout}  |  Adultos: {adults}")
 
         pagename     = self._pagename(url)
         country_code = self._country(url)
@@ -804,26 +794,26 @@ class BookingExtractor:
         html_text = r.text
 
         hotel_id = self._get_hotel_id(html_text, pagename, country_code)
-        print(f"  hotel_id    : {hotel_id or '⚠ no encontrado'}  |  slug: {pagename}")
+        print(f"  hotel_id    : {hotel_id or 'no encontrado'}  |  slug: {pagename}")
 
-        print("  → Ubicación...")
+        print("  -> Ubicación...")
         loc = self._location(soup, html_text)
 
-        print("  → Servicios generales...")
+        print("  -> Servicios generales...")
         amenities = self._amenities(pagename, country_code, checkin, checkout, adults, soup)
 
-        print("  → Servicios de la primera oferta...")
+        print("  -> Servicios de la primera oferta...")
         room_amenities = self._room_amenities(url)
         print(f"     {len(room_amenities)} servicios encontrados en la primera oferta.")
 
         calendar = []
         if hotel_id:
-            print("  → Calendario...")
+            print("  -> Calendario...")
             calendar = self._calendar(hotel_id, pagename, country_code, checkin, checkout, adults)
             disponibles = sum(1 for d in calendar if d["disponible"])
             print(f"     {len(calendar)} días — {disponibles} con disponibilidad y precio.")
         else:
-            print("  ⚠ Sin hotel_id → calendario omitido.")
+            print("  AVISO: Sin hotel_id -> calendario omitido.")
 
         return {
             **row,
@@ -859,11 +849,11 @@ class BookingExtractor:
                     url = row.get(COL_URL, "").strip()
                     if url:
                         ya_hechas.add(url)
-            print(f"  ♻️  Reanudando: {len(ya_hechas)} alojamientos ya procesados → se omiten.")
+            print(f"  Reanudando: {len(ya_hechas)} alojamientos ya procesados, se omiten.")
         except FileNotFoundError:
             pass
         except Exception as exc:
-            print(f"  ⚠ No se pudo leer el CSV de salida para reanudar: {exc}")
+            print(f"  AVISO: No se pudo leer el CSV de salida para reanudar: {exc}")
         return ya_hechas
 
     @staticmethod
@@ -875,7 +865,7 @@ class BookingExtractor:
             print(f"  CSV leído: {len(rows)} filas  |  sep='{CSV_SEPARATOR}'")
             return rows
         except Exception as exc:
-            print(f"❌ Error leyendo CSV: {exc}")
+            print(f"ERROR leyendo CSV: {exc}")
             return []
 
     def process_csv(self, input_path: str, output_path: str, workers: int = MAX_WORKERS):
@@ -911,7 +901,7 @@ class BookingExtractor:
         print(f"{'='*62}\n")
 
         if not rows_pendientes:
-            print("  ✅ Todo ya estaba procesado. Nada que hacer.")
+            print("  Todo ya estaba procesado. Nada que hacer.")
             return
 
         lock          = threading.Lock()
