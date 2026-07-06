@@ -222,6 +222,41 @@ def _url_por_coords(lat: float, lon: float, fecha_entrada: str, fecha_salida: st
 # =============================================================================
 # FASE 2 — FIX LOCAL: servicios/lat/lon/dirección vía Playwright
 # =============================================================================
+# En Streamlit Cloud, requests() casi siempre devuelve una página degradada
+# (ver _procesar en scrape_busqueda), así que _fetch_location_y_servicios se
+# ejecuta para casi todas las fichas (hasta 25 por búsqueda). Lanzar un
+# Chromium nuevo por ficha era el principal cuello de botella: cada hilo del
+# ThreadPoolExecutor lanza ahora su propio navegador UNA sola vez y lo
+# reutiliza para todas las fichas que le toquen (los objetos de Playwright no
+# se pueden compartir entre hilos, por eso es "uno por hilo" y no uno global).
+_thread_local = threading.local()
+
+
+def _get_thread_browser():
+    if not hasattr(_thread_local, 'browser'):
+        _thread_local.pw = sync_playwright().start()
+        _thread_local.browser = _thread_local.pw.chromium.launch(
+            headless=True,
+            args=['--no-sandbox', '--disable-blink-features=AutomationControlled'],
+        )
+    return _thread_local.browser
+
+
+def _close_thread_browser():
+    """Cierra el navegador reutilizado del hilo actual, si existe. Idempotente."""
+    if hasattr(_thread_local, 'browser'):
+        try:
+            _thread_local.browser.close()
+        except Exception:
+            pass
+        try:
+            _thread_local.pw.stop()
+        except Exception:
+            pass
+        del _thread_local.browser
+        del _thread_local.pw
+
+
 def _fetch_location_y_servicios(url: str) -> dict:
     """
     Copia local (con fix) de BookingExtractor._location()/_amenities()
@@ -239,18 +274,15 @@ def _fetch_location_y_servicios(url: str) -> dict:
         'pais': '', 'codigo_postal': '', 'servicios': [], '_html': '',
     }
     try:
-        with sync_playwright() as pw:
-            browser = pw.chromium.launch(
-                headless=True,
-                args=['--no-sandbox', '--disable-blink-features=AutomationControlled'],
-            )
-            context = browser.new_context(
-                user_agent=(
-                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
-                    '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
-                ),
-                locale='es-ES',
-            )
+        browser = _get_thread_browser()
+        context = browser.new_context(
+            user_agent=(
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+            ),
+            locale='es-ES',
+        )
+        try:
             context.add_init_script(
                 "Object.defineProperty(navigator,'webdriver',{get:()=>undefined});"
                 "Object.defineProperty(navigator,'plugins',{get:()=>[1,2,3]});"
@@ -272,7 +304,10 @@ def _fetch_location_y_servicios(url: str) -> dict:
             except Exception:
                 pass
             html = page.content()
-            browser.close()
+        finally:
+            # El navegador del hilo se reutiliza entre fichas; el contexto no
+            # (por eso se cierra siempre, incluso si algo falló arriba).
+            context.close()
     except Exception:
         return extra
 
@@ -937,7 +972,8 @@ def scrape_busqueda(urls: dict, fecha_entrada: str, fecha_salida: str, barra,
 
         return ficha
 
-    with ThreadPoolExecutor(max_workers=3) as executor:
+    MAX_WORKERS_FICHAS = 3
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS_FICHAS) as executor:
         futures = {
             executor.submit(_procesar, row, i + 1): i
             for i, row in enumerate(listados)
@@ -949,6 +985,15 @@ def scrape_busqueda(urls: dict, fecha_entrada: str, fecha_salida: str, barra,
             procesados[0] += 1
             progreso = 0.5 + 0.5 * (procesados[0] / len(listados))
             barra.progress(progreso, text=f'{procesados[0]}/{len(listados)} alojamientos extraídos...')
+
+        # Cierra los navegadores reutilizados por cada hilo del pool antes de
+        # salir del "with" (los hilos siguen vivos hasta entonces). Se envían
+        # más cierres que hilos para que, aunque el reparto de tareas no sea
+        # perfectamente uniforme, cada hilo activo reciba al menos uno;
+        # _close_thread_browser() es idempotente (no hace nada si ya se cerró).
+        cierres = [executor.submit(_close_thread_browser) for _ in range(MAX_WORKERS_FICHAS * 3)]
+        for c in cierres:
+            c.result()
 
     barra.progress(1.0, text='¡Listo!')
     return fichas
