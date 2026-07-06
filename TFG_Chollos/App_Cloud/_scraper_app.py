@@ -45,7 +45,7 @@ from TFG_Chollos.Scraping.Scrp_caracteristicas_estancias import (
 N_ADULTOS      = 2
 N_HABITACIONES = 1
 N_MENORES      = 0
-MAX_CARDS      = 25     
+MAX_CARDS      = 10     
 
 # Caché en memoria de (ss, dest_id, dest_type) resueltos vía autocomplete,
 # para no repetir la navegación a la home en cada búsqueda del mismo lugar
