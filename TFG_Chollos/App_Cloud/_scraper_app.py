@@ -543,12 +543,12 @@ async def _async_scrape_listado(lugar: str, url: str, fecha_entrada: str,
                     await _dismiss_cookies()
 
                     ss_input = page.locator('input[name="ss"]')
-                    await ss_input.click(timeout=10000)
+                    await ss_input.click(timeout=8000)
                     await ss_input.fill('')
                     await ss_input.type(lugar, delay=50)
 
                     sugerencia = page.locator('[data-testid="autocomplete-result"]').first
-                    await sugerencia.wait_for(timeout=8000)
+                    await sugerencia.wait_for(timeout=6000)
                     await sugerencia.click()
 
                     await page.locator('button[type="submit"]').first.click()
@@ -954,7 +954,10 @@ def scrape_busqueda(urls: dict, fecha_entrada: str, fecha_salida: str, barra,
 
         return ficha
 
-    with ThreadPoolExecutor(max_workers=3) as executor:
+    # 4 en vez de 3: con el RF podado (~373 MB en vez de ~1,4 GB) hay más
+    # margen de memoria libre para navegadores Chromium concurrentes y
+    # transitorios (se lanzan y cierran por ficha, no se reutilizan).
+    with ThreadPoolExecutor(max_workers=4) as executor:
         futures = {
             executor.submit(_procesar, row, i + 1): i
             for i, row in enumerate(listados)
