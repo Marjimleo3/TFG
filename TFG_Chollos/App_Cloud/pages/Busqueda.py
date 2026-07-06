@@ -21,7 +21,7 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from _scraper_app import scrape_busqueda
 from _feature_engineering import preprocesar_nuevos, codificar_nuevos
-from _predictor import predecir_nuevos, categorizar_chollos, mostrar_resultados, ETIQUETAS, NIVELES_ESTRICTEZ
+from _predictor import predecir_nuevos, categorizar_chollos, mostrar_resultados, ETIQUETAS, NIVELES_EXIGENCIA
 
 from TFG_Chollos.utils import conseguir_ruta_general_TFG, configurar_logger
 
@@ -153,9 +153,9 @@ def main():
     st.subheader('¿Cómo quiere que sea la categorización de los chollos?')
     col_slider, col_info = st.columns([6, 1])
     with col_slider:
-        nivel_estrictez = st.select_slider(
-            'Cuanto más estricto, más ahorro hace falta para calificar como chollo',
-            options=list(NIVELES_ESTRICTEZ.keys()),
+        nivel_exigencia = st.select_slider(
+            'Cuanta más exigencia, más ahorro hace falta para calificar como chollo',
+            options=list(NIVELES_EXIGENCIA.keys()),
             value='Predeterminado',
         )
     with col_info:
@@ -169,14 +169,14 @@ def main():
 - Normal: precio justo (±3%)
 - Inflado: no hay ahorro — precio al menos un 3% superior al estimado
 
-**Más estricto**
+**Exigente**
 - Hiper-chollo: ahorras más de un 35%
 - Super-chollo: ahorras entre un 20% y un 35%
 - Chollo: ahorras entre un 10% y un 20%
 - Normal: ahorro menor al 10% (o hasta un 3% más caro)
 - Inflado: no hay ahorro — precio al menos un 3% superior al estimado
 
-**Muy estricto**
+**Muy exigente**
 - Hiper-chollo: ahorras más de un 50%
 - Super-chollo: ahorras entre un 30% y un 50%
 - Chollo: ahorras entre un 15% y un 30%
@@ -272,8 +272,8 @@ def main():
     if 'df_resultado' in st.session_state and st.session_state.df_resultado.empty:
         st.warning('El scraping completó pero ningún alojamiento tenía precio disponible para las fechas seleccionadas.')
     elif 'df_resultado' in st.session_state and not st.session_state.df_resultado.empty:
-        # Recategorizamos con el nivel de estrictez actual (instantáneo, sin re-scrapear)
-        df = categorizar_chollos(st.session_state.df_resultado, nivel_estrictez)
+        # Recategorizamos con el nivel de exigencia actual (instantáneo, sin re-scrapear)
+        df = categorizar_chollos(st.session_state.df_resultado, nivel_exigencia)
         mask = pd.Series(True, index=df.index)
         if loc_sel != 'Todas':
             mask &= df['localidad'] == loc_sel

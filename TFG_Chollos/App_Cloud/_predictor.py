@@ -6,10 +6,10 @@ Carga del modelo, predicción y UI de resultados. No es una página Streamlit.
 Exporta:
     cargar_modelos()                             → Random Forest cacheado
     predecir_nuevos(df_features, df_info)        → (resultado, por_noche), sin categorizar
-    categorizar_chollos(df, nivel_estrictez)     → df con la columna prediccion_chollo
+    categorizar_chollos(df, nivel_exigencia)     → df con la columna prediccion_chollo
     mostrar_resultados(df)                       → tabla + gráfico de categorías
     ETIQUETAS                                    → dict {int: str} de categorías
-    NIVELES_ESTRICTEZ                            → dict {nombre: umbrales} para el slider
+    NIVELES_EXIGENCIA                            → dict {nombre: umbrales} para el slider
 '''
 
 # =============================================================================
@@ -36,12 +36,12 @@ ETIQUETAS = {
     4: 'Hiper Chollo',
 }
 
-# Umbrales de ratio (precio_real / precio_predicho) por nivel de estrictez.
+# Umbrales de ratio (precio_real / precio_predicho) por nivel de exigencia.
 # 'Predeterminado' coincide con los umbrales canónicos usados para entrenar el modelo.
-NIVELES_ESTRICTEZ = {
+NIVELES_EXIGENCIA = {
     'Predeterminado': {'umbral_hiper': 0.75, 'umbral_super': 0.85, 'umbral_chollo': 0.97, 'umbral_inflado': 1.03},
-    'Más estricto':   {'umbral_hiper': 0.65, 'umbral_super': 0.80, 'umbral_chollo': 0.90, 'umbral_inflado': 1.03},
-    'Muy estricto':   {'umbral_hiper': 0.50, 'umbral_super': 0.70, 'umbral_chollo': 0.85, 'umbral_inflado': 1.03},
+    'Exigente':       {'umbral_hiper': 0.65, 'umbral_super': 0.80, 'umbral_chollo': 0.90, 'umbral_inflado': 1.03},
+    'Muy exigente':   {'umbral_hiper': 0.50, 'umbral_super': 0.70, 'umbral_chollo': 0.85, 'umbral_inflado': 1.03},
 }
 
 
@@ -79,7 +79,7 @@ def predecir_nuevos(df_features: pd.DataFrame, df_info: pd.DataFrame) -> tuple[p
     alojamiento sumando el precio real y el predicho de todas sus noches.
 
     La categorización de chollo se hace aparte, en categorizar_chollos(), para que
-    cambiar el nivel de estrictez no requiera repetir el scraping ni la predicción.
+    cambiar el nivel de exigencia no requiera repetir el scraping ni la predicción.
 
     Parámetros
     ----------
@@ -119,9 +119,9 @@ def predecir_nuevos(df_features: pd.DataFrame, df_info: pd.DataFrame) -> tuple[p
     return resultado, por_noche
 
 
-def categorizar_chollos(df: pd.DataFrame, nivel_estrictez: str = 'Predeterminado') -> pd.DataFrame:
+def categorizar_chollos(df: pd.DataFrame, nivel_exigencia: str = 'Predeterminado') -> pd.DataFrame:
     """
-    Añade (o recalcula) la columna prediccion_chollo según el nivel de estrictez elegido.
+    Añade (o recalcula) la columna prediccion_chollo según el nivel de exigencia elegido.
     Al operar sobre precio/precio_predicho ya calculados, cambiar de nivel es instantáneo:
     no hace falta volver a scrapear ni a predecir.
     """
@@ -129,7 +129,7 @@ def categorizar_chollos(df: pd.DataFrame, nivel_estrictez: str = 'Predeterminado
         return df
 
     df = df.copy()
-    umbrales = NIVELES_ESTRICTEZ[nivel_estrictez]
+    umbrales = NIVELES_EXIGENCIA[nivel_exigencia]
     categoria = crear_etiqueta_chollo(
         pd.Series(df['precio'].values),
         pd.Series(df['precio_predicho'].values),

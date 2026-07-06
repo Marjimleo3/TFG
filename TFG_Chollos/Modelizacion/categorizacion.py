@@ -32,7 +32,7 @@ def crear_etiqueta_chollo(y_real: pd.Series, y_predicho: pd.Series,
 
     Los valores por defecto (0.75, 0.85, 0.97, 1.03) son los umbrales canónicos
     usados para etiquetar el dataset de entrenamiento; no cambiarlos aquí.
-    Las apps pueden pasar umbrales distintos para el control de estrictez del usuario.
+    Las apps pueden pasar umbrales distintos para el control de exigencia del usuario.
     """
     ratio = y_real / y_predicho
 
