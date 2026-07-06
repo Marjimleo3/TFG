@@ -54,6 +54,9 @@ FILTROS = {
     'Admite Mascotas':      'stay_type=1',
 }
 
+# 'Rota Cádiz' es un duplicado de 'Rota' (dirección sin coma entre localidad y provincia en esa ficha); se excluye del formulario para no fragmentar Rota en dos entradas.
+LOCALIDADES_EXCLUIDAS = {'Rota Cádiz'}
+
 # =============================================================================
 # CONFIGURACIÓN DEL LOGGER
 # =============================================================================
@@ -62,9 +65,6 @@ logger = configurar_logger(__name__)
 # =============================================================================
 # FUNCIONES
 # =============================================================================
-# 'Rota Cádiz' es un duplicado de 'Rota' (dirección sin coma entre localidad y provincia en esa ficha); se excluye del formulario para no fragmentar Rota en dos entradas.
-LOCALIDADES_EXCLUIDAS = {'Rota Cádiz'}
-
 
 @st.cache_data
 def cargar_destinos_db() -> list:
