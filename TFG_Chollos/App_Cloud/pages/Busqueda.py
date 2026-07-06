@@ -234,19 +234,16 @@ def main():
         filtro = generador_filtros(tipos_estancia, servicios)
         urls   = generador_urls(destinos, str(fecha_entrada), str(fecha_salida))
         urls_con_filtro = {lugar: url + filtro for lugar, url in urls.items()}
-        print(urls_con_filtro)
+        st.session_state.urls_busqueda = urls_con_filtro
 
         # Fase de scraping: listado de alojamientos + detalle de cada uno
         barra = st.progress(0, text='Iniciando...')
-        diag_scraping = []
         try:
-            raw_list = scrape_busqueda(urls_con_filtro, str(fecha_entrada), str(fecha_salida), barra, diag_scraping)
+            raw_list = scrape_busqueda(urls_con_filtro, str(fecha_entrada), str(fecha_salida), barra)
         except Exception as e:
             barra.empty()
             st.error(f'Error durante el scraping: {e}')
             return
-
-        st.session_state.diag_scraping = diag_scraping
 
         if not raw_list:
             st.warning('No se encontraron alojamientos para los criterios seleccionados.')
@@ -289,12 +286,12 @@ def main():
         mostrar_resultados(df[mask])
 
     # Herramientas del desarrollador: dataframes intermedios del pipeline
-    if 'raw_list' in st.session_state or 'df_features' in st.session_state or 'diag_scraping' in st.session_state:
+    if 'raw_list' in st.session_state or 'df_features' in st.session_state or 'urls_busqueda' in st.session_state:
         with st.expander('🛠️ Herramientas del desarrollador', expanded=False):
-            if 'diag_scraping' in st.session_state and st.session_state.diag_scraping:
-                st.caption('Diagnóstico del scraping (título de página, homepage detectada, tarjetas)')
-                for linea in st.session_state.diag_scraping:
-                    st.text(linea)
+            if 'urls_busqueda' in st.session_state and st.session_state.urls_busqueda:
+                st.caption('URL de búsqueda en Booking por destino')
+                for lugar, url in st.session_state.urls_busqueda.items():
+                    st.text(f'{lugar}: {url}')
             if 'raw_list' in st.session_state:
                 st.caption('Datos crudos del scraper (antes de preprocesar)')
                 st.dataframe(pd.DataFrame(st.session_state.raw_list), width='stretch')
