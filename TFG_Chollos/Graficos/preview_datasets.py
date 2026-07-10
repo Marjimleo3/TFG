@@ -63,7 +63,7 @@ def _contar_filas_csv(ruta: Path) -> int:
         return sum(1 for _ in f) - 1  # descuenta la cabecera
 
 
-def generar_preview(ruta: Path, titulo: str, ruta_salida: Path,
+def generar_preview(ruta: Path, ruta_salida: Path,
                     cols_mostrar: list | None = None) -> None:
 
     ruta = Path(ruta)
@@ -129,7 +129,7 @@ def generar_preview(ruta: Path, titulo: str, ruta_salida: Path,
     ruta_salida.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(ruta_salida, dpi=150, bbox_inches='tight', facecolor='white')
     plt.close()
-    logger.info(f'✅ Imagen guardada: {ruta_salida}')
+    logger.info(f'[OK] Imagen guardada: {ruta_salida}')
 
 
 # =============================================================================
@@ -138,12 +138,10 @@ def generar_preview(ruta: Path, titulo: str, ruta_salida: Path,
 def main():
     generar_preview(
         ruta=BASE / 'data' / 'raw' / 'fichas' / 'resultados_booking_Málaga.csv',
-        titulo='Datos RAW — resultados_booking_Málaga.csv',
         ruta_salida=BASE / 'images' / 'tabla_raw.png',
     )
     generar_preview(
         ruta=BASE / 'data' / 'processed' / 'analisis' / 'db_final_analisis.parquet',
-        titulo='Datos PROCESSED — db_final_analisis.parquet',
         ruta_salida=BASE / 'images' / 'tabla_processed.png',
     )
 

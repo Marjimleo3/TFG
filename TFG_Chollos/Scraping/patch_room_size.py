@@ -100,7 +100,7 @@ def main():
     print("=" * 62)
 
     if not pendientes:
-        print("✅ Todo ya procesado.")
+        print("[OK] Todo ya procesado.")
         return
 
     print("Iniciando sesión (resolviendo WAF una sola vez)...")

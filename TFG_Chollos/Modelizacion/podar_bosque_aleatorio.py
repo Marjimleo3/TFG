@@ -36,7 +36,7 @@ logger = configurar_logger(__name__)
 def main():
     BASE = conseguir_ruta_general_TFG()
 
-    logger.info('⏳ Cargando dataset de prueba y modelo completo...')
+    logger.info('Cargando dataset de prueba y modelo completo...')
     db = pd.read_parquet(BASE / 'data' / 'processed' / 'modelizacion' / 'db_final_codificada.parquet')
     X = db.drop(columns=['precio'])
     y = db['precio']
@@ -52,11 +52,11 @@ def main():
     r2   = r2_score(y_test, y_pred)
     mae  = mean_absolute_error(y_test, y_pred)
     rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-    logger.info(f'✅ RF podado a {N_ARBOLES} árboles — R²={r2:.4f} · MAE={mae:.2f}€ · RMSE={rmse:.2f}€')
+    logger.info(f'[OK] RF podado a {N_ARBOLES} árboles — R²={r2:.4f} · MAE={mae:.2f}€ · RMSE={rmse:.2f}€')
 
     ruta = BASE / 'data' / 'models' / 'bosque_aleatorio_reg_ligero.pkl'
     joblib.dump(rf_ligero, ruta, compress=3)
-    logger.info(f'✅ Guardado: {ruta} ({ruta.stat().st_size / 1e6:.1f} MB)')
+    logger.info(f'[OK] Guardado: {ruta} ({ruta.stat().st_size / 1e6:.1f} MB)')
 
 
 if __name__ == '__main__':

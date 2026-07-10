@@ -43,7 +43,7 @@ def grafico_distribucion_chollo_test():
     Genera un gráfico de pastel con la distribución de categorías de chollo
     sobre el conjunto de prueba y lo guarda como distribucion_categorias_test.png.
     """
-    logger.info('⏳ Cargando datos y modelo...')
+    logger.info('Cargando datos y modelo...')
     db = pd.read_parquet(
         BASE / 'data' / 'processed' / 'modelizacion' / 'db_final_codificada.parquet'
     )
@@ -52,7 +52,7 @@ def grafico_distribucion_chollo_test():
     _, _, X_test, _, _, y_test = train_test_validation_particion(X, y)
 
     modelo = joblib.load(BASE / 'data' / 'models' / 'bosque_aleatorio_reg.pkl')
-    logger.info('✅ Modelo cargado')
+    logger.info('[OK] Modelo cargado')
 
     y_pred = pd.Series(modelo.predict(X_test), index=y_test.index)
     categorias = crear_etiqueta_chollo(y_test, y_pred)
@@ -87,7 +87,7 @@ def grafico_distribucion_chollo_test():
     ruta.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(ruta, bbox_inches='tight', dpi=150)
     plt.close()
-    logger.info(f'✅ Gráfico guardado: {ruta}')
+    logger.info(f'[OK] Gráfico guardado: {ruta}')
 
 
 # =============================================================================

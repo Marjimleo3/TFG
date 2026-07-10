@@ -122,9 +122,9 @@ def cerrar_popup(driver):
             )
             boton = popup.find_element(By.CSS_SELECTOR, 'button[aria-label]')
             boton.click()
-            print('✅ Popup cerrado correctamente')
+            print('[OK] Popup cerrado correctamente')
         except Exception:
-            print('❌ No hay Popup')
+            print('[ERROR] No hay Popup')
             pass
 
 
@@ -190,7 +190,7 @@ def n_alojamientos(driver):
         texto = (span if span else titulo).get_text(strip=True)
         return int(re.search(r"[\d.]+", texto).group().replace(".", ""))
     except Exception as e:
-        print(f"⚠️ No se pudo leer el total de resultados: {e}")
+        print(f"[WARN] No se pudo leer el total de resultados: {e}")
     return 0
 
 
@@ -295,7 +295,7 @@ def main():
     try:
         for clave, url in urls_provincias.items():
             print(f'\n{"="*50}')
-            print(f'📍 Scrapeando {clave}')
+            print(f'Scrapeando {clave}')
             print(f'{"="*50}')
 
             # Scraping con subdivisión por precio para superar el límite de 750 resultados
@@ -310,13 +310,13 @@ def main():
                     vistos.add(url_limpia)
                     alojamientos.append(a)
 
-            logger.info(f'✅ Total único tras deduplicar: {len(alojamientos)} alojamientos')
+            logger.info(f'[OK] Total único tras deduplicar: {len(alojamientos)} alojamientos')
 
             # Añadimos las fechas y parámetros de búsqueda al DataFrame y guardamos el CSV
             df = pd.DataFrame(alojamientos)
             df['fecha_entrada'], df['fecha_salida'], df['n_adultos'], df['n_habitaciones'], df['n_menores'] = FECHA_ENTRADA, FECHA_SALIDA, N_ADULTOS, N_HABITACIONES, N_MENORES
             df = df.to_csv(BASE / "data" / "raw" / "listados" / f"urls_booking_{clave}.csv", index=False, sep='|')
-            logger.info('✅ Datos guardados correctamente')
+            logger.info('[OK] Datos guardados correctamente')
 
             # Pausa aleatoria entre provincias para no saturar el servidor
             time.sleep(random.uniform(8, 15))

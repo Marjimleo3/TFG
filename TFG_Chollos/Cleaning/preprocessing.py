@@ -337,7 +337,7 @@ def main():
     # Concatenamos todos los datasets provinciales y guardamos el parquet final
     db_completa = pd.concat(dfs_finales, ignore_index=True)
     db_completa.to_parquet(BASE / "data" / "processed" / "final" / "db_final.parquet", index=False)
-    logger.info('✅ Dataset completo guardado correctamente')
+    logger.info('[OK] Dataset completo guardado correctamente')
 
     
 

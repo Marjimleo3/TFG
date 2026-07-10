@@ -102,10 +102,10 @@ def main():
     filas = [{'localidad': loc, 'lat_centro': coords[0], 'lon_centro': coords[1]}
              for loc, coords in resultados.items()]
     pd.DataFrame(filas).sort_values('localidad').to_csv(ruta_csv, index=False)
-    logger.info(f'✅ Guardadas {len(filas)} localidades en {ruta_csv}')
+    logger.info(f'[OK] Guardadas {len(filas)} localidades en {ruta_csv}')
 
     if sin_resultado:
-        logger.warning(f'⚠️  {len(sin_resultado)} localidades sin coordenadas: {sin_resultado}')
+        logger.warning(f'[WARN] {len(sin_resultado)} localidades sin coordenadas: {sin_resultado}')
 
 
 if __name__ == '__main__':

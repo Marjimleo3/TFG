@@ -76,8 +76,8 @@ def main():
 
     db_codificada = encoding(db_analisis)
     db_codificada.to_parquet(BASE / "data" / "processed" / "modelizacion" / "db_final_codificada.parquet", index=False)
-    logger.info('✅ Dataset completo codificado guardado correctamente')
-    logger.info('✅ LabelEncoders y columnas del modelo guardados en data/models/')
+    logger.info('[OK] Dataset completo codificado guardado correctamente')
+    logger.info('[OK] LabelEncoders y columnas del modelo guardados en data/models/')
 
 
 if __name__ == "__main__":

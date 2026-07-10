@@ -67,7 +67,7 @@ def denegar_cookies(driver, timeout=2):
             EC.invisibility_of_element_located((By.ID, "onetrust-banner-sdk"))
         )
 
-        print("✅ Cookies cerradas")
+        print("[OK] Cookies cerradas")
 
     except TimeoutException:
         print("ℹ️ Banner de cookies no apareció o ya estaba cerrado")

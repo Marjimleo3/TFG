@@ -79,18 +79,18 @@ def crear_regresion_lineal(conjunto_ent_est: pd.DataFrame, conjunto_val_est: pd.
     Genera un gráfico de dispersión en unidades originales si se pasan X_plot e y_plot,
     o en escala estandarizada en caso contrario.
     """
-    logger.info('⏳ Creando "Regresión Lineal Múltiple"')
+    logger.info('Creando "Regresión Lineal Múltiple"')
 
     regresion = linear_model.LinearRegression()
     regresion.fit(conjunto_ent_est, target_ent_est)
-    logger.info('✅ Modelo entrenado')
+    logger.info('[OK] Modelo entrenado')
 
     y_pred_val = regresion.predict(conjunto_val_est)
     _log_metricas(target_val_est, y_pred_val, '[VAL - Regresión Lineal]', units=' (z-score)')
 
     ruta_modelo = BASE / 'data' / 'models' / 'regresion_lineal_reg.pkl'
     joblib.dump(regresion, ruta_modelo)
-    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
+    logger.info(f'[OK] Modelo guardado: {ruta_modelo}')
 
     # Gráfico: dispersión en unidades originales si se pasan X_plot/y_plot, estandarizadas si no
     X_graf = X_plot if X_plot is not None else conjunto_ent_est
@@ -106,7 +106,7 @@ def crear_regresion_lineal(conjunto_ent_est: pd.DataFrame, conjunto_val_est: pd.
     ruta.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(ruta, bbox_inches='tight', dpi=150)
     plt.close()
-    logger.info(f'✅ Gráfico guardado: {ruta}')
+    logger.info(f'[OK] Gráfico guardado: {ruta}')
 
     return regresion
 
@@ -119,7 +119,7 @@ def crear_arbol_decision(conjunto_ent: pd.DataFrame, conjunto_val: pd.DataFrame,
     Métricas de validación en €.
     Genera un gráfico del árbol con profundidad 3 para visualizar las decisiones principales.
     """
-    logger.info('⏳ Creando "Árbol de Decisión"')
+    logger.info('Creando "Árbol de Decisión"')
 
     param_grid = {'max_depth': [3, 5, 10, 15]}
 
@@ -133,14 +133,14 @@ def crear_arbol_decision(conjunto_ent: pd.DataFrame, conjunto_val: pd.DataFrame,
     )
     grid_search.fit(conjunto_ent, target_ent)
     mejor_arbol = grid_search.best_estimator_
-    logger.info(f'✅ Modelo entrenado | Mejores hiperparámetros: {grid_search.best_params_}')
+    logger.info(f'[OK] Modelo entrenado | Mejores hiperparámetros: {grid_search.best_params_}')
 
     y_pred_val = mejor_arbol.predict(conjunto_val)
     _log_metricas(target_val, y_pred_val, '[VAL - Árbol de Decisión]')
 
     ruta_modelo = BASE / 'data' / 'models' / 'arbol_decision_reg.pkl'
     joblib.dump(mejor_arbol, ruta_modelo)
-    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
+    logger.info(f'[OK] Modelo guardado: {ruta_modelo}')
 
     # Visualizamos las 3 primeras capas del árbol (las decisiones más importantes)
     plt.figure(figsize=(20, 10))
@@ -155,7 +155,7 @@ def crear_arbol_decision(conjunto_ent: pd.DataFrame, conjunto_val: pd.DataFrame,
     ruta.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(ruta, bbox_inches='tight', dpi=150)
     plt.close()
-    logger.info(f'✅ Gráfico guardado: {ruta}')
+    logger.info(f'[OK] Gráfico guardado: {ruta}')
 
     return mejor_arbol
 
@@ -168,7 +168,7 @@ def crear_bosque_aleatorio(conjunto_ent: pd.DataFrame, conjunto_val: pd.DataFram
     Métricas de validación en €.
     No requiere escalado.
     """
-    logger.info('⏳ Creando "Bosque Aleatorio"')
+    logger.info('Creando "Bosque Aleatorio"')
 
     param_grid = {
         'n_estimators': [50, 100],
@@ -185,14 +185,14 @@ def crear_bosque_aleatorio(conjunto_ent: pd.DataFrame, conjunto_val: pd.DataFram
     )
     grid_search.fit(conjunto_ent, target_ent)
     mejor_bosque = grid_search.best_estimator_
-    logger.info(f'✅ Modelo entrenado | Mejores hiperparámetros: {grid_search.best_params_}')
+    logger.info(f'[OK] Modelo entrenado | Mejores hiperparámetros: {grid_search.best_params_}')
 
     y_pred_val = mejor_bosque.predict(conjunto_val)
     _log_metricas(target_val, y_pred_val, '[VAL - Bosque Aleatorio]')
 
     ruta_modelo = BASE / 'data' / 'models' / 'bosque_aleatorio_reg.pkl'
     joblib.dump(mejor_bosque, ruta_modelo)
-    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
+    logger.info(f'[OK] Modelo guardado: {ruta_modelo}')
 
     return mejor_bosque
 
@@ -205,7 +205,7 @@ def crear_boosting(conjunto_ent: pd.DataFrame, conjunto_val: pd.DataFrame,
     Métricas de validación en €.
     No requiere escalado.
     """
-    logger.info('⏳ Creando "XGBoost"')
+    logger.info('Creando "XGBoost"')
 
     param_grid = {
         'n_estimators':  [100, 300, 500],
@@ -223,14 +223,14 @@ def crear_boosting(conjunto_ent: pd.DataFrame, conjunto_val: pd.DataFrame,
     )
     grid_search.fit(conjunto_ent, target_ent)
     mejor_boosting = grid_search.best_estimator_
-    logger.info(f'✅ Modelo entrenado | Mejores hiperparámetros: {grid_search.best_params_}')
+    logger.info(f'[OK] Modelo entrenado | Mejores hiperparámetros: {grid_search.best_params_}')
 
     y_pred_val = mejor_boosting.predict(conjunto_val)
     _log_metricas(target_val, y_pred_val, '[VAL - XGBoost]')
 
     ruta_modelo = BASE / 'data' / 'models' / 'boosting_reg.pkl'
     joblib.dump(mejor_boosting, ruta_modelo)
-    logger.info(f'✅ Modelo guardado: {ruta_modelo}')
+    logger.info(f'[OK] Modelo guardado: {ruta_modelo}')
 
     return mejor_boosting
 
@@ -304,7 +304,7 @@ def main():
             mejor_X_train, mejor_X_val, mejor_X_test = X_tr, X_va, X_te
             mejor_y_train, mejor_y_val, mejor_y_test = y_tr, y_va, y_te
 
-    logger.info(f'✅ Mejor modelo de regresión: {mejor_nombre} (R² val={mejor_score:.4f})')
+    logger.info(f'[OK] Mejor modelo de regresión: {mejor_nombre} (R² val={mejor_score:.4f})')
 
     # Énfasis especial en Bosque Aleatorio: importancia de variables
     if mejor_nombre == 'Bosque Aleatorio':
@@ -332,7 +332,7 @@ def main():
         modelos_dir = BASE / 'data' / 'models'
         joblib.dump(scaler_X, modelos_dir / 'scaler_X_regresion.pkl')
         joblib.dump(scaler_y, modelos_dir / 'scaler_y_regresion.pkl')
-        logger.info(f'✅ Scalers guardados en {modelos_dir}')
+        logger.info(f'[OK] Scalers guardados en {modelos_dir}')
 
 
 if __name__ == '__main__':

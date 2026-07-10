@@ -180,7 +180,7 @@ def main():
 
     salida = BASE / "Graficos" / "mapa_predeterminado.html"
     fig.write_html(salida)
-    print(f"✅ Mapa guardado en: {salida}")
+    print(f"[OK] Mapa guardado en: {salida}")
 
 
 if __name__ == "__main__":

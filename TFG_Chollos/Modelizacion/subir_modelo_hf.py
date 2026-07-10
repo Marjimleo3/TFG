@@ -47,14 +47,14 @@ def main():
     api = HfApi(token=token)
     api.create_repo(repo_id=REPO_ID, repo_type="model", exist_ok=True, private=False)
 
-    logger.info(f'⏳ Subiendo {ruta_modelo} ({ruta_modelo.stat().st_size / 1e9:.2f} GB)...')
+    logger.info(f'Subiendo {ruta_modelo} ({ruta_modelo.stat().st_size / 1e9:.2f} GB)...')
     api.upload_file(
         path_or_fileobj=str(ruta_modelo),
         path_in_repo=ARCHIVO,
         repo_id=REPO_ID,
         repo_type="model",
     )
-    logger.info(f'✅ Modelo subido: https://huggingface.co/{REPO_ID}')
+    logger.info(f'[OK] Modelo subido: https://huggingface.co/{REPO_ID}')
 
 
 if __name__ == "__main__":
