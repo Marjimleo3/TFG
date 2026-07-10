@@ -1,6 +1,6 @@
 # Detector de Chollos en Alojamientos de Andalucía
 
-Sistema de aprendizaje automático que detecta alojamientos con precios anómalamente bajos ("chollos") en Booking.com para las provincias de Andalucía. Combina scraping web, preprocesamiento de datos y modelos de clasificación y regresión, con una interfaz web en Streamlit para el usuario final.
+Sistema de aprendizaje automático que detecta alojamientos con precios anómalamente bajos ("chollos") en Booking.com para las provincias de Andalucía. Combina scraping web, preprocesamiento de datos y un modelo de regresión que predice el precio justo de cada alojamiento, con una interfaz web en Streamlit para el usuario final.
 
 ---
 
@@ -16,6 +16,7 @@ Sistema de aprendizaje automático que detecta alojamientos con precios anómala
 | Interfaz web | Streamlit |
 | Gestión de entorno | uv |
 | Análisis estadístico | R 4.x, corrplot, arrow |
+| Distribución de modelos | Hugging Face Hub (`huggingface-hub`) |
 
 ---
 
@@ -29,18 +30,23 @@ TFG/
 │   │   ├── Scrp_estancias_provincias.py         # Scraping de listados (Selenium)
 │   │   ├── Scrp_caracteristicas_estancias.py    # Scraping de fichas (Playwright)
 │   │   ├── obtener_coordenadas_centros.py        # Geocodificación de localidades (Nominatim)
-│   │   └── patch_room_size.py
+│   │   └── patch_room_size.py                    # Extracción del tamaño de habitación (m²) desde los CSVs ya scrapeados
 │   ├── Cleaning/
 │   │   ├── preprocessing.py   # Limpieza y estructuración del dataset
 │   │   ├── post_analisis.py   # Eliminación de outliers
 │   │   └── encoding.py        # Codificación para ML
 │   ├── Modelizacion/
-│   │   ├── Modelizacion.py      # Entrenamiento y evaluación de modelos ML
-│   │   └── transformaciones.py  # Partición y escalado del dataset
+│   │   ├── Modelizacion.py             # Entrenamiento, selección y evaluación de los modelos de regresión
+│   │   ├── transformaciones.py         # Partición y escalado del dataset
+│   │   ├── categorizacion.py           # Etiquetado de categorías de chollo por umbrales sobre precio_real/precio_predicho
+│   │   ├── podar_bosque_aleatorio.py   # Reduce el Random Forest ganador para que quepa en Streamlit Community Cloud
+│   │   └── subir_modelo_hf.py          # Sube el Random Forest completo a Hugging Face Hub (lo descarga App_Cloud)
 │   ├── Graficos/
 │   │   ├── Grafico_Alojamientos_Andalucia.py  # Mapa coroplético de alojamientos
+│   │   ├── Graficos.py                        # Distribución de categorías de chollo en el conjunto de test
+│   │   ├── preview_datasets.py                # Imágenes de previsualización de los datasets RAW/PROCESSED
 │   │   └── correlacion.R                      # Matriz de correlación (Pearson)
-│   ├── App/                   # Aplicación Streamlit
+│   ├── App/                   # Aplicación Streamlit (uso local)
 │   │   ├── main.py                # Página principal (mapa + gráficos)
 │   │   ├── run.py                 # Lanzador de la app
 │   │   ├── graficos_analisis.py
@@ -49,14 +55,26 @@ TFG/
 │   │   ├── _feature_engineering.py  # Preprocesado de datos para predicción
 │   │   └── pages/
 │   │       └── Busqueda.py    # Página de búsqueda de chollos
+│   ├── App_Cloud/              # Misma app, adaptada a Streamlit Community Cloud
+│   │   ├── main.py                # Modelo podado + descarga desde Hugging Face Hub
+│   │   ├── run.py
+│   │   ├── graficos_analisis.py
+│   │   ├── _predictor.py
+│   │   ├── _scraper_app.py
+│   │   ├── _feature_engineering.py
+│   │   └── pages/
+│   │       └── Busqueda.py
 │   └── utils.py
 ├── data/
 │   ├── raw/                   # Datos en bruto del scraping
 │   ├── processed/             # Datos limpios y codificados
 │   ├── models/                # Modelos entrenados (.pkl)
 │   └── resultados/            # Resultados de evaluación
+├── packages.txt                # Dependencias del sistema para el despliegue (chromium, para Playwright)
 └── pyproject.toml
 ```
+
+> `App_Cloud/` existe porque el Random Forest completo (~1,4 GB en memoria) supera el límite del plan gratuito de Streamlit Community Cloud. Para el despliegue se usa una versión podada a 20 árboles (`podar_bosque_aleatorio.py`, ~373 MB, pérdida de rendimiento mínima) descargada desde Hugging Face Hub en tiempo de ejecución.
 
 ---
 
@@ -145,6 +163,8 @@ streamlit run TFG_Chollos/App/main.py
 
 > Los modelos ya están entrenados e incluidos en `data/models/`. No es necesario ejecutar el pipeline de datos para usar la app.
 
+`TFG_Chollos/App_Cloud/` contiene la misma aplicación adaptada al plan gratuito de Streamlit Community Cloud (modelo podado descargado desde Hugging Face Hub); no está pensada para ejecutarse en local.
+
 ### Pipeline de datos completo (opcional — solo si se quiere reentrenar desde cero)
 
 ```powershell
@@ -168,6 +188,12 @@ uv run python TFG_Chollos/Cleaning/encoding.py
 
 # 7. Entrenamiento de modelos
 uv run python TFG_Chollos/Modelizacion/Modelizacion.py
+
+# 8. (Opcional) Reducir el modelo ganador para desplegarlo en Streamlit Community Cloud
+uv run python TFG_Chollos/Modelizacion/podar_bosque_aleatorio.py
+
+# 9. (Opcional) Subir el modelo completo a Hugging Face Hub para que App_Cloud lo descargue
+uv run python TFG_Chollos/Modelizacion/subir_modelo_hf.py
 ```
 
 ---
@@ -204,17 +230,29 @@ X_test  (15%) → evaluación final sin sesgo (se usa una única vez)
 
 | Tipo | Modelos |
 |---|---|
-| Regresión | Regresión Lineal, Árbol de Decisión, Random Forest, XGBoost |
-| Clasificación | Regresión Logística, Árbol de Decisión, Random Forest, XGBoost |
+| Regresión (precio) | Regresión Lineal, Árbol de Decisión, Random Forest, XGBoost |
 
-Los modelos de SVM, KNN y Redes Neuronales fueron descartados por tiempo de entrenamiento excesivo (>1h por fit). Los hiperparámetros se optimizan con `GridSearchCV`.
+Los modelos de SVM, KNN y Redes Neuronales fueron descartados por tiempo de entrenamiento excesivo (>1h por fit). Los hiperparámetros se optimizan con `GridSearchCV`, seleccionando el mejor modelo por R² en validación.
 
-### Resultados
+### Resultados (test)
 
-| Tarea | Modelo ganador | Métrica |
-|---|---|---|
-| Regresión (precio) | Random Forest | R² = 0.8779 \| MAE = 19.45€ |
-| Clasificación (categoría) | Random Forest | F1-weighted = 0.6509 |
+| Modelo | R² | MAE | RMSE |
+|---|---|---|---|
+| **Random Forest (ganador)** | **0.8779** | **19.45€** | **33.18€** |
+| Árbol de Decisión | 0.6286 | — | — |
+| XGBoost | 0.5352 | — | — |
+
+### Categorización de chollos
+
+No se entrena un clasificador aparte: una vez elegido el modelo de regresión ganador, cada alojamiento se etiqueta por umbrales sobre el ratio `precio_real / precio_predicho` (`Modelizacion/categorizacion.py`):
+
+| Categoría | Condición del ratio |
+|---|---|
+| Hiper chollo | ≤ 0.75 |
+| Super chollo | 0.75 – 0.85 |
+| Chollo | 0.85 – 0.97 |
+| Normal | 0.97 – 1.03 |
+| Inflado | > 1.03 |
 
 ---
 

@@ -262,7 +262,6 @@ def main():
     regresion = crear_regresion_lineal(X_train_est, X_val_est, y_train_est, y_val_est, 'tamaño_habitacion', X_plot=X_train, y_plot=y_train)
     arbol     = crear_arbol_decision(X_train, X_val, y_train, y_val)
     bosque    = crear_bosque_aleatorio(X_train, X_val, y_train, y_val)
-    # bosque  = joblib.load(BASE / 'data' / 'models' / 'bosque_aleatorio_reg.pkl')
     boosting  = crear_boosting(X_train, X_val, y_train, y_val)
 
     # 4. SELECCIÓN DEL MEJOR MODELO + EVALUACIÓN EN TEST

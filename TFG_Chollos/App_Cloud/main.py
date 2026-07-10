@@ -10,7 +10,6 @@ Para ejecutar:
 # =============================================================================
 import asyncio
 import re
-import shutil
 import subprocess
 import sys
 import threading

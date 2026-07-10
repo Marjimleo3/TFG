@@ -19,7 +19,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 import pandas as pd
-import plotly.express as px
 import requests
 import streamlit as st
 from bs4 import BeautifulSoup

@@ -18,11 +18,6 @@ Uso:
 # =============================================================================
 # IMPORTS
 # =============================================================================
-#Librerías estándar (vienen incluidas con Python):
-import os
-from pathlib import Path
-import logging
-
 #Librerías de terceros (es necesario instalarlas):
 import pandas as pd
 from dotenv import load_dotenv
