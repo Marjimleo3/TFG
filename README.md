@@ -16,7 +16,6 @@ Sistema de aprendizaje automático que detecta alojamientos con precios anómala
 | Interfaz web | Streamlit |
 | Gestión de entorno | uv |
 | Análisis estadístico | R 4.x, corrplot, arrow |
-| Distribución de modelos | Hugging Face Hub (`huggingface-hub`) |
 
 ---
 
@@ -39,8 +38,8 @@ TFG/
 │   │   ├── Modelizacion.py             # Entrenamiento, selección y evaluación de los modelos de regresión
 │   │   ├── transformaciones.py         # Partición y escalado del dataset
 │   │   ├── categorizacion.py           # Etiquetado de categorías de chollo por umbrales sobre precio_real/precio_predicho
-│   │   ├── podar_bosque_aleatorio.py   # Reduce el Random Forest ganador para que quepa en Streamlit Community Cloud
-│   │   └── subir_modelo_hf.py          # Sube el Random Forest completo a Hugging Face Hub (lo descarga App_Cloud)
+│   │   ├── podar_bosque_aleatorio.py   # Reduce el Random Forest ganador a 20 árboles para que quepa en el repo y en memoria en Streamlit Community Cloud
+│   │   └── subir_modelo_hf.py          # (Enfoque abandonado) Subía el Random Forest completo a Hugging Face Hub; ya no lo usa ninguna app
 │   ├── Graficos/
 │   │   ├── Grafico_Alojamientos_Andalucia.py  # Mapa coroplético de alojamientos
 │   │   ├── Graficos.py                        # Distribución de categorías de chollo en el conjunto de test
@@ -56,7 +55,7 @@ TFG/
 │   │   └── pages/
 │   │       └── Busqueda.py    # Página de búsqueda de chollos
 │   ├── App_Cloud/              # Misma app, adaptada a Streamlit Community Cloud
-│   │   ├── main.py                # Modelo podado + descarga desde Hugging Face Hub
+│   │   ├── main.py                # Usa el modelo podado, incluido en el repo (carga desde disco, sin red)
 │   │   ├── run.py
 │   │   ├── graficos_analisis.py
 │   │   ├── _predictor.py
@@ -74,7 +73,7 @@ TFG/
 └── pyproject.toml
 ```
 
-> `App_Cloud/` existe porque el Random Forest completo (~1,4 GB en memoria) supera el límite del plan gratuito de Streamlit Community Cloud. Para el despliegue se usa una versión podada a 20 árboles (`podar_bosque_aleatorio.py`, ~373 MB, pérdida de rendimiento mínima) descargada desde Hugging Face Hub en tiempo de ejecución.
+> `App_Cloud/` existe porque el Random Forest completo (~1,4 GB en memoria) supera el límite del plan gratuito de Streamlit Community Cloud. La solución inicial fue alojar el modelo completo en Hugging Face Hub y descargarlo al arrancar (`subir_modelo_hf.py`), pero eso no resolvía el pico de memoria al deserializarlo. La solución final poda el bosque a 20 árboles (`podar_bosque_aleatorio.py`, ~373 MB en memoria, ~59 MB comprimido, pérdida de rendimiento mínima), lo que permite incluirlo directamente en el repositorio y cargarlo desde disco sin depender de red.
 
 ---
 
@@ -191,9 +190,6 @@ uv run python TFG_Chollos/Modelizacion/Modelizacion.py
 
 # 8. (Opcional) Reducir el modelo ganador para desplegarlo en Streamlit Community Cloud
 uv run python TFG_Chollos/Modelizacion/podar_bosque_aleatorio.py
-
-# 9. (Opcional) Subir el modelo completo a Hugging Face Hub para que App_Cloud lo descargue
-uv run python TFG_Chollos/Modelizacion/subir_modelo_hf.py
 ```
 
 ---
