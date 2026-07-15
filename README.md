@@ -230,13 +230,18 @@ X_test  (15%) → evaluación final sin sesgo (se usa una única vez)
 
 Los modelos de SVM, KNN y Redes Neuronales fueron descartados por tiempo de entrenamiento excesivo (>1h por fit). Los hiperparámetros se optimizan con `GridSearchCV`, seleccionando el mejor modelo por R² en validación.
 
-### Resultados (test)
+### Resultados
+
+Métricas sobre el conjunto de **validación**, usadas para comparar los 4 modelos y elegir el ganador (evaluarlos en test invalidaría la evaluación final, que debe usarse una única vez):
 
 | Modelo | R² | MAE | RMSE |
 |---|---|---|---|
-| **Random Forest (ganador)** | **0.8779** | **19.45€** | **33.18€** |
-| Árbol de Decisión | 0.6286 | — | — |
-| XGBoost | 0.5352 | — | — |
+| Regresión Lineal | 0.1438 | 63.33€ | 84.04€ |
+| XGBoost | 0.5063 | 45.53€ | 63.82€ |
+| Árbol de Decisión | 0.5930 | 38.22€ | 57.95€ |
+| **Random Forest (ganador)** | **0.8670** | **19.42€** | **33.12€** |
+
+Evaluado una única vez sobre el conjunto de **prueba** independiente, el Random Forest ganador alcanza R²=0.8676, MAE=19.43€, RMSE=33.05€ — sin indicios de sobreajuste entre validación y prueba.
 
 ### Categorización de chollos
 
