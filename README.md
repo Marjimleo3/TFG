@@ -38,8 +38,7 @@ TFG/
 │   │   ├── Modelizacion.py             # Entrenamiento, selección y evaluación de los modelos de regresión
 │   │   ├── transformaciones.py         # Partición y escalado del dataset
 │   │   ├── categorizacion.py           # Etiquetado de categorías de chollo por umbrales sobre precio_real/precio_predicho
-│   │   ├── podar_bosque_aleatorio.py   # Reduce el Random Forest ganador a 20 árboles para que quepa en el repo y en memoria en Streamlit Community Cloud
-│   │   └── subir_modelo_hf.py          # (Enfoque abandonado) Subía el Random Forest completo a Hugging Face Hub; ya no lo usa ninguna app
+│   │   └── podar_bosque_aleatorio.py   # Reduce el Random Forest ganador a 20 árboles para que quepa en el repo y en memoria en Streamlit Community Cloud
 │   ├── Graficos/
 │   │   ├── Grafico_Alojamientos_Andalucia.py  # Mapa coroplético de alojamientos
 │   │   ├── Graficos.py                        # Distribución de categorías de chollo en el conjunto de test
@@ -73,7 +72,7 @@ TFG/
 └── pyproject.toml
 ```
 
-> `App_Cloud/` existe porque el Random Forest completo (~1,4 GB en memoria) supera el límite del plan gratuito de Streamlit Community Cloud. La solución inicial fue alojar el modelo completo en Hugging Face Hub y descargarlo al arrancar (`subir_modelo_hf.py`), pero eso no resolvía el pico de memoria al deserializarlo. La solución final poda el bosque a 20 árboles (`podar_bosque_aleatorio.py`, ~373 MB en memoria, ~59 MB comprimido, pérdida de rendimiento mínima), lo que permite incluirlo directamente en el repositorio y cargarlo desde disco sin depender de red.
+> `App_Cloud/` existe porque el Random Forest completo (~1,4 GB en memoria) supera el límite del plan gratuito de Streamlit Community Cloud. La solución inicial fue alojar el modelo completo en Hugging Face Hub y descargarlo al arrancar, pero eso no resolvía el pico de memoria al deserializarlo. La solución final poda el bosque a 20 árboles (`podar_bosque_aleatorio.py`, ~373 MB en memoria, ~59 MB comprimido, pérdida de rendimiento mínima), lo que permite incluirlo directamente en el repositorio y cargarlo desde disco sin depender de red.
 
 ---
 
